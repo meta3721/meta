@@ -1,0 +1,7 @@
+name: synthetic
+role: unit_fixture
+split:
+  train: 0.60
+  validation: 0.20
+  test: 0.20
+  warmup_fraction_of_train: 0.20

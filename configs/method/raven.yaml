@@ -1,0 +1,9 @@
+name: raven
+uses_design_ratio: true
+uses_obs_correction: true
+uses_use_correction: true
+uses_instant_calibration: true
+uses_debt: true
+uses_reference: true
+uses_variance: true
+uses_staleness: true

@@ -1,0 +1,7 @@
+name: E0_unit
+description: Formula unit tests and synthetic truth (no large-scale runs)
+datasets: [synthetic]
+methods: [raven]
+scenarios: [balanced]
+seeds: [26001]
+num_windows: 10

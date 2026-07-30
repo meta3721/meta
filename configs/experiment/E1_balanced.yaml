@@ -1,0 +1,7 @@
+name: E1_balanced
+description: Balanced no-harm gate (5 seeds)
+datasets: [sensorscope]
+methods: [fedavg_window, timealign_agg, twostage_hajek, raven]
+scenarios: [balanced]
+seeds: [26001, 26002, 26003, 26004, 26005]
+num_windows: 100

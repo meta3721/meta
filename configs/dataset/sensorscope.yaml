@@ -1,0 +1,8 @@
+name: sensorscope
+role: main_controlled
+raw_glob: data/raw/sensorscope/**
+split:
+  train: 0.60
+  validation: 0.20
+  test: 0.20
+  warmup_fraction_of_train: 0.20

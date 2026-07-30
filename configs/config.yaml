@@ -1,0 +1,51 @@
+# Default root config (Phase 1 skeleton). Affects results → must enter manifest.
+experiment: E0_unit
+dataset: synthetic
+method: raven
+scenario: balanced
+seed: 26001
+device: cpu
+output_dir: outputs/runs
+resume: false
+dry_run: false
+max_workers: 1
+fail_fast: true
+
+clients:
+  K: 3
+  local_steps: 5
+  risk_set_mean: 5
+
+window:
+  num_windows: 10
+  duration: 1.0
+  max_staleness: 5
+
+correction:
+  p_min: 0.05
+  q_min: 0.05
+  a_max: 20.0
+  d_max: 10.0
+  opportunity_forgetting: 0.95
+  pi_min: 1.0e-8
+
+aggregation:
+  lambda_group: 1.0
+  lambda_reference: 1.0
+  lambda_variance: 0.1
+  lambda_staleness: 0.1
+  min_effective_clients: 3
+  alpha_max: 0.5
+  max_server_learning_rate: 1.0
+
+solver:
+  backend: CLARABEL
+  tolerance: 1.0e-6
+
+seeds:
+  master: null
+  data: null
+  event: null
+  model: null
+  solver: null
+  bootstrap: null
