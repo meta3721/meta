@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 import socket
 import subprocess
 from dataclasses import asdict, dataclass, field
@@ -51,11 +52,29 @@ REQUIRED_MANIFEST_FIELDS = (
 VALID_GATE_STATUSES = frozenset({"PENDING", "PASS", "FAIL", "N/A"})
 
 
+def git_executable() -> str | None:
+    """Locate Git from PATH or standard Git-for-Windows install locations."""
+    found = shutil.which("git")
+    if found is not None:
+        return found
+    for candidate in (
+        Path(r"C:\Program Files\Git\cmd\git.exe"),
+        Path(r"C:\Program Files\Git\bin\git.exe"),
+        Path(r"C:\Program Files (x86)\Git\cmd\git.exe"),
+    ):
+        if candidate.is_file():
+            return str(candidate)
+    return None
+
+
 def _git_info(repo_root: Path | None = None) -> tuple[str, bool | None, str]:
     cwd = str(repo_root) if repo_root is not None else None
+    git = git_executable()
+    if git is None:
+        return "NO_GIT", None, sha256_json({"git": "NO_GIT"})
     try:
         commit = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"],
+            [git, "rev-parse", "HEAD"],
             cwd=cwd,
             stderr=subprocess.DEVNULL,
             text=True,
@@ -64,18 +83,18 @@ def _git_info(repo_root: Path | None = None) -> tuple[str, bool | None, str]:
         return "NO_GIT", None, sha256_json({"git": "NO_GIT"})
     try:
         status_bytes = subprocess.check_output(
-            ["git", "status", "--porcelain"],
+            [git, "status", "--porcelain"],
             cwd=cwd,
             stderr=subprocess.DEVNULL,
         )
         dirty = bool(status_bytes.strip())
         diff_bytes = subprocess.check_output(
-            ["git", "diff", "--binary", "--no-ext-diff", "HEAD"],
+            [git, "diff", "--binary", "--no-ext-diff", "HEAD"],
             cwd=cwd,
             stderr=subprocess.DEVNULL,
         )
         untracked_bytes = subprocess.check_output(
-            ["git", "ls-files", "--others", "--exclude-standard", "-z"],
+            [git, "ls-files", "--others", "--exclude-standard", "-z"],
             cwd=cwd,
             stderr=subprocess.DEVNULL,
         )

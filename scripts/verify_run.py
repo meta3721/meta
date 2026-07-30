@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import shutil
 import sys
 from pathlib import Path
 
@@ -17,7 +16,11 @@ from raven_mcs import CONSTITUTION_VERSION, OFFICIAL_PYTHON, __version__
 from raven_mcs.experiments.registry import KNOWN_EXPERIMENTS
 from raven_mcs.utils.config import load_base_config, resolve_run_config
 from raven_mcs.utils.hashing import environment_fingerprint
-from raven_mcs.utils.manifest import REQUIRED_MANIFEST_FIELDS, build_manifest
+from raven_mcs.utils.manifest import (
+    REQUIRED_MANIFEST_FIELDS,
+    build_manifest,
+    git_executable,
+)
 from raven_mcs.utils.seed import SeedBundle
 from raven_mcs.utils.validation import validate_config
 
@@ -127,15 +130,15 @@ def check_repository(*, require_git: bool = False) -> int:
     except Exception as exc:  # noqa: BLE001
         errors.append(f"manifest construction failed: {exc}")
 
-    git_executable = shutil.which("git")
-    if git_executable is None or not (root / ".git").exists():
+    git_path = git_executable()
+    if git_path is None or not (root / ".git").exists():
         message = "Git executable/repository unavailable; paper runs must use --require-git"
         if require_git:
             errors.append(message)
         else:
             print(f"WARNING: {message}")
     else:
-        print(f"Git audit available: {git_executable}")
+        print(f"Git audit available: {git_path}")
 
     for rel in ("outputs/runs", "outputs/aggregate", "outputs/reproducibility"):
         if not (root / rel).is_dir():
