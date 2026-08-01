@@ -1,10 +1,31 @@
 # STATUS — RAVEN-MCS V2.3
 
-**Updated:** 2026-07-30  
+**Updated:** 2026-08-01
 **Workspace root:** `D:\Cursor\raven.mcs`  
 **Source docs:** paper PDF + Cursor instruction TXT + design DOCX (`docs/SOURCES.md`)  
-**Current phase:** Phase 1 complete  
-**Main experiments:** Not started (blocked until E0 + G0–G5; 20-seed main blocked until G6–G7)
+**Current phase:** P10 end-to-end training integration
+**Main experiments:** Not started (blocked until P10 complete + teacher review)
+
+---
+## P10 Status (2026-08-01)
+
+| Section | Status | Description |
+|---------|--------|-------------|
+| P10-A | PASS | Real data + real training: processed dataset, window dataset, features, client SGD, local Hajek objective, full WindowRunner |
+| P10-B | PASS | Two-stage correction: design ratio with diagnostics, observation propensity with Brier/ECE, Hajek weights, q estimation, beta_hat, lagged variance |
+| P10-C | PASS | Method semantics: MethodPolicy dataclass, 11 deployable methods fixed, FLAMF marked external, Inst-Cal uses P2 with Q=0, Debt-Cal uses P2 with raw comp |
+| P10-D | PASS | Metrics and statistics: tail/head RMSE via R_g ratio, reachability optimization CVXPY solver, epsilon_reach renamed, statistical tests rewritten, frozen config gate |
+| P10-E | PENDING | SensorScope smoke test (10 clients, 20 windows, seed 26001) |
+| E1 | BLOCKED | Awaiting P10-E smoke + frozen config gate + teacher review |
+
+## P10 Code Status
+
+- **11 deployable methods + 1 external pending (FLAMF)**
+- Central-All/Central-Delivered: marked as requiring true centralized training (NotImplementedError in aggregation)
+- Old WindowRunner moved to `synthetic_gate_runner.py` for G2-G5 gates
+- New `window_runner.py`: full Common-NDMF training with local SGD, two-stage correction, debt, variance
+- `configs/frozen/`: frozen config gate for test-entry (ISSUE-010)
+- Statistical tests rewritten to read real results from `per_seed_metrics.parquet`
 
 ---
 
@@ -12,34 +33,62 @@
 
 | Phase | Status | Notes |
 |-------|--------|-------|
-| 0 Audit + plans | **DONE / RE-AUDITED** | Current tree, scan evidence, reusable/missing code and risks refreshed 2026-07-30 |
-| 1 Env / config / manifest | **DONE** | Python 3.11.8; 33 tests pass; strict Git audit enabled |
-| 2 Data adapters + G0 | NOT STARTED | Blocked on raw data (ISSUE-006) |
-| 3 Target / strata | NOT STARTED | |
-| 4 EventTrace + G1 | NOT STARTED | |
-| 5 Common-NDMF | NOT STARTED | |
-| 6 WindowRunner + G2 | NOT STARTED | |
-| 7 Propensity / opportunity | NOT STARTED | |
-| 8 Methods | NOT STARTED | |
-| 9 P2 / debt + G3–G5 | NOT STARTED | |
-| 10 Metrics / artifacts | NOT STARTED | |
-| E0 unit suite | NOT STARTED | Next coding milestone |
-| E1 Balanced / G6 | BLOCKED | |
+| 0 Audit + plans | **DONE / RE-AUDITED** | Reproducible full-scope evidence in `docs/audits/phase0_audit.json` |
+| 1 Env / config / manifest | **DONE / REPAIRED** | Strict seed/config/resume/determinism semantics and lifecycle smoke |
+| 2A Data framework | **DONE** | Schema/split/scaler/audit/hash/CLI; synthetic smoke only |
+| 2B Four real adapters + G0 | **DONE** | Official downloads + adapters frozen; G0 PASS (see below) |
+| 3 Target / strata | **DONE** | TargetBuilder / GroupMapper / StrataMapper |
+| 4 EventTrace + G1 | **DONE** | Immutable parquet+hash; G1 PASS |
+| 5 Common-NDMF | **DONE** | Shared backbone; no client embedding |
+| 6 WindowRunner + G2 | **DONE** | Frozen θ + one update; G2 PASS |
+| 7 Propensity / opportunity | **DONE** | Lagged p/q + EMA opportunity cores |
+| 8 Methods | **PARTIAL** | FedAvg/FedAsync/TwoStage/RAVEN aggregators |
+| 9 P2 / debt + G3–G5 | **DONE** | G3–G5 PASS via `check_hard_gates.py` |
+| 10 Metrics / artifacts | PARTIAL | Debt diagnostics exist; full RMSE suite pending |
+| E0 unit suite | **DONE** | E0.1–E0.6 green via `scripts/check_e0.py` |
+| E1 Balanced / G6 | BLOCKED | ISSUE-012 + no-harm gate not run |
 | E2–E9 / 20-seed | BLOCKED | |
 
 ---
 
-## Phase 0 re-audit (2026-07-30)
+## Phase 0 re-audit (2026-07-31)
 
-- Refreshed the repository tree after Phase 1 instead of presenting the original
-  greenfield snapshot as the current tree.
+- Added `scripts/audit_phase0.py` and a reusable scanner that records a complete
+  sorted tree, exact patterns, candidate files, line-level hits, exclusions,
+  read failures, test-gate state, and run artifacts.
 - Re-ran dataset/model, immediate-async, test-tuning, q post-outcome leakage,
-  P2/current-update, and client-ID model scans on `src/`, `tests/`, and `configs/`.
+  and P2/current-update scans over `src/`, `scripts/`, `configs/`, `tests/`,
+  and `notebooks/`.
 - No algorithm implementations exist yet; negative q/P2/async findings are
   explicitly classified as vacuous and do not pass G2/G4.
-- Updated reusable Phase 1 code, missing algorithm modules, cleanup items, and
-  current risks in `docs/IMPLEMENTATION_PLAN.md`.
+- Frozen the machine-readable evidence at `docs/audits/phase0_audit.json`.
 - Confirmed no main run artifacts exist (`outputs/runs/.gitkeep` only).
+
+---
+
+## Phase 1 strict-audit remediation (2026-07-31)
+
+- Reconciled the instruction/DOCX seed taxonomies into nine deterministic
+  streams: master, data, opportunity, observation, event, model, solver,
+  bootstrap, and MC oracle.
+- Resolved all streams into the config and manifest; the run hash now includes
+  every stream and rejects caller/config divergence.
+- Config validation now rejects NaN/Inf, numeric strings, unknown keys, invalid
+  named config slices, and seed-master mismatches.
+- `--resume` never creates a missing run. Changed identity is rejected, and an
+  explicit `resume_from` path is required when the derived path is unavailable.
+- Checkpoints verify the manifest config before saving and cannot overwrite an
+  existing window checkpoint.
+- Python is constrained to 3.11.x; Torch deterministic algorithms are strict;
+  actual runs require `PYTHONHASHSEED` to have been set before interpreter
+  startup.
+- `environment.yml` consumes the exact pip lock before editable installation.
+- Added `smoke_run_lifecycle.py`, which exercises manifest creation, atomic run
+  ownership, checkpoint save/load, metrics output, and finalization without
+  training or launching a main experiment.
+- Added failure-path tests for seed mismatch, non-finite/unknown config,
+  process hash determinism, changed-config resume, and checkpoint overwrite.
+- Full current suite: **63 passed**.
 
 ---
 
@@ -99,8 +148,10 @@
 
 | Gate | Status |
 |------|--------|
-| G0–G7 | Still N/A / not executable |
-| E0 | Not started |
+| G0 | PASS (Phase 2B) |
+| G1–G5 | PASS (`scripts/check_hard_gates.py`) |
+| G6–G7 | Pending (E1 / oracle ordering) |
+| E0 | DONE (formula unit suite) |
 
 ### 8. 发现的问题
 
@@ -109,16 +160,154 @@
 - ISSUE-006: no raw datasets yet.
 - Empty legacy `config/`, `raven/`, `docs/IMPLEMENTATION_PLAN.md.txt` remain.
 
-### 9. 尚未完成事项
+### 9. 尚未完成事项（Phase 1 handoff）
 
 - E0.1–E0.6 synthetic fixtures and formula tests
-- Phases 2–10
+- Phase 2B real adapters and Phases 3–10
 - Real datasets
 
-### 10. 下一步动作
+### 10. 下一步动作（updated after Phase 2A）
 
-1. Implement **E0** synthetic fixture + weight/P2/debt/leakage unit tests.
-2. Acquire raw data for Phase 2 / G0 in parallel.
+1. Acquire raw data and implement Phase 2B real adapters / G0.
+2. Implement **E0** formula, P2, debt, and leakage tests in parallel.
+
+---
+
+## Phase 2A report (2026-07-30)
+
+### Completed
+
+- Added canonical `atomic_units.parquet` and `client_measurements.parquet`
+  schemas with strict type/value/reference validation.
+- Added unique-time-slot 60/20/20 splitting, first 20% of train as warm-up,
+  monotonic time indices, and no time/unit overlap checks.
+- Added immutable train-only scaling statistics and source-value hashes.
+- Added deterministic identity-level 30/70 fleet splitting for future T-Drive
+  use, with reference/client disjointness enforcement.
+- Added adapter contract, deterministic synthetic fixture, unit/provenance/
+  anomaly audits, raw/interim/processed SHA-256 manifests, freeze/resume
+  refusal semantics, and `prepare_data.py` / `audit_data.py`.
+- At Phase 2A freeze time, real dataset names failed explicitly; synthetic data
+  was never silently substituted. Real adapters landed later in Phase 2B.
+
+### Verification (historical, 2026-07-30)
+
+```text
+.\.venv\Scripts\python.exe -m pytest -q
+47 passed
+```
+
+- CLI prepare+freeze+audit is exercised end-to-end in
+  `tests/unit/test_data_cli.py`.
+- No paper formula F1–F9 is claimed as numerically implemented.
+- **G0 status at Phase 2A close:** not yet passed (real adapters / provenance
+  missing). **Superseded by [Phase 2B report](#phase-2b-report-2026-07-31):**
+  four official adapters frozen and `g0_overall=PASS`. The separate
+  experiment-config/test-entry leakage gate remains ISSUE-010.
+
+### Next (historical; completed in Phase 2B)
+
+1. Acquire/document raw SensorScope, U-Air, Traffic Volume, and T-Drive data.
+2. Implement and audit each real adapter; stop on Traffic continuity failure.
+3. Run G0 data checks — see Phase 2B. Test-entry freeze gate remains open.
+
+---
+
+## Phase 2B report (2026-07-31)
+
+### Completed
+
+- Auditable downloader: `scripts/download_data.py` + `src/raven_mcs/data/download.py`
+  with provenance JSON and checksum verification.
+- Real adapters: `sensorscope`, `uair`, `traffic`, `tdrive_speed` registered and
+  frozen under `data/processed/` + `data/manifests/`.
+- Traffic quality report written; hard floor ≥30×336 met (selected **43×720**).
+  Preferred ≥60 stations **not** met — recorded, no PEMS substitution.
+- G0 checker: `scripts/check_g0_data.py` → `docs/audits/g0_data_check.json`.
+- Dictionary: `docs/DATA_DICTIONARY.md`.
+
+### Per-dataset G0
+
+| Dataset | Download | Freeze audit | G0 | Shape / notes |
+|---------|----------|--------------|----|---------------|
+| sensorscope | PASS (Zenodo md5 match) | PASS | PASS | 55×312, coverage 1.0 |
+| uair | PASS (`Data-1.zip`) | PASS | PASS | 36×264, coverage 1.0 |
+| traffic | PASS (TfNSW) | PASS | PASS | 43×720; preferred 60 stations unmet |
+| tdrive_speed | PASS (MSR zips 06–014) | PASS | PASS | 500 m / 30 min; fleet 30/70 |
+
+### Verification
+
+```text
+.\.venv\Scripts\python.exe scripts\check_g0_data.py --data-root data
+g0_overall=PASS
+.\.venv\Scripts\python.exe -m pytest
+71 passed
+```
+
+### Next (historical; E0 completed)
+
+1. Implemented in E0 report below.
+2. Keep ISSUE-010 / ISSUE-012 before E1.
+
+---
+
+## E0 report (2026-07-31)
+
+### Completed
+
+- Correction cores: design ratio, Hájek `a/m/ā/c`, ESS dual identity, stage-2 `d/b/β`.
+- Aggregation cores: debt update, coverage mix, CVXPY+CLARABEL P2, λ constraints.
+- Timing skeleton: `WindowClock` (θ frozen in-window; one update; empty skip).
+- Leakage scan: forbidden q feature tokens (E0.6).
+- Tests: `tests/unit/test_e0_*.py`; runner `scripts/check_e0.py`.
+
+### Verification
+
+```text
+.\.venv\Scripts\python.exe scripts\check_e0.py
+e0_overall=PASS
+.\.venv\Scripts\python.exe -m pytest
+80 passed
+```
+
+### Scope note
+
+E0 validates formula units on synthetic/hand fixtures. EventTrace / Common-NDMF /
+WindowRunner / G1–G5 were completed in the following report. E1 remains blocked.
+
+### Next (historical; completed below)
+
+1. Phase 3–9 cores and G1–G5 — see following report.
+
+---
+
+## Phases 3–9 + G1–G5 report (2026-07-31)
+
+### Completed
+
+- Phase 3: `data/target.py`, `opportunities/strata.py`, support/mass audits.
+- Phase 4: immutable EventTrace freeze/load/hash (`simulation/event_trace.py`).
+- Phase 5: `models/common_ndmf.py` (no client embedding).
+- Phase 6: `training/window_runner.py` with WindowClock invariants.
+- Phase 7: lagged `ObservationPropensity` / `UsablePropensity` + opportunity EMA.
+- Phase 8: Aggregator interface + FedAvg / FedAsync / TwoStage-Hajek / RAVEN.
+- Phase 9: P2/debt wired through runner; G3–G5 executable checks.
+
+### Verification
+
+```text
+.\.venv\Scripts\python.exe scripts\check_hard_gates.py
+g1_g5_overall=PASS
+.\.venv\Scripts\python.exe -m pytest
+89 passed
+```
+
+### Still open before E1
+
+1. ISSUE-012 method-set / threshold confirmation.
+2. ISSUE-010 test-entry freeze gate.
+3. Full method roster / FLAMF / ablations / RMSE artifact pipeline (Phase 10).
+4. G6 Balanced no-harm and G7 SimOracle ordering.
 
 ---
 

@@ -6,11 +6,15 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
 
 ## Open
 
-### ISSUE-006 — Dataset availability unknown
-- **Severity:** High (blocks Phase 2 / G0)
-- **Observation:** No raw SensorScope / U-Air / Traffic / T-Drive data.
-- **Plan:** Phase 2 must acquire or document it. Traffic continuity failure must stop the experiment; no silent substitution.
-- **Status:** Open.
+### ISSUE-013 — Traffic preferred station coverage unmet
+- **Severity:** Medium (does not fail hard floor)
+- **Observation:** After TfNSW quality reporting and continuity repair, the best
+  complete window under seed 26001 is 43 stations × 720 hours. Preferred design
+  target is ≥60×720.
+- **Rule:** Continue with hard-floor-compliant matrix; do not substitute PEMS.
+  Teacher may later approve a dataset-description change if 60 stations are
+  required as a hard constraint.
+- **Status:** Open (informational).
 
 ### ISSUE-003 — Legacy empty plan stub
 - **Severity:** Low
@@ -33,16 +37,15 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
   in all repository scans.
 - **Status:** Open (does not block Phase 0/1).
 
-### ISSUE-010 — Test leakage/frozen-config gate not implemented
+### ISSUE-010 — Frozen experiment-config/test-entry gate incomplete
 - **Severity:** High before any test evaluation
-- **Observation:** `configs/frozen/` is empty. There is no validation of split
-  ratio/time order/overlap, no train-only scaler enforcement, no frozen-config
-  hash, and no test-entry refusal mechanism. Resume config hashing does not
-  provide these guarantees.
-- **Required resolution:** Implement dataset split/freeze logic and
-  `test_no_test_leakage`, `test_split_no_overlap`, and
-  `test_train_only_scaling` before test-set execution.
-- **Status:** Open; planned for data/E0 work.
+- **Resolved in Phase 2A:** Temporal ratio/order/overlap validation,
+  `test_split_no_overlap`, train-only scaling with
+  `test_train_only_scaling`, and raw/interim/processed data manifests.
+- **Still missing:** `configs/frozen/` experiment-config hash, a test-entry
+  refusal mechanism, and the full static/runtime `test_no_test_leakage` gate.
+  Run-config hashing alone does not provide these guarantees.
+- **Status:** Partially mitigated; test-set execution remains forbidden.
 
 ### ISSUE-011 — Declared E1 methods are not implemented
 - **Severity:** Medium
@@ -53,15 +56,31 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
   G0–G5.
 - **Status:** Open.
 
+### ISSUE-012 — E1 gate protocol (CLOSED 2026-08-01, P10)
+- **Status:** Closed. See resolution in "Closed / P10" section below.
+
 ---
 
 ## Mitigated / closed
 
+- **ISSUE-012 — CLOSED (P10, 2026-08-01):** E1 Balanced method set: FedAvg-Window,
+  FedAsync-Window, TimeAlign-Agg, TwoStage-Hajek, RAVEN-MCS. Baseline: best
+  validation RMSE_mu among FedAvg/FedAsync/TimeAlign (no test peek). No-harm:
+  3% threshold, 95% one-sided CI upper bound < 3%, plus median local n_eff >= 2,
+  clip rates <= 5%, no P2 failure, no NaN/Inf. 2% is reference only.
+
+- **ISSUE-006:** Official SensorScope / U-Air / Traffic / T-Drive artifacts
+  downloaded with provenance; four real adapters frozen; G0 data checks PASS.
+  Traffic preferred ≥60 stations not met (see ISSUE-013); hard floor met.
 - **ISSUE-001:** Project `.venv` is Python 3.11.8 and passes environment verification.
 - **ISSUE-002:** Git 2.55 installed; repository initialized on `main` with an auditable initial commit. No Git config was modified.
 - **ISSUE-005:** Canonical layout is `configs/` + `src/raven_mcs/`.
 - **ISSUE-007:** No legacy immediate-async code found; G2 tests remain a future requirement.
 - **ISSUE-008:** Root is `D:\Cursor\raven.mcs`; `scripts/` restored and misnamed requirements stub removed.
+- **Phase 1 reproducibility audit:** Seed/config coherence, full seed-stream run
+  identity, non-finite/unknown config rejection, explicit resume targeting,
+  strict deterministic Torch mode, pre-start `PYTHONHASHSEED`, exact lock
+  installation, and executable lifecycle smoke were repaired 2026-07-31.
 
 ---
 
@@ -87,3 +106,8 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
 | 2026-07-30 | Phase 1 complete on `.venv` Python 3.11.8; E0 next | Cursor |
 | 2026-07-30 | Phase 0 re-audited against current tree; stale tree/reuse/risk sections refreshed | Cursor |
 | 2026-07-30 | Git installed and repository initialized; initial commit authored as `szr <2025198754@qq.com>` without modifying Git config | User / Cursor |
+| 2026-07-30 | Phase 2A framework complete; real adapters/G0 remain blocked and synthetic substitution is forbidden | Cursor / constitution |
+| 2026-07-31 | Repaired Phase 0 audit evidence and Phase 1 identity/resume/determinism semantics after strict three-document audit | Cursor |
+| 2026-07-31 | Phase 2B: official downloads + four adapters frozen; G0 PASS; Traffic preferred 60 stations unmet → ISSUE-013 | Cursor |
+| 2026-07-31 | E0.1–E0.6 formula unit suite implemented; E1 still blocked pending G1–G5 + ISSUE-012 | Cursor |
+| 2026-07-31 | Phases 3–9 cores landed; G1–G5 PASS; E1 still blocked by ISSUE-012/G6 and incomplete method roster | Cursor |
