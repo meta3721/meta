@@ -1,0 +1,10 @@
+name: debt_cal
+description: Debt-Cal: no zeta/p/q correction; uses raw local composition with group calibration and debt
+uses_design_ratio: false
+uses_obs_correction: false
+uses_use_correction: false
+uses_instant_calibration: true
+uses_debt: true
+uses_reference: false
+uses_variance: false
+uses_staleness: false

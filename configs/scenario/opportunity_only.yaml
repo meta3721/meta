@@ -1,0 +1,7 @@
+name: opportunity_only
+description: Only opportunity distribution deviates from target; p and q near-constant
+opportunity_skew: 1.0
+mean_observation_rate: 0.20
+mean_usable_rate: 0.60
+client_bias_std_ratio: 0.20
+delta_cal: 0.0

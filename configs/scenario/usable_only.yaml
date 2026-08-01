@@ -1,0 +1,7 @@
+name: usable_only
+description: Only usable propensity non-uniform; opportunity near-target, p near-constant
+opportunity_skew: 0.0
+mean_observation_rate: 0.20
+mean_usable_rate: 0.60
+client_bias_std_ratio: 0.20
+delta_cal: 0.0

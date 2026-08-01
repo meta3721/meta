@@ -93,9 +93,9 @@ def test_corrected_mass_not_ess() -> None:
     )
 
     uniform_a = np.ones_like(a)
-    m_uni = float(uniform_a.sum())
+    m_uni = float((obs * uniform_a).sum())
     n_eff_uni = effective_sample_size(obs, uniform_a, total_mass=m_uni,
-                                       normalized=uniform_a / m_uni)
+                                       normalized=(obs * uniform_a) / m_uni)
     assert abs(m_uni - n_eff_uni) < 1e-10
 
 

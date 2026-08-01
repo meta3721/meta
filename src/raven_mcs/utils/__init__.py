@@ -17,7 +17,9 @@ from raven_mcs.utils.manifest import (
 )
 from raven_mcs.utils.run import RunContext, finalize_run, initialize_run
 from raven_mcs.utils.seed import (
+    SEED_STREAMS,
     SeedBundle,
+    assert_preconfigured_python_hash_seed,
     capture_rng_state,
     restore_rng_state,
     seed_everything,
@@ -48,6 +50,8 @@ __all__ = [
     "initialize_run",
     "finalize_run",
     "SeedBundle",
+    "SEED_STREAMS",
+    "assert_preconfigured_python_hash_seed",
     "capture_rng_state",
     "restore_rng_state",
     "seed_everything",

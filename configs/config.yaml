@@ -45,7 +45,10 @@ solver:
 seeds:
   master: null
   data: null
+  opportunity: null
+  observation: null
   event: null
   model: null
   solver: null
   bootstrap: null
+  mc_oracle: null

@@ -375,6 +375,7 @@ class RavenAggregator(Aggregator):
         self.alpha_max = alpha_max
         self.e_min = e_min
         self.max_server_learning_rate = max_server_learning_rate
+        self.solve_results = []
 
     def compute_server_weights(self, payload: WindowAggregateInput) -> np.ndarray:
         if (
@@ -408,6 +409,7 @@ class RavenAggregator(Aggregator):
             e_min=min(self.e_min, n_active),
             max_server_learning_rate=self.max_server_learning_rate,
         )
+        self.solve_results.append(result)
         return _normalize(result.alpha)
 
 

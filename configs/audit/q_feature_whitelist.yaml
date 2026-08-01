@@ -1,0 +1,5 @@
+entries:
+  - file: src/raven_mcs/simulation/usable_generator.py
+    symbol: generate_usable_events
+    reason: Arrival is simulator truth used to construct the U outcome label, never a q-model input.
+    allowed_role: simulator_truth

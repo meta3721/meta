@@ -18,11 +18,13 @@ Each window:
 from __future__ import annotations
 
 import copy
+import hashlib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
 import numpy as np
+import pandas as pd
 import torch
 
 from raven_mcs.aggregation.base import Aggregator, WindowAggregateInput
@@ -48,7 +50,7 @@ from raven_mcs.models.common_ndmf import CommonNDMF, deterministic_common_ndmf
 from raven_mcs.models.features import extract_features
 from raven_mcs.opportunities.estimator import OpportunityEstimator
 from raven_mcs.propensity.observation import ObservationPropensity
-from raven_mcs.propensity.usable import UsablePropensity
+from raven_mcs.propensity.usable import UsablePropensity, deadline_slack_pre
 from raven_mcs.simulation.event_trace import EventTrace
 from raven_mcs.training.client import ClientTrainer, unflatten_params
 from raven_mcs.training.client import _flatten_params as flatten_params
@@ -90,7 +92,9 @@ class FullWindowRunner:
     policy: MethodPolicy
     mu: np.ndarray
     num_groups: int
-    eta: float = 1.0
+    # Local updates are normalized gradients; apply a conservative fixed server
+    # step so legitimate stale updates cannot destabilize a smoke run.
+    eta: float = 0.01
     learning_rate: float = 0.01
     local_steps: int = 5
     a_max: float = 20.0
@@ -112,7 +116,8 @@ class FullWindowRunner:
     obs_propensity: Optional[ObservationPropensity] = None
     usable_propensity: Optional[UsablePropensity] = None
     variance_state: dict[str, float] = field(default_factory=dict)
-    model_versions: dict[str, int] = field(default_factory=dict)
+    model_versions: dict[int, dict[str, torch.Tensor]] = field(default_factory=dict)
+    diagnostics: list[dict[str, Any]] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.mu = np.asarray(self.mu, dtype=np.float64)
@@ -128,15 +133,25 @@ class FullWindowRunner:
             self.opportunity_estimator = OpportunityEstimator()
         if self.obs_propensity is None:
             self.obs_propensity = ObservationPropensity()
+        if self.usable_propensity is None:
+            self.usable_propensity = UsablePropensity()
+        self.model_versions.setdefault(0, copy.deepcopy(self.theta))
         self._trainer = ClientTrainer(self.model, learning_rate=self.learning_rate)
 
     def _theta_hash(self) -> str:
-        return sha256_json(
-            [float(v.sum().item()) for v in self.theta.values()]
-        )
+        digest = hashlib.sha256()
+        for name, value in sorted(self.theta.items()):
+            array = value.detach().cpu().contiguous().numpy()
+            digest.update(name.encode("utf-8"))
+            digest.update(str(array.dtype).encode("ascii"))
+            digest.update(str(array.shape).encode("ascii"))
+            digest.update(array.tobytes())
+        return digest.hexdigest()
 
     def _get_model_checkpoint(self, version: int) -> dict[str, torch.Tensor]:
-        return copy.deepcopy(self.theta)
+        if version not in self.model_versions:
+            raise WindowTimingError(f"Checkpoint version {version} is unavailable")
+        return copy.deepcopy(self.model_versions[version])
 
     def _compute_zeta(
         self,
@@ -174,6 +189,13 @@ class FullWindowRunner:
             for f in features_list
         ], dtype=np.float64)
 
+    @staticmethod
+    def _hour_block(stratum_id: str) -> float:
+        for token in str(stratum_id).split("::"):
+            if token.startswith("block") and token[5:].isdigit():
+                return float(token[5:])
+        return 0.0
+
     def run(self) -> list[WindowMetrics]:
         events = self.trace.events
 
@@ -190,10 +212,14 @@ class FullWindowRunner:
         version = self.clock.model_version
 
         # Step 2: Read risk sets from EventTrace
-        window_slice = extract_window_slice(window_id, events, self.dataset)
+        coarse_groups = self.num_groups if self.num_groups in {4, 8} else None
+        window_slice = extract_window_slice(
+            window_id, events, self.dataset, coarse_time_groups=coarse_groups,
+        )
 
         if not window_slice.records:
             self.clock.skip_empty_window()
+            self.model_versions[self.clock.model_version] = copy.deepcopy(self.theta)
             after_hash = self._theta_hash()
             return WindowMetrics(
                 window_id=window_id,
@@ -221,8 +247,14 @@ class FullWindowRunner:
             # Compute zeta_hat for this client's records
             zeta = self._compute_zeta(cid, rec.opportunity_strata)
 
-            features_list = [{"bias": 1.0, "hour_block": 0.0, "workload": float(rec.raw_workload)}
-                             for _ in rec.risk_set_unit_ids]
+            features_list = [
+                {
+                    "bias": 1.0,
+                    "hour_block": self._hour_block(stratum),
+                    "workload": float(np.log1p(rec.raw_workload)),
+                }
+                for stratum in rec.opportunity_strata
+            ]
             p_hat = self._compute_p_hat(features_list)
 
             # Stage 1: a = min(a_max, zeta_hat / max(p_hat, p_min))
@@ -268,6 +300,7 @@ class FullWindowRunner:
             data = client_data[cid]
             rec = data["record"]
             downloaded_version = rec.downloaded_version
+            self.clock.register_local_work(downloaded_version)
             checkpoint = self._get_model_checkpoint(downloaded_version)
 
             observed_records = []
@@ -287,9 +320,15 @@ class FullWindowRunner:
             a_bar_np = data["a_bar"].astype(np.float64)
             obs_mask = rec.O > 0
             a_bar_observed = a_bar_np[obs_mask] if obs_mask.any() else a_bar_np
+            if not self.policy.uses_hajek_local_loss:
+                a_bar_observed = np.ones(len(observed_records), dtype=np.float64)
+                a_bar_observed /= max(len(observed_records), 1)
 
             if len(a_bar_observed) != len(observed_records):
-                a_bar_observed = np.ones(len(observed_records)) / max(len(observed_records), 1)
+                raise RuntimeError(
+                    f"Observed records/weights misaligned for {cid}: "
+                    f"{len(observed_records)} records vs {len(a_bar_observed)} weights"
+                )
 
             update, loss = self._trainer.train_step(
                 model_state=checkpoint,
@@ -299,6 +338,21 @@ class FullWindowRunner:
             )
             local_updates[cid] = update
             train_losses[cid] = loss
+            raw_local = np.ones(len(observed_records), dtype=np.float64)
+            raw_local /= max(len(observed_records), 1)
+            self.diagnostics.append({
+                "window_id": window_id,
+                "client_id": cid,
+                "raw_local_weights": raw_local.tolist(),
+                "hajek_local_weights": data["a_bar"][obs_mask].tolist(),
+                "applied_local_weights": a_bar_observed.tolist(),
+                "zeta_hat": data["zeta"].tolist(),
+                "p_hat": data["p_hat"].tolist(),
+                "m": float(data["m_total"]),
+                "n_eff": float(data["n_eff"]),
+                "local_loss": float(loss),
+                "update_vector_hash": sha256_json(update.tolist()),
+            })
 
         # Step 7: Read U → form A_r
         a_r_clients = [
@@ -307,7 +361,12 @@ class FullWindowRunner:
         ]
 
         if not a_r_clients:
+            # U=0 attempts are still valid labels for future opportunity/p/q
+            # estimators.  Update only after all current-window predictions and
+            # local work are complete.
+            self._update_lagged_estimators(window_slice, client_data)
             self.clock.skip_empty_window()
+            self.model_versions[self.clock.model_version] = copy.deepcopy(self.theta)
             after_hash = self._theta_hash()
             return WindowMetrics(
                 window_id=window_id,
@@ -330,8 +389,12 @@ class FullWindowRunner:
         # Step 8: Compute method-specific alpha
         n_active = len(a_r_clients)
         raw_counts = np.array([
-            client_data[cid]["m_total"] if cid in client_data
+            float(np.sum(client_data[cid]["record"].O)) if cid in client_data
             else 1.0
+            for cid in a_r_clients
+        ], dtype=np.float64)
+        corrected_masses = np.array([
+            client_data[cid]["m_total"] if cid in client_data else 1.0
             for cid in a_r_clients
         ], dtype=np.float64)
 
@@ -345,14 +408,23 @@ class FullWindowRunner:
         # Stage 2: q → d → b → beta_hat
         q_hat = np.array([
             self.usable_propensity.predict(
-                np.array([1.0, client_data[cid]["record"].model_age if cid in client_data else 0.0, 0.0, 0.0, 0.0])
+                np.array([
+                    1.0,
+                    client_data[cid]["record"].model_age if cid in client_data else 0.0,
+                    0.0,
+                    0.0,
+                    deadline_slack_pre(
+                        client_data[cid]["record"].window_close_time,
+                        client_data[cid]["record"].registration_time,
+                    ) if cid in client_data else 0.0,
+                ])
             )
             if self.usable_propensity is not None else 0.5
             for cid in a_r_clients
         ], dtype=np.float64)
 
         d_w = d_weight(q_hat, d_max=self.d_max, q_min=self.q_min)
-        b = two_stage_mass(raw_counts, d_w)
+        b = two_stage_mass(corrected_masses, d_w)
         beta = beta_hat(b)
         clip_stage2 = float(np.mean(np.abs(d_w) >= self.d_max))
 
@@ -369,7 +441,7 @@ class FullWindowRunner:
         payload = WindowAggregateInput(
             client_ids=a_r_clients,
             raw_counts=raw_counts,
-            total_masses=raw_counts,
+            total_masses=corrected_masses,
             compositions=compositions_mat,
             beta_hat=beta,
             staleness=staleness,
@@ -389,13 +461,16 @@ class FullWindowRunner:
                 theta_flat = theta_flat - float(self.eta) * alpha[i] * local_updates[cid]
 
         self.theta = unflatten_params(theta_flat, self.theta)
-        self.clock.apply_server_update()
+        self.model.load_state_dict(self.theta)
+        new_version = self.clock.apply_server_update()
+        self.model_versions[new_version] = copy.deepcopy(self.theta)
 
         # Step 10: Update debt
         omega = coverage_mix(compositions_mat, alpha)
-        self.debt = update_debt(
-            self.debt, mu=self.mu, omega=omega, eta=float(self.eta), active=True,
-        )
+        if self.policy.uses_debt:
+            self.debt = update_debt(
+                self.debt, mu=self.mu, omega=omega, eta=float(self.eta), active=True,
+            )
         self.scale += float(self.eta)
         self.omega_sum = self.omega_sum + float(self.eta) * omega
 
@@ -404,6 +479,15 @@ class FullWindowRunner:
         self._update_variance_state(client_data, a_r_clients)
 
         after_hash = self._theta_hash()
+        by_client = {row["client_id"]: row for row in self.diagnostics if row["window_id"] == window_id}
+        for i, cid in enumerate(a_r_clients):
+            if cid in by_client:
+                by_client[cid].update({
+                    "q_hat": float(q_hat[i]),
+                    "beta_hat": float(beta[i]),
+                    "alpha": float(alpha[i]),
+                    "global_model_hash": after_hash,
+                })
 
         n_eff_values = [
             client_data[cid]["n_eff"] for cid in a_r_clients if cid in client_data
@@ -449,9 +533,28 @@ class FullWindowRunner:
 
             # Update observation propensity
             if self.obs_propensity is not None and len(rec.risk_set_unit_ids) > 0:
-                obs_rate = float(np.mean(rec.O))
-                features = np.array([1.0, 0.0, float(rec.raw_workload)])
-                self.obs_propensity.update_after_completion(features, obs_rate)
+                mean_block = float(np.mean([
+                    self._hour_block(stratum) for stratum in rec.opportunity_strata
+                ]))
+                features = np.array([
+                    1.0, mean_block, float(np.log1p(rec.raw_workload)),
+                ])
+                self.obs_propensity.update_after_completion(
+                    features, float(np.mean(rec.O)),
+                )
+            if self.usable_propensity is not None:
+                self.usable_propensity.update_lagged(
+                    np.array([
+                        1.0,
+                        float(rec.model_age),
+                        0.0,
+                        0.0,
+                        deadline_slack_pre(
+                            rec.window_close_time, rec.registration_time,
+                        ),
+                    ]),
+                    float(rec.U),
+                )
 
     def _update_variance_state(
         self,

@@ -22,6 +22,7 @@ def save_window_checkpoint(
     include_rng_state: bool = True,
 ) -> Path:
     """Atomically save arbitrary trusted Python/Torch state for one window."""
+    assert_resume_config_hash(run_dir, config)
     manifest = load_manifest(run_dir)
     payload = {
         "checkpoint_version": 1,
@@ -32,6 +33,8 @@ def save_window_checkpoint(
         "rng_state": capture_rng_state() if include_rng_state else None,
     }
     path = checkpoint_path(run_dir, window_r)
+    if path.exists():
+        raise FileExistsError(f"Checkpoint already exists; refusing overwrite: {path}")
     atomic_write_bytes(path, pickle.dumps(payload, protocol=pickle.HIGHEST_PROTOCOL))
     return path
 

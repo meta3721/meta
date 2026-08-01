@@ -1,0 +1,7 @@
+name: E5_support_reachability
+description: Support and reachability under varying target support, opportunity skew, and client counts
+datasets: [sensorscope]
+methods: [twostage_hajek, raven]
+scenarios: [balanced, opportunity_only, complete_aligned]
+seeds: [26001, 26002, 26003, 26004, 26005, 26006, 26007, 26008, 26009, 26010]
+num_windows: 300

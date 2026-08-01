@@ -1,0 +1,32 @@
+name: traffic
+role: main_controlled
+raw_glob: data/raw/traffic/**
+split:
+  train: 0.60
+  validation: 0.20
+  test: 0.20
+  warmup_fraction_of_train: 0.20
+target:
+  name: traffic_volume
+  unit: vehicles_per_hour
+matrix:
+  preferred_stations: 60
+  preferred_hours: 720
+  hard_floor_stations: 30
+  hard_floor_hours: 336
+  time_unit: hour
+physical_filters:
+  - Require non-negative hourly volume
+  - Drop stations failing continuity quality report
+  - Stop if hard floor (<30 stations x 336 continuous hours) is unmet
+download:
+  source_name: Transport for NSW / Data.NSW Traffic Volume Counts
+  source_url: https://data.nsw.gov.au/data/dataset/2-nsw-roads-traffic-volume-counts-api
+  license: cc-by
+  artifacts:
+    - filename: road_traffic_counts_station_reference.csv
+      url: https://opendata.transport.nsw.gov.au/data/dataset/ef2b0bd2-db1e-48f3-9ea1-2bb9e6bc6504/resource/c65ad7b4-0257-4cc6-953e-5299ac8d27ba/download/road_traffic_counts_station_reference.csv
+      required: true
+    - filename: road_traffic_counts_hourly_permanent.zip
+      url: https://opendata.transport.nsw.gov.au/data/dataset/ef2b0bd2-db1e-48f3-9ea1-2bb9e6bc6504/resource/bca06c7e-30be-4a90-bc8b-c67428c0823a/download/road_traffic_counts_hourly_permanent.zip
+      required: true

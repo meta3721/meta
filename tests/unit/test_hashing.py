@@ -23,6 +23,12 @@ def test_config_hash_key_order_invariant() -> None:
     assert config_hash(a) == config_hash(b)
 
 
+def test_config_hash_excludes_execution_control_flags() -> None:
+    base = {"seed": 1, "dataset": "x", "resume": False, "max_workers": 1}
+    changed = {**base, "resume": True, "max_workers": 8}
+    assert config_hash(base) == config_hash(changed)
+
+
 def test_environment_hash_nonzero() -> None:
     h = environment_hash()
     assert isinstance(h, str) and len(h) == 64
@@ -46,8 +52,20 @@ def test_run_hash_is_stable_and_input_sensitive() -> None:
         "environment_hash_value": "d" * 64,
         "git_commit": "NO_GIT",
         "git_state_hash": "e" * 64,
-        "seed": 26001,
+        "seeds": {
+            "master": 26001,
+            "data": 1,
+            "opportunity": 2,
+            "observation": 3,
+            "event": 4,
+            "model": 5,
+            "solver": 6,
+            "bootstrap": 7,
+            "mc_oracle": 8,
+        },
     }
     first = run_hash(**values)
     assert first == run_hash(**values)
-    assert first != run_hash(**(values | {"seed": 26002}))
+    changed_seeds = dict(values["seeds"])
+    changed_seeds["data"] = 99
+    assert first != run_hash(**(values | {"seeds": changed_seeds}))

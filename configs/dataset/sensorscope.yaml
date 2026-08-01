@@ -6,3 +6,24 @@ split:
   validation: 0.20
   test: 0.20
   warmup_fraction_of_train: 0.20
+target:
+  name: ambient_temperature
+  unit: degree_Celsius
+  column_candidates: [temperature, Temperature, ambient_temperature]
+matrix:
+  spatial_count: 55
+  time_count: 312
+  time_unit: hour
+physical_filters:
+  - Drop rows with non-finite temperature
+  - Keep temperature in [-40, 60] Celsius
+  - Prefer stations with contiguous coverage for the selected horizon
+download:
+  source_name: EPFL/Zenodo SensorScope Data
+  source_url: https://zenodo.org/records/2654726
+  license: cc-by-4.0
+  artifacts:
+    - filename: Sensorscope.zip
+      url: https://zenodo.org/api/records/2654726/files/Sensorscope.zip/content
+      md5: 4bbed2bbd48e535bc2877cad339fbbd6
+      required: true

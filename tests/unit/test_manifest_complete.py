@@ -30,7 +30,7 @@ TRACE_HASH = "b" * 64
 
 def test_manifest_required_fields_present(tmp_path: Path) -> None:
     cfg = resolve_run_config(seed=26001)
-    bundle = seed_everything(26001)
+    bundle = seed_everything(26001, require_preconfigured_hash_seed=False)
     run_id = make_run_id(
         experiment=str(cfg["experiment"]),
         dataset=str(cfg["dataset"]),
@@ -59,7 +59,7 @@ def test_manifest_required_fields_present(tmp_path: Path) -> None:
 
 def test_resume_config_hash(tmp_path: Path) -> None:
     cfg = resolve_run_config(seed=26001)
-    bundle = seed_everything(26001)
+    bundle = seed_everything(26001, require_preconfigured_hash_seed=False)
     run_id = "test_run"
     run_dir = ensure_run_layout(tmp_path / run_id)
     man = build_manifest(
@@ -82,6 +82,13 @@ def test_resume_config_hash(tmp_path: Path) -> None:
     assert payload["window_r"] == 0
     assert np.array_equal(payload["state"]["theta"], np.asarray([0.0, 1.0]))
     assert payload["state"]["nested"]["step"] == 4
+    with pytest.raises(FileExistsError, match="refusing overwrite"):
+        save_window_checkpoint(
+            run_dir,
+            window_r=0,
+            state={"theta": np.asarray([9.0])},
+            config=cfg,
+        )
 
     bad = dict(cfg)
     bad["seed"] = 99999
@@ -90,6 +97,13 @@ def test_resume_config_hash(tmp_path: Path) -> None:
         assert_resume_config_hash(run_dir, bad)
     with pytest.raises(RuntimeError, match="config hash mismatch"):
         load_checkpoint_for_resume(run_dir, bad)
+    with pytest.raises(RuntimeError, match="config hash mismatch"):
+        save_window_checkpoint(
+            run_dir,
+            window_r=1,
+            state={"theta": np.asarray([9.0])},
+            config=bad,
+        )
 
 
 def test_manifest_finalize_requires_failure_reason(tmp_path: Path) -> None:
@@ -98,7 +112,9 @@ def test_manifest_finalize_requires_failure_reason(tmp_path: Path) -> None:
     man = build_manifest(
         run_id="finalize",
         config=cfg,
-        seed_bundle=seed_everything(26001),
+        seed_bundle=seed_everything(
+            26001, require_preconfigured_hash_seed=False
+        ),
         data_hash=DATA_HASH,
         event_trace_hash=TRACE_HASH,
     )
@@ -125,4 +141,16 @@ def test_auditable_manifest_can_require_git(tmp_path: Path) -> None:
             event_trace_hash=TRACE_HASH,
             repo_root=tmp_path,
             require_git=True,
+        )
+
+
+def test_manifest_rejects_seed_bundle_mismatch() -> None:
+    cfg = resolve_run_config(seed=26001)
+    with pytest.raises(ValueError, match="seed_bundle"):
+        build_manifest(
+            run_id="seed-mismatch",
+            config=cfg,
+            seed_bundle=SeedBundle.from_master(999),
+            data_hash=DATA_HASH,
+            event_trace_hash=TRACE_HASH,
         )

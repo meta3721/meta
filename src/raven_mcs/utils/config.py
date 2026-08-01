@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from raven_mcs.utils.seed import SeedBundle
 from raven_mcs.utils.serialization import load_yaml
 from raven_mcs.utils.validation import assert_valid_config
 
@@ -80,6 +81,8 @@ def resolve_run_config(
     if overrides:
         cfg = deep_merge(cfg, overrides)
 
+    seed_bundle = SeedBundle.from_config(cfg["seed"], cfg.get("seeds"))
+    cfg["seeds"] = seed_bundle.as_dict()
     if validate:
         assert_valid_config(cfg)
     return cfg

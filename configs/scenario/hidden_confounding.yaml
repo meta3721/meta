@@ -1,0 +1,8 @@
+name: hidden_confounding
+description: Latent variable H affects both selection and measurement; identification boundary only
+opportunity_skew: 1.0
+mean_observation_rate: 0.20
+mean_usable_rate: 0.60
+client_bias_std_ratio: 0.20
+delta_cal: 0.0
+hidden_confounding_strength: 0.3

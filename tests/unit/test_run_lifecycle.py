@@ -15,7 +15,10 @@ DATA_HASH = "c" * 64
 TRACE_HASH = "d" * 64
 
 
-def test_initialize_run_writes_required_artifacts(tmp_path: Path) -> None:
+def test_initialize_run_writes_required_artifacts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PYTHONHASHSEED", "26001")
     cfg = resolve_run_config()
     context = initialize_run(
         config=cfg,
@@ -40,7 +43,10 @@ def test_initialize_run_writes_required_artifacts(tmp_path: Path) -> None:
         assert (context.path / name).exists()
 
 
-def test_run_refuses_overwrite_and_supports_resume(tmp_path: Path) -> None:
+def test_run_refuses_overwrite_and_supports_resume(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PYTHONHASHSEED", "26001")
     cfg = resolve_run_config()
     kwargs = {
         "config": cfg,
@@ -61,6 +67,48 @@ def test_run_refuses_overwrite_and_supports_resume(tmp_path: Path) -> None:
     finalize_run(context, hard_gate_status="PASS")
     with pytest.raises(RuntimeError, match="already finalized"):
         initialize_run(**kwargs, resume=True)
+
+
+def test_resume_rejects_changed_config_end_to_end(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PYTHONHASHSEED", "26001")
+    cfg = resolve_run_config()
+    context = initialize_run(
+        config=cfg,
+        seed_bundle=SeedBundle.from_config(cfg["seed"], cfg["seeds"]),
+        data_hash=DATA_HASH,
+        event_trace_hash=TRACE_HASH,
+        output_root=tmp_path,
+        require_git=False,
+        repo_root=tmp_path,
+    )
+    changed = resolve_run_config(
+        overrides={"clients": {"local_steps": cfg["clients"]["local_steps"] + 1}}
+    )
+    with pytest.raises(FileNotFoundError, match="Resume refused"):
+        initialize_run(
+            config=changed,
+            seed_bundle=SeedBundle.from_config(changed["seed"], changed["seeds"]),
+            data_hash=DATA_HASH,
+            event_trace_hash=TRACE_HASH,
+            output_root=tmp_path,
+            resume=True,
+            require_git=False,
+            repo_root=tmp_path,
+        )
+    with pytest.raises(RuntimeError, match="config hash mismatch"):
+        initialize_run(
+            config=changed,
+            seed_bundle=SeedBundle.from_config(changed["seed"], changed["seeds"]),
+            data_hash=DATA_HASH,
+            event_trace_hash=TRACE_HASH,
+            output_root=tmp_path,
+            resume=True,
+            resume_from=context.path,
+            require_git=False,
+            repo_root=tmp_path,
+        )
 
 
 def test_dry_run_does_not_create_output(tmp_path: Path) -> None:

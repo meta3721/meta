@@ -5,6 +5,50 @@ from __future__ import annotations
 import numpy as np
 
 
+def atomic_arrival_weights(
+    pi_hat_opp: np.ndarray,
+    nu_hat: np.ndarray,
+    p_hat_obs: np.ndarray,
+    q_hat_use: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """F8.3 atomic arrival intensities and normalized arrival weights.
+
+    Each contribution array is shaped ``(n_clients, n_units)``. ``nu_hat`` may
+    also be a one-dimensional per-unit vector for exchangeable strata.
+    """
+    pi = np.asarray(pi_hat_opp, dtype=np.float64)
+    p = np.asarray(p_hat_obs, dtype=np.float64)
+    q = np.asarray(q_hat_use, dtype=np.float64)
+    nu = np.asarray(nu_hat, dtype=np.float64)
+    if pi.ndim != 2 or p.shape != pi.shape or q.shape != pi.shape:
+        raise ValueError("pi_hat_opp, p_hat_obs, q_hat_use must share (client, unit) shape")
+    if nu.ndim == 1:
+        if nu.shape[0] != pi.shape[1]:
+            raise ValueError("one-dimensional nu_hat must have n_units entries")
+        nu = np.broadcast_to(nu, pi.shape)
+    if nu.shape != pi.shape:
+        raise ValueError("nu_hat must have (client, unit) shape")
+    for name, values in (("pi_hat_opp", pi), ("nu_hat", nu), ("p_hat_obs", p), ("q_hat_use", q)):
+        if not np.all(np.isfinite(values)) or np.any(values < 0):
+            raise ValueError(f"{name} must be finite and non-negative")
+    intensity = np.sum(pi * nu * p * q, axis=0)
+    total = float(intensity.sum())
+    if not np.isfinite(total) or total <= 0:
+        raise ValueError("arrival intensity must have positive finite mass")
+    return intensity, intensity / total
+
+
+def _validated_weights(weights: np.ndarray, length: int, name: str) -> np.ndarray:
+    values = np.asarray(weights, dtype=np.float64)
+    if values.ndim != 1 or len(values) != length:
+        raise ValueError(f"{name} must be one-dimensional with matching length")
+    if not np.all(np.isfinite(values)) or np.any(values < 0):
+        raise ValueError(f"{name} must be finite and non-negative")
+    if abs(float(values.sum()) - 1.0) > 1e-10:
+        raise ValueError(f"{name} must sum to one")
+    return values
+
+
 def rmse_mu(
     y_pred: np.ndarray,
     y_true: np.ndarray,
@@ -16,11 +60,9 @@ def rmse_mu(
     """
     yp = np.asarray(y_pred, dtype=np.float64)
     yt = np.asarray(y_true, dtype=np.float64)
-    w = np.asarray(target_weights, dtype=np.float64)
+    w = _validated_weights(target_weights, len(yp), "target_weights")
     if len(yp) != len(yt) or len(yp) != len(w):
         raise ValueError("y_pred, y_true, target_weights must have same length")
-    if np.any(w < 0):
-        raise ValueError("target_weights must be non-negative")
     return float(np.sqrt(np.sum(w * (yp - yt) ** 2)))
 
 

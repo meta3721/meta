@@ -5,6 +5,14 @@
 **Status:** P10 end-to-end training integration; 11 deployable methods + 1 external pending.
 **Update rule:** When a symbol lands, replace `PLANNED` with `path::symbol` and keep the formula ID stable.
 
+## Pre-E1 seal additions
+
+| Requirement | Implementation | Evidence |
+|---|---|---|
+| P2 feasibility residuals and fallback | `aggregation/p2_cvxpy.py::solve_p2` | `PRE_E1_SOLVER_AUDIT.json` |
+| `U=1 => tau<=S_max` | `simulation/event_trace.py::EventTrace.validate` | `PRE_E1_TIME_STALENESS_AUDIT.json` |
+| Registration-time deadline slack | `propensity/usable.py::deadline_slack_pre` | `DATA_DICTIONARY.md`, q audit |
+
 ---
 
 ## 1. Atomic units, strata, targets

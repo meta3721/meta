@@ -25,6 +25,9 @@ class WindowRecords:
     U: int  # usable indicator
     downloaded_version: int
     model_age: float
+    tau: int
+    registration_time: float
+    window_close_time: float
     raw_workload: float
 
 
@@ -50,6 +53,7 @@ def extract_window_slice(
     window_id: int,
     event_trace_events: Any,  # pd.DataFrame with EventTrace schema
     processed_dataset: Any,  # ProcessedDataset
+    coarse_time_groups: int | None = None,
 ) -> WindowDataSlice:
     """Extract per-window observation records from EventTrace and atomic units.
 
@@ -75,17 +79,26 @@ def extract_window_slice(
 
         risk_ids = list(row["risk_set_unit_ids"]) if isinstance(row["risk_set_unit_ids"], (list, np.ndarray)) else []
         obs_ids = list(row["observed_unit_ids"]) if isinstance(row["observed_unit_ids"], (list, np.ndarray)) else []
+        if not set(obs_ids).issubset(set(risk_ids)):
+            raise ValueError("observed_unit_ids must be a subset of risk_set_unit_ids")
 
         risk_strata: list[str] = []
         risk_groups: list[int] = []
         obs_values: list[float] = []
+        ordered_obs_ids: list[str] = []
         O_array: list[float] = []
 
         for rid in risk_ids:
             unit = processed_dataset.get_atomic_by_id(rid)
             if unit is not None:
                 risk_strata.append(unit.opportunity_stratum)
-                risk_groups.append(unit.target_group)
+                if coarse_time_groups is None:
+                    risk_groups.append(unit.target_group)
+                else:
+                    total_slots = int(processed_dataset.atomic_df["time_index"].max()) + 1
+                    risk_groups.append(
+                        min(coarse_time_groups - 1, int(unit.time_index * coarse_time_groups / total_slots))
+                    )
             else:
                 risk_strata.append("unknown")
                 risk_groups.append(-1)
@@ -95,8 +108,11 @@ def extract_window_slice(
 
             if is_observed:
                 # Look up observed value from measurements
-                obs_value = unit.target_value if unit else 0.0
+                if unit is None:
+                    raise ValueError(f"Observed unit is absent from processed data: {rid}")
+                obs_value = unit.target_value
                 obs_values.append(obs_value)
+                ordered_obs_ids.append(rid)
 
         U_val = int(row["U"])
         if U_val == 1:
@@ -106,7 +122,7 @@ def extract_window_slice(
             window_id=window_id,
             client_id=client_id,
             risk_set_unit_ids=risk_ids,
-            observed_unit_ids=obs_ids,
+            observed_unit_ids=ordered_obs_ids,
             observed_values=obs_values,
             opportunity_strata=risk_strata,
             target_groups=risk_groups,
@@ -114,6 +130,9 @@ def extract_window_slice(
             U=U_val,
             downloaded_version=int(row["downloaded_version"]),
             model_age=float(row["model_age"]),
+            tau=int(row.get("tau", row["model_age"])),
+            registration_time=float(row["registration_time"]),
+            window_close_time=float(window_id + 1),
             raw_workload=float(row.get("raw_workload", 0)),
         ))
 

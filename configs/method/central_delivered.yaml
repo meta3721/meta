@@ -1,0 +1,10 @@
+name: central_delivered
+description: Centralised baseline using only observations from finally usable attempts
+uses_design_ratio: false
+uses_obs_correction: false
+uses_use_correction: false
+uses_instant_calibration: false
+uses_debt: false
+uses_reference: false
+uses_variance: false
+uses_staleness: false

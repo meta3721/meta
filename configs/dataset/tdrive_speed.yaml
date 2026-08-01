@@ -1,0 +1,28 @@
+name: tdrive_speed
+role: trace_consistent
+raw_glob: data/raw/tdrive_speed/**
+split:
+  train: 0.60
+  validation: 0.20
+  test: 0.20
+  warmup_fraction_of_train: 0.20
+target:
+  name: speed
+  unit: km_per_h
+grid:
+  cell_meters: 500
+  slot_minutes: 30
+fleet:
+  reference_fraction: 0.30
+physical_filters:
+  - Drop speeds <5 or >120 km/h
+  - Stratified 30/70 reference/client fleet by trajectory length
+  - Same vehicle record cannot construct both target and client input
+download:
+  source_name: Microsoft Research T-Drive trajectory sample
+  source_url: https://www.microsoft.com/en-us/research/publication/t-drive-trajectory-data-sample/
+  license: microsoft-research-license
+  resolve_from_page: true
+  prefer_all_zips: true
+  filename_hints: []
+  artifacts: []

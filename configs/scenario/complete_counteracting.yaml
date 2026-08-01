@@ -1,0 +1,7 @@
+name: complete_counteracting
+description: Observation and usable biases partially cancel; tests single-stage correction risk
+opportunity_skew: 1.0
+mean_observation_rate: 0.20
+mean_usable_rate: 0.60
+client_bias_std_ratio: 0.20
+delta_cal: 0.0

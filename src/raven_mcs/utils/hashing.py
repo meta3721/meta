@@ -10,6 +10,10 @@ import sys
 from pathlib import Path
 from typing import Any, Mapping
 
+NON_IDENTITY_CONFIG_KEYS = frozenset(
+    {"resume", "dry_run", "max_workers", "fail_fast", "output_dir"}
+)
+
 
 def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
@@ -86,7 +90,14 @@ def environment_hash() -> str:
 
 
 def config_hash(config: Mapping[str, Any]) -> str:
-    return sha256_json(dict(config))
+    """Hash scientific run identity while excluding execution-control flags."""
+    return sha256_json(
+        {
+            key: value
+            for key, value in config.items()
+            if key not in NON_IDENTITY_CONFIG_KEYS
+        }
+    )
 
 
 def run_hash(
@@ -97,7 +108,7 @@ def run_hash(
     environment_hash_value: str,
     git_commit: str,
     git_state_hash: str,
-    seed: int,
+    seeds: Mapping[str, int],
 ) -> str:
     """Hash the immutable identity of a run, excluding timestamps/results."""
     return sha256_json(
@@ -108,7 +119,7 @@ def run_hash(
             "environment_hash": environment_hash_value,
             "git_commit": git_commit,
             "git_state_hash": git_state_hash,
-            "seed": int(seed),
+            "seeds": {key: int(value) for key, value in sorted(seeds.items())},
         }
     )
 

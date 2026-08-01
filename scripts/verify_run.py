@@ -58,19 +58,15 @@ def check_environment() -> int:
     print(f"platform: {info['platform']}")
 
     errors: list[str] = []
-    if py < (3, 11):
-        errors.append(
-            f"Python >= 3.11 required; found {py.major}.{py.minor}.{py.micro}"
-        )
     if f"{py.major}.{py.minor}" != OFFICIAL_PYTHON:
-        print(
-            f"WARNING: official reproducibility Python is {OFFICIAL_PYTHON}; "
-            f"current is {py.major}.{py.minor}.{py.micro} (ISSUE-001)."
+        errors.append(
+            f"Python {OFFICIAL_PYTHON}.x required; "
+            f"found {py.major}.{py.minor}.{py.micro}"
         )
     else:
         print(f"Python minor matches official pin ({OFFICIAL_PYTHON}).")
 
-    for mod in ("numpy", "yaml", "pandas", "pytest"):
+    for mod in ("numpy", "yaml", "pandas", "pyarrow", "hydra", "sklearn", "pytest"):
         try:
             __import__(mod if mod != "yaml" else "yaml")
             print(f"dependency OK: {mod}")

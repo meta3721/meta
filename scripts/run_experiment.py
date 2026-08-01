@@ -22,6 +22,8 @@ if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
 from raven_mcs.aggregation.methods import get_aggregator
+from raven_mcs.data.base import DatasetMetadata
+from raven_mcs.data.processed_dataset import ProcessedDataset
 from raven_mcs.simulation.event_trace import (
     EventTrace,
     freeze_event_trace,
@@ -29,6 +31,7 @@ from raven_mcs.simulation.event_trace import (
     synthesize_event_trace,
 )
 from raven_mcs.training.synthetic_gate_runner import SyntheticGateRunner, build_synthetic_runner
+from raven_mcs.training.window_runner import FullWindowRunner, build_full_runner
 from raven_mcs.utils.config import resolve_run_config
 from raven_mcs.utils.serialization import dump_json, load_yaml
 
@@ -105,18 +108,46 @@ def _run_experiment(
         }
 
     # Build and run
-    aggregator = get_aggregator(method)
-    runner = SyntheticGateRunner(
-        trace=trace,
-        aggregator=aggregator,
-        mu=np.full(n_groups, 1.0 / n_groups),
-    )
-    metrics = runner.run()
+    if dataset == "synthetic":
+        aggregator = get_aggregator(method)
+        runner = SyntheticGateRunner(
+            trace=trace,
+            aggregator=aggregator,
+            mu=np.full(n_groups, 1.0 / n_groups),
+        )
+        metrics = runner.run()
+        final_debt = float(np.linalg.norm(runner.debt, ord=1))
+        omega_bar = runner.omega_bar()
+    else:
+        # Use FullWindowRunner for real datasets
+        data_dir = Path(f"data/processed/{dataset}")
+        metadata = DatasetMetadata(
+            dataset=dataset,
+            target_name="target",
+            target_unit="unit",
+            spatial_unit="station",
+            time_unit="hour",
+            source_name="real",
+            source_url="",
+            raw_license="unknown",
+            filtering_rules=("No physical filtering applied",),
+        )
+        processed = ProcessedDataset(data_dir, metadata)
+        full_runner = build_full_runner(
+            trace=trace,
+            dataset=processed,
+            method=method,
+            n_groups=processed.num_groups,
+            model_seed=seed,
+            device="cpu",
+        )
+        runner = full_runner
+        metrics = full_runner.run()
+        final_debt = float(np.linalg.norm(full_runner.debt, ord=1))
+        omega_bar = full_runner.omega_bar()
 
     # Collect summary
     active_windows = sum(1 for m in metrics if m.active)
-    final_debt = float(np.linalg.norm(runner.debt, ord=1))
-    omega_bar = runner.omega_bar()
 
     return {
         "experiment": experiment,

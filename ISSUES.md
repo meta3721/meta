@@ -6,6 +6,36 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
 
 ## Open
 
+### ISSUE-014 — Chronological window/tau audit incomplete
+- **Severity:** High
+- **Observation:** P10 Smoke did not emit continuous-window, future-leakage, or tau-consistency audit evidence.
+- **Status:** Closed 2026-08-01; R1-G1 recomputes chronological/tau evidence.
+
+### ISSUE-015 — RMSE_rho used uniform weights
+- **Severity:** High
+- **Observation:** P10 Smoke did not compute atomic arrival-risk weights.
+- **Status:** Closed 2026-08-01; R1-G2 verifies atomic contributions and normalization.
+
+### ISSUE-016 — Gap_mis was inconsistent with RMSE definitions
+- **Severity:** High
+- **Observation:** P10 Smoke used group RMSE range rather than RMSE_mu - RMSE_rho.
+- **Status:** Closed 2026-08-01; R1-G3 recomputes both RMSE values and the gap.
+
+### ISSUE-017 — q feature scan not closed
+- **Severity:** High
+- **Observation:** MATCHES_REQUIRE_REVIEW was treated as accepted without an explicit whitelist.
+- **Status:** Closed 2026-08-01; runtime q feature schema has no unreviewed matches.
+
+### ISSUE-018 — FedAvg and TwoStage had forced identical behavior
+- **Severity:** High
+- **Observation:** MethodPolicy was not applied to local loss and q remained constant.
+- **Status:** Closed 2026-08-01; weight, update, model, and prediction differences are audited.
+
+### ISSUE-019 — P10 run artifacts incomplete
+- **Severity:** High
+- **Observation:** The prior Smoke lacked resolved config, trace ref, window, arrival, propensity, solver, system, checkpoint, and log artifacts.
+- **Status:** Closed 2026-08-01; artifacts and hashes are checked by R1-G7.
+
 ### ISSUE-013 — Traffic preferred station coverage unmet
 - **Severity:** Medium (does not fail hard floor)
 - **Observation:** After TfNSW quality reporting and continuity repair, the best
@@ -42,10 +72,10 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
 - **Resolved in Phase 2A:** Temporal ratio/order/overlap validation,
   `test_split_no_overlap`, train-only scaling with
   `test_train_only_scaling`, and raw/interim/processed data manifests.
-- **Still missing:** `configs/frozen/` experiment-config hash, a test-entry
-  refusal mechanism, and the full static/runtime `test_no_test_leakage` gate.
-  Run-config hashing alone does not provide these guarantees.
-- **Status:** Partially mitigated; test-set execution remains forbidden.
+- **Resolution:** Frozen config now binds config/data/group/EventTrace hashes,
+  validation summary, timestamp, and Git commit. Test prediction refuses
+  mismatched identities before model evaluation.
+- **Status:** Closed 2026-08-01 by P10-R1 config/test-entry tests and R1-G7.
 
 ### ISSUE-011 — Declared E1 methods are not implemented
 - **Severity:** Medium
@@ -54,7 +84,7 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
   model, or runner exist.
 - **Rule:** Treat E1 YAML as a declaration only; do not launch it before E0 and
   G0–G5.
-- **Status:** Open.
+- **Status:** Closed 2026-08-01; method registry and end-to-end runner are executable.
 
 ### ISSUE-012 — E1 gate protocol (CLOSED 2026-08-01, P10)
 - **Status:** Closed. See resolution in "Closed / P10" section below.
@@ -62,6 +92,13 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
 ---
 
 ## Mitigated / closed
+
+- **PRE-E1 solver warning — CLOSED:** `optimal_inaccurate` and residual
+  violations trigger SCS fallback; accepted solutions must pass explicit
+  simplex, nonnegative, upper-bound, and ESS/L2 residual gates.
+- **PRE-E1 staleness boundary — CLOSED:** EventTrace freezes `S_max=5`,
+  requires usable updates to satisfy `tau <= S_max`, and rejects expired usable
+  updates.
 
 - **ISSUE-012 — CLOSED (P10, 2026-08-01):** E1 Balanced method set: FedAvg-Window,
   FedAsync-Window, TimeAlign-Agg, TwoStage-Hajek, RAVEN-MCS. Baseline: best

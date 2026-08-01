@@ -1,0 +1,10 @@
+name: P10_R1_SMOKE
+description: Chronological SensorScope smoke with atomic arrival-risk metrics
+datasets: [sensorscope]
+methods: [fedavg_window, twostage_hajek, raven]
+scenarios: [complete_aligned]
+seeds: [26001]
+num_windows: 20
+clients: 10
+local_steps: 2
+target_groups: 4

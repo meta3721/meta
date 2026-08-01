@@ -1,0 +1,10 @@
+name: inst_cal
+description: Inst-Cal: full correction with P2 group/reference/variance/staleness; Q=0 (no debt pressure)
+uses_design_ratio: true
+uses_obs_correction: true
+uses_use_correction: true
+uses_instant_calibration: true
+uses_debt: false
+uses_reference: true
+uses_variance: true
+uses_staleness: true

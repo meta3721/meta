@@ -1,0 +1,10 @@
+name: local_hajek
+description: Local-Hajek: zeta + p correction at client; server does not correct q; no debt/P2
+uses_design_ratio: true
+uses_obs_correction: true
+uses_use_correction: false
+uses_instant_calibration: false
+uses_debt: false
+uses_reference: false
+uses_variance: false
+uses_staleness: false

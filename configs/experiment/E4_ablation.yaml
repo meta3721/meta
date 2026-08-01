@@ -1,0 +1,7 @@
+name: E4_ablation
+description: Ablation study on a single complete EventTrace
+datasets: [sensorscope]
+methods: [fedavg_window, twostage_hajek, inst_cal, debt_cal, raven]
+scenarios: [complete_aligned]
+seeds: [26001, 26002, 26003, 26004, 26005, 26006, 26007, 26008, 26009, 26010, 26011, 26012, 26013, 26014, 26015, 26016, 26017, 26018, 26019, 26020]
+num_windows: 300

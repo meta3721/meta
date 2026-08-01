@@ -1,0 +1,10 @@
+name: twostage_hajek
+description: TwoStage-Hajek: zeta + p + q correction; alpha = beta_hat; no debt/variance/staleness optimization
+uses_design_ratio: true
+uses_obs_correction: true
+uses_use_correction: true
+uses_instant_calibration: false
+uses_debt: false
+uses_reference: true
+uses_variance: false
+uses_staleness: false

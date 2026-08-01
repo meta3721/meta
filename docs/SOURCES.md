@@ -34,16 +34,32 @@ Machine-readable extracts (for search only; not paper artifacts):
 | RQ5 | Do theory quantities match measurements? | debt bound, reachability, pair discrepancy, variance proxy |
 | RQ6 | Is overhead acceptable? | bytes, compute, P2 time, memory, time-to-RMSE |
 
-## Dataset provenance (design brief)
+## Dataset provenance (design brief → Phase 2B freeze)
 
-| Dataset | Role | Source note |
-|---------|------|-------------|
-| SensorScope | Main controlled | EPFL/Zenodo |
-| U-Air | Main controlled | U-Air / MSR urban air |
-| NSW Traffic Volume | Main controlled | Transport for NSW / Data.NSW |
-| T-Drive-Speed | Trace-consistent mobility | MSR T-Drive sample |
+| Dataset | Role | Exact download / artifact | Frozen matrix (seed 26001) |
+|---------|------|---------------------------|----------------------------|
+| SensorScope | Main controlled | Zenodo `https://zenodo.org/records/2654726` → `Sensorscope.zip` md5 `4bbed2bbd48e535bc2877cad339fbbd6` | 55 stations × 312 hours |
+| U-Air | Main controlled | MSR Urban Air page → `Data-1.zip` (`Data/airquality.csv`) | 36 stations × 264 hours |
+| NSW Traffic Volume | Main controlled | TfNSW station ref CSV + `road_traffic_counts_hourly_permanent.zip` | 43 stations × 720 hours (hard floor met; preferred ≥60 stations not met) |
+| T-Drive-Speed | Trace-consistent mobility | MSR T-Drive sample zips `06.zip`…`014.zip` | 500 m / 30 min grid; reference/client fleets 30/70 |
 
-**Traffic stop rule:** need quality report first; prefer ≥60 stations, ≥720 continuous hours; hard floor ≥30 stations × 336 hours. If unmet → stop and report; PEMS-BAY only after teacher approval to change paper dataset text.
+Provenance JSON: `data/raw/<dataset>/provenance.json`. Column/unit rules: `docs/DATA_DICTIONARY.md`.
+
+**Traffic stop rule:** quality report first (`station_quality_report.csv`); prefer ≥60 stations × ≥720 continuous hours; hard floor ≥30 × 336. If hard floor unmet → stop and report; PEMS-BAY only after teacher approval to change paper dataset text.
+
+## Reconciliations requiring explicit treatment
+
+- **Seed taxonomy:** preserve the superset `master`, `data`, `opportunity`,
+  `observation`, `event`, `model`, `solver`, `bootstrap`, `mc_oracle`; derive
+  unspecified streams deterministically from `master` and hash all resolved
+  values.
+- **E1 conflict:** the DOCX and binding execution instruction disagree on the
+  method set and 2%/3% no-harm threshold. The execution instruction takes
+  precedence provisionally, but E1 remains blocked pending teacher confirmation
+  (ISSUE-012).
+- **Formula ambiguity:** typography-sensitive DOCX/PDF conflicts stop the
+  affected experiment for teacher review; source priority is not permission to
+  silently change a mathematical definition.
 
 ## Layout note
 

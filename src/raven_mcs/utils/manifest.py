@@ -21,7 +21,7 @@ from raven_mcs.utils.hashing import (
     sha256_json,
 )
 from raven_mcs.utils.serialization import dump_json, dump_yaml, load_json
-from raven_mcs.utils.seed import SeedBundle
+from raven_mcs.utils.seed import SEED_STREAMS, SeedBundle
 
 
 REQUIRED_MANIFEST_FIELDS = (
@@ -174,6 +174,15 @@ class RunManifest:
             errors.append("git_state_hash must be a SHA-256 digest")
         if self.hard_gate_status not in VALID_GATE_STATUSES:
             errors.append(f"invalid hard_gate_status: {self.hard_gate_status}")
+        if set(self.seeds) != set(SEED_STREAMS):
+            errors.append(f"seeds must contain exactly: {list(SEED_STREAMS)}")
+        elif self.seeds.get("master") != self.seed:
+            errors.append("manifest seed must equal seeds.master")
+        elif any(
+            isinstance(value, bool) or not isinstance(value, int) or value < 0
+            for value in self.seeds.values()
+        ):
+            errors.append("all manifest seeds must be non-negative integers")
         if final:
             if self.end_time is None:
                 errors.append("end_time is required for a finalized manifest")
@@ -216,6 +225,17 @@ def build_manifest(
     require_git: bool = False,
     allow_unset_hashes: bool = False,
 ) -> RunManifest:
+    config_seed = config.get("seed")
+    configured_seeds = config.get("seeds")
+    if not isinstance(config_seed, int) or isinstance(config_seed, bool):
+        raise ValueError("config seed must be an integer")
+    if configured_seeds is not None and not isinstance(configured_seeds, Mapping):
+        raise ValueError("config seeds must be a mapping")
+    expected_seed_bundle = SeedBundle.from_config(config_seed, configured_seeds)
+    if seed_bundle != expected_seed_bundle:
+        raise ValueError(
+            "seed_bundle does not match the resolved config seed streams"
+        )
     commit, dirty, git_state_hash = _git_info(repo_root)
     if require_git and (commit == "NO_GIT" or dirty is None):
         raise RuntimeError("Git is required for an auditable run, but no repository is available")
@@ -242,7 +262,7 @@ def build_manifest(
         environment_hash_value=env_hash,
         git_commit=commit,
         git_state_hash=git_state_hash,
-        seed=int(config.get("seed")),
+        seeds=seed_bundle.as_dict(),
     )
     manifest = RunManifest(
         run_id=run_id,
@@ -250,7 +270,7 @@ def build_manifest(
         dataset=str(config.get("dataset")),
         method=str(config.get("method")),
         scenario=str(config.get("scenario")),
-        seed=int(config.get("seed")),
+        seed=config_seed,
         run_hash=identity_hash,
         git_commit=commit,
         git_dirty=dirty,

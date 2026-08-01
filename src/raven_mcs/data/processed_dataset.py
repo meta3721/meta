@@ -96,8 +96,12 @@ class ProcessedDataset:
         self._spatial_to_idx: dict[str, int] = {sid: i for i, sid in enumerate(spatial_ids)}
         self.num_spatial = len(spatial_ids)
 
-        self._target_groups = sorted(self._atomic_df["target_group"].unique())
-        self.num_groups = len(self._target_groups)
+        raw_groups = sorted(self._atomic_df["target_group"].unique())
+        self._target_group_str_to_int: dict[str, int] = {
+            g: i for i, g in enumerate(raw_groups)
+        }
+        self.num_groups = len(raw_groups)
+        self._target_groups = list(range(self.num_groups))
 
     def _fit_scaler(self) -> None:
         train_mask = self._atomic_df["split"] == "train"
@@ -110,6 +114,19 @@ class ProcessedDataset:
     def spatial_index(self, spatial_id: str) -> int:
         return self._spatial_to_idx[str(spatial_id)]
 
+    def _absolute_time_hours(self, row: pd.Series) -> float:
+        ts = row["absolute_time"]
+        if hasattr(ts, "timestamp"):
+            return float(ts.timestamp()) / 3600.0
+        return float(ts)
+
+    def _encode_target_group(self, raw_value: str) -> int:
+        """Encode string target_group to integer index."""
+        encoded = self._target_group_str_to_int.get(str(raw_value))
+        if encoded is not None:
+            return encoded
+        return 0
+
     def get_atomic_units(self, split: str | None = None) -> list[AtomicUnit]:
         df = self._atomic_df if split is None else self._atomic_df[self._atomic_df["split"] == split]
         units: list[AtomicUnit] = []
@@ -117,11 +134,11 @@ class ProcessedDataset:
             units.append(AtomicUnit(
                 unit_id=str(row["unit_id"]),
                 spatial_id=str(row["spatial_id"]),
-                absolute_time=float(row["absolute_time"]),
+                absolute_time=self._absolute_time_hours(row),
                 time_index=int(row["time_index"]),
                 target_value=float(row["target_value"]),
                 split=str(row["split"]),
-                target_group=int(row["target_group"]),
+                target_group=self._encode_target_group(str(row["target_group"])),
                 opportunity_stratum=str(row["opportunity_stratum"]),
                 public_features={},
                 support_flag=bool(row.get("support_flag", True)),
@@ -135,7 +152,7 @@ class ProcessedDataset:
             measurements.append(ClientMeasurement(
                 client_id=str(row["client_id"]),
                 unit_id=str(row["unit_id"]),
-                observed_value=float(row["observed_value"]),
+                observed_value=float(row["potential_measurement"]),
                 split=str(row["split"]),
                 source_trace_id=str(row.get("source_trace_id", "")),
             ))
@@ -149,11 +166,11 @@ class ProcessedDataset:
         return AtomicUnit(
             unit_id=str(row["unit_id"]),
             spatial_id=str(row["spatial_id"]),
-            absolute_time=float(row["absolute_time"]),
+            absolute_time=self._absolute_time_hours(row),
             time_index=int(row["time_index"]),
             target_value=float(row["target_value"]),
             split=str(row["split"]),
-            target_group=int(row["target_group"]),
+            target_group=self._encode_target_group(str(row["target_group"])),
             opportunity_stratum=str(row["opportunity_stratum"]),
             public_features={},
             support_flag=bool(row.get("support_flag", True)),

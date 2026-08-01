@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import math
+from numbers import Real
 from dataclasses import dataclass, field
 from typing import Any, Mapping
+
+from raven_mcs.utils.seed import SEED_STREAMS
 
 
 class ConfigValidationError(ValueError):
@@ -30,6 +34,69 @@ REQUIRED_TOP_LEVEL = (
     "seeds",
 )
 
+INTERNAL_CONFIG_KEYS = (
+    "_experiment_cfg",
+    "_dataset_cfg",
+    "_method_cfg",
+    "_scenario_cfg",
+)
+
+BLOCK_KEYS = {
+    "clients": {"K", "local_steps", "risk_set_mean"},
+    "window": {"num_windows", "duration", "max_staleness"},
+    "correction": {
+        "p_min",
+        "q_min",
+        "a_max",
+        "d_max",
+        "opportunity_forgetting",
+        "pi_min",
+    },
+    "aggregation": {
+        "lambda_group",
+        "lambda_reference",
+        "lambda_variance",
+        "lambda_staleness",
+        "min_effective_clients",
+        "alpha_max",
+        "max_server_learning_rate",
+    },
+    "solver": {"backend", "tolerance"},
+    "seeds": set(SEED_STREAMS),
+}
+
+SLICE_KEYS = {
+    "_experiment_cfg": {
+        "name",
+        "description",
+        "datasets",
+        "methods",
+        "scenarios",
+        "seeds",
+        "num_windows",
+    },
+    "_dataset_cfg": {"name", "role", "raw_glob", "split"},
+    "_method_cfg": {
+        "name",
+        "uses_design_ratio",
+        "uses_obs_correction",
+        "uses_use_correction",
+        "uses_instant_calibration",
+        "uses_debt",
+        "uses_reference",
+        "uses_variance",
+        "uses_staleness",
+    },
+    "_scenario_cfg": {
+        "name",
+        "opportunity_skew",
+        "mean_observation_rate",
+        "mean_usable_rate",
+        "client_bias_std_ratio",
+        "delta_cal",
+    },
+}
+
 
 @dataclass
 class ValidatedConfig:
@@ -49,15 +116,25 @@ def _require_keys(
             errors.append(f"missing key: {prefix}{key}")
 
 
+def _reject_unknown(
+    value: Mapping[str, Any],
+    allowed: set[str],
+    prefix: str,
+    errors: list[str],
+) -> None:
+    for key in sorted(set(value) - allowed):
+        errors.append(f"unknown key: {prefix}{key}")
+
+
 def _as_float(value: Any, label: str, errors: list[str]) -> float | None:
-    if isinstance(value, bool):
-        errors.append(f"{label} must be numeric")
+    if isinstance(value, bool) or not isinstance(value, Real):
+        errors.append(f"{label} must be a finite numeric value")
         return None
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        errors.append(f"{label} must be numeric")
+    number = float(value)
+    if not math.isfinite(number):
+        errors.append(f"{label} must be finite")
         return None
+    return number
 
 
 def _as_int(value: Any, label: str, errors: list[str]) -> int | None:
@@ -65,6 +142,107 @@ def _as_int(value: Any, label: str, errors: list[str]) -> int | None:
         errors.append(f"{label} must be an integer")
         return None
     return value
+
+
+def _validate_named_slices(raw: Mapping[str, Any], errors: list[str]) -> None:
+    for slice_name, allowed in SLICE_KEYS.items():
+        if slice_name not in raw:
+            continue
+        value = raw[slice_name]
+        if not isinstance(value, Mapping):
+            errors.append(f"{slice_name} must be a mapping")
+            continue
+        _reject_unknown(value, allowed, f"{slice_name}.", errors)
+        name = value.get("name")
+        if not isinstance(name, str) or not name.strip():
+            errors.append(f"{slice_name}.name must be a non-empty string")
+
+        if slice_name == "_experiment_cfg":
+            for key in ("datasets", "methods", "scenarios"):
+                items = value.get(key)
+                if not isinstance(items, list) or not items or any(
+                    not isinstance(item, str) or not item.strip() for item in items
+                ):
+                    errors.append(f"{slice_name}.{key} must be a non-empty string list")
+            experiment_seeds = value.get("seeds")
+            if not isinstance(experiment_seeds, list) or not experiment_seeds:
+                errors.append(f"{slice_name}.seeds must be a non-empty integer list")
+            elif any(
+                isinstance(item, bool) or not isinstance(item, int) or item < 0
+                for item in experiment_seeds
+            ):
+                errors.append(
+                    f"{slice_name}.seeds must contain non-negative integers"
+                )
+            if "num_windows" in value:
+                number = _as_int(
+                    value["num_windows"], f"{slice_name}.num_windows", errors
+                )
+                if number is not None and number < 1:
+                    errors.append(f"{slice_name}.num_windows must be >= 1")
+
+        elif slice_name == "_dataset_cfg":
+            role = value.get("role")
+            if not isinstance(role, str) or not role.strip():
+                errors.append(f"{slice_name}.role must be a non-empty string")
+            split = value.get("split")
+            required_split = {
+                "train",
+                "validation",
+                "test",
+                "warmup_fraction_of_train",
+            }
+            if not isinstance(split, Mapping):
+                errors.append(f"{slice_name}.split must be a mapping")
+            else:
+                _require_keys(split, tuple(required_split), f"{slice_name}.split.", errors)
+                _reject_unknown(split, required_split, f"{slice_name}.split.", errors)
+                fractions: dict[str, float] = {}
+                for key in required_split:
+                    if key in split:
+                        number = _as_float(
+                            split[key], f"{slice_name}.split.{key}", errors
+                        )
+                        if number is not None:
+                            fractions[key] = number
+                            if not 0 < number < 1:
+                                errors.append(
+                                    f"{slice_name}.split.{key} must be in (0, 1)"
+                                )
+                if all(key in fractions for key in ("train", "validation", "test")):
+                    if (
+                        abs(
+                            fractions["train"]
+                            + fractions["validation"]
+                            + fractions["test"]
+                            - 1.0
+                        )
+                        > 1e-12
+                    ):
+                        errors.append(
+                            f"{slice_name}.split train/validation/test must sum to 1"
+                        )
+
+        elif slice_name == "_method_cfg":
+            for key in allowed - {"name"}:
+                if key not in value:
+                    errors.append(f"missing key: {slice_name}.{key}")
+                elif not isinstance(value[key], bool):
+                    errors.append(f"{slice_name}.{key} must be boolean")
+
+        elif slice_name == "_scenario_cfg":
+            for key in allowed - {"name"}:
+                if key not in value:
+                    errors.append(f"missing key: {slice_name}.{key}")
+                    continue
+                number = _as_float(value[key], f"{slice_name}.{key}", errors)
+                if number is None:
+                    continue
+                if key in {"mean_observation_rate", "mean_usable_rate"}:
+                    if not 0 < number <= 1:
+                        errors.append(f"{slice_name}.{key} must be in (0, 1]")
+                elif key != "delta_cal" and number < 0:
+                    errors.append(f"{slice_name}.{key} must be >= 0")
 
 
 def validate_config(config: Mapping[str, Any]) -> ValidatedConfig:
@@ -76,6 +254,12 @@ def validate_config(config: Mapping[str, Any]) -> ValidatedConfig:
     raw = dict(config)
     errors: list[str] = []
     _require_keys(raw, REQUIRED_TOP_LEVEL, "", errors)
+    _reject_unknown(
+        raw,
+        set(REQUIRED_TOP_LEVEL) | set(INTERNAL_CONFIG_KEYS),
+        "",
+        errors,
+    )
 
     for key in ("experiment", "dataset", "method", "scenario", "device", "output_dir"):
         value = raw.get(key)
@@ -101,6 +285,7 @@ def validate_config(config: Mapping[str, Any]) -> ValidatedConfig:
 
     agg = raw.get("aggregation")
     if isinstance(agg, Mapping):
+        _reject_unknown(agg, BLOCK_KEYS["aggregation"], "aggregation.", errors)
         _require_keys(
             agg,
             (
@@ -172,6 +357,7 @@ def validate_config(config: Mapping[str, Any]) -> ValidatedConfig:
 
     corr = raw.get("correction")
     if isinstance(corr, Mapping):
+        _reject_unknown(corr, BLOCK_KEYS["correction"], "correction.", errors)
         for key in (
             "p_min",
             "q_min",
@@ -217,6 +403,7 @@ def validate_config(config: Mapping[str, Any]) -> ValidatedConfig:
 
     solver = raw.get("solver")
     if isinstance(solver, Mapping):
+        _reject_unknown(solver, BLOCK_KEYS["solver"], "solver.", errors)
         if "backend" not in solver:
             errors.append("missing key: solver.backend")
         elif not isinstance(solver["backend"], str) or not solver["backend"].strip():
@@ -239,6 +426,7 @@ def validate_config(config: Mapping[str, Any]) -> ValidatedConfig:
 
     clients = raw.get("clients")
     if isinstance(clients, Mapping):
+        _reject_unknown(clients, BLOCK_KEYS["clients"], "clients.", errors)
         for key in ("K", "local_steps", "risk_set_mean"):
             if key not in clients:
                 errors.append(f"missing key: clients.{key}")
@@ -251,6 +439,7 @@ def validate_config(config: Mapping[str, Any]) -> ValidatedConfig:
 
     window = raw.get("window")
     if isinstance(window, Mapping):
+        _reject_unknown(window, BLOCK_KEYS["window"], "window.", errors)
         for key in ("num_windows", "duration", "max_staleness"):
             if key not in window:
                 errors.append(f"missing key: window.{key}")
@@ -279,8 +468,9 @@ def validate_config(config: Mapping[str, Any]) -> ValidatedConfig:
         errors.append("window must be a mapping")
 
     seeds = raw.get("seeds")
-    required_seeds = ("master", "data", "event", "model", "solver", "bootstrap")
+    required_seeds = SEED_STREAMS
     if isinstance(seeds, Mapping):
+        _reject_unknown(seeds, BLOCK_KEYS["seeds"], "seeds.", errors)
         _require_keys(seeds, required_seeds, "seeds.", errors)
         for key in required_seeds:
             value = seeds.get(key)
@@ -291,6 +481,16 @@ def validate_config(config: Mapping[str, Any]) -> ValidatedConfig:
     else:
         errors.append("seeds must be a mapping")
 
+    if (
+        isinstance(seed, int)
+        and not isinstance(seed, bool)
+        and isinstance(seeds, Mapping)
+        and seeds.get("master") is not None
+        and seeds.get("master") != seed
+    ):
+        errors.append("seeds.master must equal seed")
+
+    _validate_named_slices(raw, errors)
     return ValidatedConfig(raw=raw, errors=errors)
 
 

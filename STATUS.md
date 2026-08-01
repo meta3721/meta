@@ -3,20 +3,44 @@
 **Updated:** 2026-08-01
 **Workspace root:** `D:\Cursor\raven.mcs`  
 **Source docs:** paper PDF + Cursor instruction TXT + design DOCX (`docs/SOURCES.md`)  
-**Current phase:** P10 end-to-end training integration
-**Main experiments:** Not started (blocked until P10 complete + teacher review)
+**Current phase:** Pre-E1 Seal complete; teacher authorization pending
+**Main experiments:** Not started
 
 ---
 ## P10 Status (2026-08-01)
 
 | Section | Status | Description |
 |---------|--------|-------------|
-| P10-A | PASS | Real data + real training: processed dataset, window dataset, features, client SGD, local Hajek objective, full WindowRunner |
-| P10-B | PASS | Two-stage correction: design ratio with diagnostics, observation propensity with Brier/ECE, Hajek weights, q estimation, beta_hat, lagged variance |
-| P10-C | PASS | Method semantics: MethodPolicy dataclass, 11 deployable methods fixed, FLAMF marked external, Inst-Cal uses P2 with Q=0, Debt-Cal uses P2 with raw comp |
-| P10-D | PASS | Metrics and statistics: tail/head RMSE via R_g ratio, reachability optimization CVXPY solver, epsilon_reach renamed, statistical tests rewritten, frozen config gate |
-| P10-E | PENDING | SensorScope smoke test (10 clients, 20 windows, seed 26001) |
-| E1 | BLOCKED | Awaiting P10-E smoke + frozen config gate + teacher review |
+| P10-A | PASS | Chronological windows, tau invariants, historical checkpoints, and past-only estimator updates verified |
+| P10-B | PASS | Estimated zeta/p/q and frozen atomic arrival-risk contributions verified |
+| P10-C | PASS | FedAvg/TwoStage local and server paths produce distinct audited updates |
+| P10-D | PASS | RMSE_mu/RMSE_rho are recomputed from atomic rows and Gap_mis identity is exact |
+| P10-E | PASS | Two same-seed SensorScope runs pass R1-G1 through R1-G8 |
+| E1 | READY_FOR_TEACHER_AUTHORIZATION | Pre-E1 Seal evidence complete; no E1 run has been executed |
+
+## Pre-E1 Seal
+
+- `P10-R1 = PASS`
+- `PRE-E1-SEAL = PASS`
+- `E1 = READY_FOR_TEACHER_AUTHORIZATION`
+- `E2-E9 = NOT STARTED`
+
+This status is readiness for teacher authorization only; it is not permission
+to execute E1.
+
+## P10-E Smoke Results (2026-08-01)
+
+Runs: `outputs/runs/P10_SMOKE_20260801_102055/` and
+`outputs/runs/P10_SMOKE_20260801_102515/`
+
+| Method | RMSE_mu | RMSE_rho | Gap_mis | Train Loss | Active Win | Time |
+|--------|---------|----------|---------|------------|------------|------|
+| FedAvg-Window | 7.1818 | 7.0646 | 0.1172 | 7.8376 | 20/20 | 69.7s |
+| TwoStage-Hajek | 7.1572 | 7.0400 | 0.1172 | 7.9108 | 20/20 | 70.6s |
+| RAVEN-MCS | 7.1111 | 6.9937 | 0.1174 | 7.9075 | 20/20 | 74.6s |
+
+All P10 smoke checks and R1-G1 through R1-G8: **PASS**.
+
 
 ## P10 Code Status
 

@@ -34,6 +34,10 @@ def freeze_config(
     dataset: str,
     config_dir: Path | None = None,
     frozen_dir: Path | None = None,
+    *,
+    group_mapping_path: Path | None = None,
+    event_trace_hash: str | None = None,
+    data_hash: str | None = None,
 ) -> dict:
     if config_dir is None:
         config_dir = _ROOT / "configs" / "experiment"
@@ -51,6 +55,19 @@ def freeze_config(
     resolved["dataset"] = dataset
     resolved["freeze_timestamp"] = datetime.now(timezone.utc).isoformat()
     resolved["freeze_git_commit"] = _get_git_commit()
+    if group_mapping_path is not None:
+        resolved["group_mapping_hash"] = hashlib.sha256(
+            group_mapping_path.read_bytes()
+        ).hexdigest()
+    if event_trace_hash is not None:
+        resolved["event_trace_hash"] = event_trace_hash
+    if data_hash is not None:
+        resolved["data_hash"] = data_hash
+    resolved["validation_summary"] = {
+        "experiment_config_exists": True,
+        "dataset": dataset,
+        "group_mapping_frozen": group_mapping_path is not None,
+    }
 
     config_hash = _hash_config(resolved)
 
@@ -79,6 +96,10 @@ def validate_frozen_config(
     experiment: str,
     dataset: str,
     frozen_dir: Path | None = None,
+    *,
+    expected_data_hash: str | None = None,
+    expected_group_mapping_hash: str | None = None,
+    expected_event_trace_hash: str | None = None,
 ) -> dict:
     """Validate that a frozen config exists and its hash matches."""
     if frozen_dir is None:
@@ -110,6 +131,19 @@ def validate_frozen_config(
             f"Config hash mismatch! Expected {stored_hash}, got {current_hash}. "
             f"Config has been modified since freeze."
         )
+    summary = config.get("validation_summary")
+    if not isinstance(summary, dict) or not summary.get("experiment_config_exists"):
+        raise ValueError("Frozen config is missing a completed validation_summary")
+    expected = {
+        "data_hash": expected_data_hash,
+        "group_mapping_hash": expected_group_mapping_hash,
+        "event_trace_hash": expected_event_trace_hash,
+    }
+    for field, value in expected.items():
+        if value is not None and config.get(field) != value:
+            raise ValueError(
+                f"Frozen {field} mismatch: expected {value}, got {config.get(field)}"
+            )
 
     return {
         "experiment": experiment,
@@ -117,6 +151,7 @@ def validate_frozen_config(
         "config_hash": current_hash,
         "valid": True,
         "frozen_path": str(frozen_path),
+        "config": config,
     }
 
 
@@ -138,9 +173,12 @@ def test_entry_gate(
     experiment: str,
     dataset: str,
     frozen_dir: Path | None = None,
+    **expected_hashes: str,
 ) -> bool:
     """Check if test runs are allowed for this experiment/dataset."""
-    validation = validate_frozen_config(experiment, dataset, frozen_dir)
+    validation = validate_frozen_config(
+        experiment, dataset, frozen_dir, **expected_hashes,
+    )
     return validation["valid"]
 
 
@@ -150,6 +188,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dataset", required=True, help="Dataset name")
     parser.add_argument("--config-dir", type=Path, default=None)
     parser.add_argument("--frozen-dir", type=Path, default=None)
+    parser.add_argument("--output", type=Path, default=None, help="Alias for --frozen-dir")
+    parser.add_argument("--groups", type=Path, default=_ROOT / "configs" / "frozen" / "e1_sensorscope_groups.yaml")
+    parser.add_argument("--event-trace-hash", default=None)
+    parser.add_argument("--data-hash", default=None)
     parser.add_argument("--validate", action="store_true", help="Only validate frozen config")
     args = parser.parse_args(argv)
 
@@ -160,7 +202,13 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Hash: {result['config_hash']}")
             return 0
 
-        result = freeze_config(args.experiment, args.dataset, args.config_dir, args.frozen_dir)
+        result = freeze_config(
+            args.experiment, args.dataset, args.config_dir,
+            args.output or args.frozen_dir,
+            group_mapping_path=args.groups if args.groups.exists() else None,
+            event_trace_hash=args.event_trace_hash,
+            data_hash=args.data_hash,
+        )
         print(f"Config frozen: {args.experiment}/{args.dataset}")
         print(f"  Hash: {result['config_hash']}")
         print(f"  Path: {result['frozen_path']}")

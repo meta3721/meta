@@ -1,0 +1,15 @@
+name: PRE_E1_SMOKE
+description: Clean-commit Pre-E1 seal smoke
+datasets: [sensorscope]
+methods: [fedavg_window, twostage_hajek, raven]
+scenarios: [complete_aligned]
+seeds: [26001]
+num_windows: 20
+clients: 10
+local_steps: 2
+target_groups: 4
+s_max: 5
+solver:
+  primary: CLARABEL
+  fallback: SCS
+  residual_tolerance: 1.0e-7

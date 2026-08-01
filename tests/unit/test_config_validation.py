@@ -48,6 +48,9 @@ def test_resolve_run_config_default() -> None:
         (("device",), "gpu", "device"),
         (("solver", "tolerance"), 0.0, "solver.tolerance"),
         (("solver", "tolerance"), "invalid", "solver.tolerance"),
+        (("solver", "tolerance"), "1e-6", "solver.tolerance"),
+        (("solver", "tolerance"), float("nan"), "must be finite"),
+        (("solver", "tolerance"), float("inf"), "must be finite"),
         (("correction", "p_min"), 1.1, "correction.p_min"),
         (
             ("correction", "opportunity_forgetting"),
@@ -68,3 +71,24 @@ def test_extended_config_validation(
     target[path[-1]] = value
     result = validate_config(cfg)
     assert any(message in error for error in result.errors)
+
+
+def test_unknown_config_keys_are_rejected() -> None:
+    cfg = load_base_config()
+    cfg["typo_parameter"] = 1
+    cfg["solver"]["tolernace"] = 1e-6
+    result = validate_config(cfg)
+    assert "unknown key: typo_parameter" in result.errors
+    assert "unknown key: solver.tolernace" in result.errors
+
+
+def test_resolved_config_contains_all_concrete_seed_streams() -> None:
+    cfg = resolve_run_config(seed=26001)
+    assert cfg["seeds"]["master"] == cfg["seed"]
+    assert all(isinstance(value, int) for value in cfg["seeds"].values())
+    assert len(set(cfg["seeds"].values())) == len(cfg["seeds"])
+
+
+def test_named_config_slice_rejects_unknown_keys() -> None:
+    with pytest.raises(ConfigValidationError, match="unknown key"):
+        resolve_run_config(overrides={"_dataset_cfg": {"typo": 1}})

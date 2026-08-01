@@ -5,9 +5,31 @@ from __future__ import annotations
 import os
 import random
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Mapping
 
 import numpy as np
+
+SEED_STREAMS = (
+    "master",
+    "data",
+    "opportunity",
+    "observation",
+    "event",
+    "model",
+    "solver",
+    "bootstrap",
+    "mc_oracle",
+)
+
+
+def assert_preconfigured_python_hash_seed(seed: int) -> None:
+    """Require the interpreter to have started with the run's hash seed."""
+    expected = str(seed)
+    if os.environ.get("PYTHONHASHSEED") != expected:
+        raise RuntimeError(
+            "PYTHONHASHSEED must be set before Python starts; launch this run with "
+            f"PYTHONHASHSEED={expected}"
+        )
 
 
 @dataclass(frozen=True)
@@ -16,47 +38,93 @@ class SeedBundle:
 
     master: int
     data: int
+    opportunity: int
+    observation: int
     event: int
     model: int
     solver: int
     bootstrap: int
+    mc_oracle: int
 
     @classmethod
     def from_master(cls, master: int) -> SeedBundle:
         """Derive component seeds from a master seed (stable, documented)."""
+        if isinstance(master, bool) or not isinstance(master, int) or master < 0:
+            raise ValueError("master seed must be a non-negative integer")
         rng = np.random.default_rng(int(master))
-        draws = rng.integers(0, 2**31 - 1, size=5, dtype=np.int64)
+        draws = rng.integers(0, 2**31 - 1, size=8, dtype=np.int64)
         return cls(
             master=int(master),
             data=int(draws[0]),
-            event=int(draws[1]),
-            model=int(draws[2]),
-            solver=int(draws[3]),
-            bootstrap=int(draws[4]),
+            opportunity=int(draws[1]),
+            observation=int(draws[2]),
+            event=int(draws[3]),
+            model=int(draws[4]),
+            solver=int(draws[5]),
+            bootstrap=int(draws[6]),
+            mc_oracle=int(draws[7]),
         )
+
+    @classmethod
+    def from_config(
+        cls,
+        master: int,
+        configured: Mapping[str, Any] | None,
+    ) -> SeedBundle:
+        """Resolve explicit overrides against stable master-derived streams."""
+        if isinstance(master, bool) or not isinstance(master, int) or master < 0:
+            raise ValueError("master seed must be a non-negative integer")
+        values = dict(configured or {})
+        unknown = sorted(set(values) - set(SEED_STREAMS))
+        if unknown:
+            raise ValueError(f"Unknown seed streams: {unknown}")
+        configured_master = values.get("master")
+        if configured_master is not None and configured_master != master:
+            raise ValueError(
+                f"seeds.master ({configured_master}) must equal seed ({master})"
+            )
+        derived = cls.from_master(master).as_dict()
+        resolved: dict[str, int] = {"master": master}
+        for name in SEED_STREAMS[1:]:
+            value = values.get(name)
+            if value is None:
+                resolved[name] = derived[name]
+            elif isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ValueError(f"seeds.{name} must be a non-negative integer")
+            else:
+                resolved[name] = value
+        return cls(**resolved)
 
     def as_dict(self) -> dict[str, int]:
         return {
             "master": self.master,
             "data": self.data,
+            "opportunity": self.opportunity,
+            "observation": self.observation,
             "event": self.event,
             "model": self.model,
             "solver": self.solver,
             "bootstrap": self.bootstrap,
+            "mc_oracle": self.mc_oracle,
         }
 
 
-def seed_everything(seed: int) -> SeedBundle:
+def seed_everything(
+    seed: int | SeedBundle,
+    *,
+    require_preconfigured_hash_seed: bool = True,
+) -> SeedBundle:
     """
     Seed Python, NumPy, and Torch (if installed) for reproducibility.
 
     Sets at least: random, numpy, torch CPU/CUDA, deterministic algorithms,
     cuDNN deterministic, PYTHONHASHSEED.
     """
-    bundle = SeedBundle.from_master(int(seed))
-    os.environ["PYTHONHASHSEED"] = str(bundle.master)
+    bundle = seed if isinstance(seed, SeedBundle) else SeedBundle.from_master(seed)
+    if require_preconfigured_hash_seed:
+        assert_preconfigured_python_hash_seed(bundle.master)
     random.seed(bundle.master)
-    np.random.seed(bundle.master % (2**32 - 1))
+    np.random.seed(bundle.data % (2**32 - 1))
 
     try:
         import torch
@@ -64,7 +132,7 @@ def seed_everything(seed: int) -> SeedBundle:
         torch.manual_seed(bundle.model)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(bundle.model)
-        torch.use_deterministic_algorithms(True, warn_only=True)
+        torch.use_deterministic_algorithms(True)
         if hasattr(torch.backends, "cudnn"):
             torch.backends.cudnn.deterministic = True
             torch.backends.cudnn.benchmark = False

@@ -1,0 +1,7 @@
+name: E2_misalignment
+description: Target-risk misalignment evidence across six bias scenarios
+datasets: [sensorscope]
+methods: [fedavg_window, fedasync_window, timealign_agg]
+scenarios: [balanced, opportunity_only, observation_only, usable_only, complete_aligned, complete_counteracting]
+seeds: [26001, 26002, 26003, 26004, 26005, 26006, 26007, 26008, 26009, 26010, 26011, 26012, 26013, 26014, 26015, 26016, 26017, 26018, 26019, 26020]
+num_windows: 300

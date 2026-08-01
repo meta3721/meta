@@ -1,0 +1,13 @@
+group_count: 4
+mapping: time_index_quartile
+spatial_partition: none
+time_blocks:
+  - {id: 0, start_fraction: 0.00, end_fraction: 0.25}
+  - {id: 1, start_fraction: 0.25, end_fraction: 0.50}
+  - {id: 2, start_fraction: 0.50, end_fraction: 0.75}
+  - {id: 3, start_fraction: 0.75, end_fraction: 1.00}
+support_threshold: 1
+selection_rule: validation_only_predefined_time_quartiles
+validation_audit_hash: 6f3c81cd48769edff97d6e11502a1db499cd93bf8b88463ad726397f3e5e6df0
+fine_grained_diagnostic_groups: station_x_time_block_220
+reason: SensorScope processed data has no frozen station coordinates; time-only G=4 is auditable and independent of predictions.

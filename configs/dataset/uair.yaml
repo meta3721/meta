@@ -1,0 +1,27 @@
+name: uair
+role: main_controlled
+raw_glob: data/raw/uair/**
+split:
+  train: 0.60
+  validation: 0.20
+  test: 0.20
+  warmup_fraction_of_train: 0.20
+target:
+  name: pm25
+  unit: ug_per_m3
+matrix:
+  spatial_count: 36
+  time_count: 264
+  time_unit: hour
+physical_filters:
+  - Drop non-finite PM2.5 values
+  - Keep PM2.5 in [0, 1000] ug/m3
+  - Only use official Microsoft Research Urban Air artifacts
+download:
+  source_name: Microsoft Research Urban Air
+  source_url: https://www.microsoft.com/en-us/research/project/urban-air/
+  license: research-use-as-published
+  resolve_from_page: true
+  filename_hints: [Data-1.zip, Data.zip, UrbanAir, AirQuality]
+  prefer_all_zips: false
+  artifacts: []
