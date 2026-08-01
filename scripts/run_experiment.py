@@ -33,7 +33,8 @@ from raven_mcs.simulation.event_trace import (
 from raven_mcs.training.synthetic_gate_runner import SyntheticGateRunner, build_synthetic_runner
 from raven_mcs.training.window_runner import FullWindowRunner, build_full_runner
 from raven_mcs.utils.config import resolve_run_config
-from raven_mcs.utils.serialization import dump_json, load_yaml
+from raven_mcs.utils.serialization import dump_json, load_json, load_yaml
+from raven_mcs.experiments.e1_entry import run_official_method
 
 
 def _get_or_generate_trace(
@@ -87,12 +88,46 @@ def _run_experiment(
     n_groups: int = 4,
     trace_cache: Path | None = None,
     dry_run: bool = False,
+    local_steps: int = 2,
+    device: str = "cpu",
+    output_root: Path | None = None,
 ) -> dict[str, Any]:
     """Execute one experiment run and return summary metrics."""
     if trace_cache is None:
         trace_cache = Path("outputs/event_traces")
 
     print(f"Run: experiment={experiment} dataset={dataset} method={method} scenario={scenario} seed={seed}")
+
+    if experiment == "E1_balanced" and dataset == "sensorscope":
+        trace_dir = trace_cache / f"e1_balanced_seed{seed}"
+        if dry_run:
+            trace, identity = load_event_trace(trace_dir)
+            return {
+                "experiment": experiment, "dataset": dataset, "method": method,
+                "scenario": scenario, "seed": seed,
+                "trace_hash": identity["trace_hash"], "status": "dry_run",
+                "official_entry": True,
+            }
+        run_dir = run_official_method(
+            _ROOT, method=method, seed=seed, num_windows=num_windows,
+            local_steps=local_steps, device=device, trace_dir=trace_dir,
+            output_root=output_root,
+        )
+        metrics_run = load_json(run_dir / "metrics_run.json")
+        manifest = load_json(run_dir / "manifest.json")
+        return {
+            **metrics_run,
+            "experiment": experiment,
+            "dataset": dataset,
+            "scenario": scenario,
+            "run_id": manifest["run_id"],
+            "run_dir": str(run_dir),
+            "trace_hash": manifest["event_trace_hash"],
+            "config_hash": manifest["target_group_hash"],
+            "git_commit": manifest["git_commit"],
+            "status": "completed",
+            "official_entry": True,
+        }
 
     trace, trace_hash = _get_or_generate_trace(dataset, scenario, seed, num_windows, trace_cache)
 
@@ -174,6 +209,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--scenario", default=None, help="Override scenario")
     parser.add_argument("--seed", type=int, default=None, help="Override seed")
     parser.add_argument("--num-windows", type=int, default=None, help="Override num_windows")
+    parser.add_argument("--local-steps", type=int, default=2)
+    parser.add_argument("--device", default="cpu")
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/runs"))
     parser.add_argument("--trace-cache", type=Path, default=Path("outputs/event_traces"))
     parser.add_argument("--dry-run", action="store_true")
@@ -216,6 +253,9 @@ def main(argv: list[str] | None = None) -> int:
                             num_windows=num_windows,
                             trace_cache=args.trace_cache,
                             dry_run=args.dry_run,
+                            local_steps=args.local_steps,
+                            device=args.device,
+                            output_root=args.output_dir,
                         )
                         results.append(result)
                         status = result.get("status", "unknown")

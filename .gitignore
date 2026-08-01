@@ -18,6 +18,11 @@ outputs/audits/
 outputs/event_traces/
 outputs/gate_work/
 outputs/*.json
+outputs/entry_smoke/
+outputs/statistics/
+outputs/validation/
+outputs/aggregate/
+logs/
 deliverables/
 *.zip
 docs/audits/
@@ -27,6 +32,8 @@ configs/frozen/PRE_E1_SMOKE_*.yaml
 configs/frozen/pre_e1_smoke.yaml
 configs/frozen/e1_sensorscope_balanced.yaml
 configs/frozen/FROZEN_CONFIG_MANIFEST.json
+configs/frozen/e1_selected_baseline.yaml
+configs/frozen/e1_sensorscope_clients.yaml
 参考文件/
 *.npz
 .DS_Store

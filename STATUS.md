@@ -3,7 +3,7 @@
 **Updated:** 2026-08-01
 **Workspace root:** `D:\Cursor\raven.mcs`  
 **Source docs:** paper PDF + Cursor instruction TXT + design DOCX (`docs/SOURCES.md`)  
-**Current phase:** Pre-E1 Seal complete; teacher authorization pending
+**Current phase:** E1-ENTRY-SEAL complete; teacher authorization pending
 **Main experiments:** Not started
 
 ---
@@ -16,12 +16,13 @@
 | P10-C | PASS | FedAvg/TwoStage local and server paths produce distinct audited updates |
 | P10-D | PASS | RMSE_mu/RMSE_rho are recomputed from atomic rows and Gap_mis identity is exact |
 | P10-E | PASS | Two same-seed SensorScope runs pass R1-G1 through R1-G8 |
-| E1 | READY_FOR_TEACHER_AUTHORIZATION | Pre-E1 Seal evidence complete; no E1 run has been executed |
+| E1 | READY_FOR_TEACHER_AUTHORIZATION | E1-ENTRY-SEAL official-entry smoke passed; formal E1 not executed |
 
 ## Pre-E1 Seal
 
 - `P10-R1 = PASS`
-- `PRE-E1-SEAL = PASS`
+- `PRE-E1-SMOKE = PASS`
+- `E1-ENTRY-SEAL = PASS`
 - `E1 = READY_FOR_TEACHER_AUTHORIZATION`
 - `E2-E9 = NOT STARTED`
 
@@ -44,8 +45,9 @@ All P10 smoke checks and R1-G1 through R1-G8: **PASS**.
 
 ## P10 Code Status
 
-- **11 deployable methods + 1 external pending (FLAMF)**
+- **E1 five methods: official entry verified**
 - Central-All/Central-Delivered: marked as requiring true centralized training (NotImplementedError in aggregation)
+- FLAMF-Original: external baseline not integrated
 - Old WindowRunner moved to `synthetic_gate_runner.py` for G2-G5 gates
 - New `window_runner.py`: full Common-NDMF training with local SGD, two-stage correction, debt, variance
 - `configs/frozen/`: frozen config gate for test-entry (ISSUE-010)
@@ -66,11 +68,11 @@ All P10 smoke checks and R1-G1 through R1-G8: **PASS**.
 | 5 Common-NDMF | **DONE** | Shared backbone; no client embedding |
 | 6 WindowRunner + G2 | **DONE** | Frozen θ + one update; G2 PASS |
 | 7 Propensity / opportunity | **DONE** | Lagged p/q + EMA opportunity cores |
-| 8 Methods | **PARTIAL** | FedAvg/FedAsync/TwoStage/RAVEN aggregators |
+| 8 Methods | **PARTIAL** | E1 five-method official entry verified; centralized methods remain pending |
 | 9 P2 / debt + G3–G5 | **DONE** | G3–G5 PASS via `check_hard_gates.py` |
-| 10 Metrics / artifacts | PARTIAL | Debt diagnostics exist; full RMSE suite pending |
+| 10 Metrics / artifacts | **DONE FOR E1 ENTRY** | Full predictions, risks, RMSE/Gap/ESS/clip/solver artifacts |
 | E0 unit suite | **DONE** | E0.1–E0.6 green via `scripts/check_e0.py` |
-| E1 Balanced / G6 | BLOCKED | ISSUE-012 + no-harm gate not run |
+| E1 Balanced / G6 | READY_FOR_TEACHER_AUTHORIZATION | Formal five-seed E1 not executed |
 | E2–E9 / 20-seed | BLOCKED | |
 
 ---

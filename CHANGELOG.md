@@ -1,5 +1,18 @@
 # Changelog
 
+## E1-ENTRY-SEAL
+
+- Added the official SensorScope E1 runner with frozen G=4 main groups and
+  separate 220-group diagnostics.
+- Replaced the dummy EventTrace generator with five real-ID balanced traces
+  and a seed-independent frozen station/client mapping.
+- Added complete per-run prediction, risk, metric, ESS, clip, method, system
+  and solver artifacts for all five E1 methods.
+- Added strict `per_seed_metrics.parquet` aggregation, validation-only baseline
+  freeze, selected-baseline no-harm dry-run and E1E-G1–G8 checks.
+- Verified the official five-method, one-seed, 20-window entry smoke. Formal E1
+  and E2–E9 remain unexecuted.
+
 ## Pre-E1 Seal
 
 - Added strict P2 residual gates with SCS fallback on inaccurate CLARABEL results.

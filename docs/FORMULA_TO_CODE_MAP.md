@@ -13,6 +13,17 @@
 | `U=1 => tau<=S_max` | `simulation/event_trace.py::EventTrace.validate` | `PRE_E1_TIME_STALENESS_AUDIT.json` |
 | Registration-time deadline slack | `propensity/usable.py::deadline_slack_pre` | `DATA_DICTIONARY.md`, q audit |
 
+## E1 official-entry closure
+
+| Requirement | Implementation | Evidence |
+|---|---|---|
+| Frozen SensorScope G=4 main groups | `experiments/e1_entry.py::add_e1_groups` | run manifests, prediction rows |
+| Real-ID balanced EventTrace family | `experiments/e1_entry.py::generate_balanced_trace` | five trace manifests/audits |
+| Official atomic target/arrival risk | `experiments/e1_entry.py::_arrival_weights` | `arrival_weights_test.parquet` |
+| Per-seed aggregation | `scripts/aggregate_results.py::aggregate` | `per_seed_metrics.parquet` |
+| Validation-only baseline | `scripts/select_e1_baseline.py::choose_baseline` | `e1_selected_baseline.yaml` |
+| No-harm degradation dry-run | `scripts/statistical_tests.py` | `no_harm_summary.json` |
+
 ---
 
 ## 1. Atomic units, strata, targets

@@ -6,6 +6,36 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
 
 ## Open
 
+### ISSUE-020 — Official E1 runner ignores frozen G=4 mapping
+- **Severity:** Blocking
+- **Status:** Closed 2026-08-01; official runner validates the frozen mapping
+  hash and explicitly runs debt/P2 with G=4.
+
+### ISSUE-021 — Official E1 EventTrace generator uses dummy unit IDs
+- **Severity:** Blocking
+- **Status:** Closed 2026-08-01; five frozen traces use real SensorScope IDs
+  and a stable SHA256 station-cluster mapping.
+
+### ISSUE-022 — Official E1 runner does not emit full paper metrics
+- **Severity:** Blocking
+- **Status:** Closed 2026-08-01; every official run emits predictions,
+  target/arrival risk, full run/window metrics and diagnostics.
+
+### ISSUE-023 — aggregate_results does not emit per_seed_metrics.parquet
+- **Severity:** Blocking
+- **Status:** Closed 2026-08-01; strict aggregation emits parquet/CSV/run index,
+  summary and failed-run inventory.
+
+### ISSUE-024 — Validation baseline selection is not frozen
+- **Severity:** Blocking
+- **Status:** Closed 2026-08-01; selection uses validation only and is frozen
+  in `e1_selected_baseline.yaml`.
+
+### ISSUE-025 — FedAsync and TimeAlign lack official-entry smoke evidence
+- **Severity:** Blocking
+- **Status:** Closed 2026-08-01; both methods completed the official-entry
+  single-seed smoke with diagnostics.
+
 ### ISSUE-014 — Chronological window/tau audit incomplete
 - **Severity:** High
 - **Observation:** P10 Smoke did not emit continuous-window, future-leakage, or tau-consistency audit evidence.

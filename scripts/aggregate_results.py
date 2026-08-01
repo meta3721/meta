@@ -1,96 +1,154 @@
 #!/usr/bin/env python3
-"""Aggregate experiment results across seeds, methods, and datasets.
-
-Usage:
-    python scripts/aggregate_results.py --experiment E1_balanced
-    python scripts/aggregate_results.py --input-dir outputs/runs --output outputs/aggregate/E1_summary.json
-"""
-
+"""Strict E1 per-seed aggregation."""
 from __future__ import annotations
 
 import argparse
 import sys
-from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+import pandas as pd
 
-_ROOT = Path(__file__).resolve().parents[1]
-_SRC = _ROOT / "src"
-if str(_SRC) not in sys.path:
-    sys.path.insert(0, str(_SRC))
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
 
+from raven_mcs.experiments.e1_entry import E1_METHODS, E1_SEEDS
 from raven_mcs.utils.serialization import dump_json, load_json
 
-
-def _collect_results(input_dir: Path, experiment: str) -> list[dict[str, Any]]:
-    results: list[dict[str, Any]] = []
-    pattern = f"{experiment}_summary.json"
-    for path in sorted(input_dir.rglob(pattern)):
-        data = load_json(path)
-        if isinstance(data.get("results"), list):
-            results.extend(data["results"])
-        elif isinstance(data, dict) and "status" in data:
-            results.append(data)
-    return results
+PER_SEED_COLUMNS = (
+    "seed", "method", "RMSE_mu", "RMSE_rho", "Gap_mis", "Head_RMSE",
+    "Tail_RMSE", "Delta_group", "Delta_c_s", "avg_delta_group",
+    "avg_delta_ref", "normalized_debt", "median_n_eff",
+    "first_stage_clip_rate", "second_stage_clip_rate", "fallback_count",
+    "solver_failure_count", "runtime", "communication", "run_id",
+    "config_hash", "event_trace_hash", "git_commit", "status",
+)
 
 
-def _aggregate(results: list[dict[str, Any]]) -> dict[str, Any]:
-    by_method: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for r in results:
-        method = r.get("method", "unknown")
-        by_method[method].append(r)
-
-    summary: dict[str, Any] = {
-        "total_runs": len(results),
-        "methods": {},
+def collect_run(run_dir: Path) -> dict[str, Any]:
+    metrics = load_json(run_dir / "metrics_run.json")
+    manifest = load_json(run_dir / "manifest.json")
+    return {
+        "seed": int(metrics["seed"]),
+        "method": metrics["method"],
+        "RMSE_mu": metrics["RMSE_mu"],
+        "RMSE_rho": metrics["RMSE_rho"],
+        "Gap_mis": metrics["Gap_mis"],
+        "Head_RMSE": metrics["Head_RMSE"],
+        "Tail_RMSE": metrics["Tail_RMSE"],
+        "Delta_group": metrics["Delta_group"],
+        "Delta_c_s": metrics["Delta_c_s"],
+        "avg_delta_group": metrics["avg_delta_group"],
+        "avg_delta_ref": metrics["avg_delta_ref"],
+        "normalized_debt": metrics["normalized_debt"],
+        "median_n_eff": metrics["median_n_eff"],
+        "first_stage_clip_rate": metrics["first_stage_clip_rate"],
+        "second_stage_clip_rate": metrics["second_stage_clip_rate"],
+        "fallback_count": metrics["fallback_count"],
+        "solver_failure_count": metrics["solver_failure_count"],
+        "runtime": metrics["total_runtime"],
+        "communication": metrics["total_communication"],
+        "run_id": manifest["run_id"],
+        "config_hash": manifest["target_group_hash"],
+        "event_trace_hash": manifest["event_trace_hash"],
+        "git_commit": manifest["git_commit"],
+        "status": metrics["status"],
+        "target_group_hash": manifest["target_group_hash"],
+        "run_dir": str(run_dir),
     }
 
-    for method, runs in by_method.items():
-        debits = [r.get("final_debt_l1") for r in runs if r.get("final_debt_l1") is not None]
-        active = [r.get("active_windows") for r in runs if r.get("active_windows") is not None]
-        statuses = [r.get("status") for r in runs]
 
-        summary["methods"][method] = {
-            "num_runs": len(runs),
-            "num_success": sum(1 for s in statuses if s == "completed"),
-            "mean_debt_l1": float(np.mean(debits)) if debits else None,
-            "std_debt_l1": float(np.std(debits)) if debits else None,
-            "mean_active_windows": float(np.mean(active)) if active else None,
-            "std_active_windows": float(np.std(active)) if active else None,
-        }
+def validate_rows(frame: pd.DataFrame, *, mode: str) -> None:
+    required_seeds = {26001} if mode == "entry-smoke" else set(E1_SEEDS)
+    if set(frame["seed"]) != required_seeds:
+        raise RuntimeError(
+            f"{mode} seed set mismatch: {sorted(set(frame['seed']))}",
+        )
+    duplicates = frame.duplicated(["seed", "method"], keep=False)
+    if duplicates.any():
+        raise RuntimeError("duplicate seed-method pair")
+    for seed in required_seeds:
+        methods = set(frame.loc[frame["seed"] == seed, "method"])
+        if methods != set(E1_METHODS):
+            raise RuntimeError(f"seed {seed} method set mismatch: {sorted(methods)}")
+    if len(frame) != len(required_seeds) * len(E1_METHODS):
+        raise RuntimeError("unexpected successful run count")
+    if set(frame["status"]) != {"completed"}:
+        raise RuntimeError("failed/non-completed run in aggregation")
+    if frame[list(PER_SEED_COLUMNS)].isna().any().any():
+        raise RuntimeError("missing metric in per-seed aggregation")
+    if frame.duplicated(["run_id"]).any():
+        raise RuntimeError("duplicate run_id")
+    for column in ("git_commit", "config_hash", "target_group_hash"):
+        if frame[column].nunique() != 1:
+            raise RuntimeError(f"{column} mismatch")
+    if frame.groupby("seed")["event_trace_hash"].nunique().max() != 1:
+        raise RuntimeError("methods do not share EventTrace within seed")
 
-    return summary
+
+def aggregate(input_root: Path, output_dir: Path, *, mode: str) -> pd.DataFrame:
+    successes = []
+    failures = []
+    for manifest_path in sorted(input_root.rglob("manifest.json")):
+        run_dir = manifest_path.parent
+        try:
+            successes.append(collect_run(run_dir))
+        except Exception as exc:  # noqa: BLE001
+            failures.append({"run_dir": str(run_dir), "error": str(exc)})
+    frame = pd.DataFrame(successes)
+    if frame.empty:
+        raise RuntimeError(f"no successful E1 runs under {input_root}")
+    validate_rows(frame, mode=mode)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    ordered = frame[list(PER_SEED_COLUMNS)].sort_values(["seed", "method"])
+    ordered.to_parquet(output_dir / "per_seed_metrics.parquet", index=False)
+    ordered.to_csv(output_dir / "per_seed_metrics.csv", index=False)
+    frame[[
+        "run_id", "run_dir", "seed", "method", "status", "git_commit",
+        "config_hash", "event_trace_hash", "target_group_hash",
+    ]].to_parquet(output_dir / "run_index.parquet", index=False)
+    pd.DataFrame(failures, columns=["run_dir", "error"]).to_csv(
+        output_dir / "failed_runs.csv", index=False,
+    )
+    dump_json({
+        "experiment": "E1_balanced",
+        "mode": mode,
+        "successful_runs": len(frame),
+        "failed_runs": len(failures),
+        "seeds": sorted(frame["seed"].unique().tolist()),
+        "methods": sorted(frame["method"].unique().tolist()),
+        "mean_metrics": {
+            method: {
+                metric: float(values[metric].mean())
+                for metric in ("RMSE_mu", "RMSE_rho", "Gap_mis")
+            }
+            for method, values in frame.groupby("method")
+        },
+        "hard_gate_pass": True,
+    }, output_dir / "aggregate_summary.json")
+    return ordered
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Aggregate RAVEN-MCS experiment results.")
-    parser.add_argument("--experiment", default=None, help="Experiment name filter")
-    parser.add_argument("--input-dir", type=Path, default=Path("outputs/runs"))
-    parser.add_argument("--output-dir", type=Path, default=Path("outputs/aggregate"))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--experiment", default="E1_balanced")
+    parser.add_argument("--mode", choices=["formal", "entry-smoke"], default="formal")
+    parser.add_argument("--input-dir", type=Path)
+    parser.add_argument("--output-dir", type=Path)
     args = parser.parse_args(argv)
-
-    if not args.input_dir.exists():
-        print(f"No results directory: {args.input_dir}")
-        return 0
-
-    experiment = args.experiment or "*"
-    results = _collect_results(args.input_dir, experiment)
-    if not results:
-        print(f"No results found in {args.input_dir}")
-        return 0
-
-    summary = _aggregate(results)
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-    out = args.output_dir / f"{experiment}_aggregate.json"
-    dump_json(summary, out)
-    print(f"Aggregated {len(results)} runs across {len(summary['methods'])} methods → {out}")
-
-    for method, stats in summary["methods"].items():
-        print(f"  {method}: {stats['num_success']}/{stats['num_runs']} "
-              f"debt={stats['mean_debt_l1']:.6f}±{stats['std_debt_l1']:.6f}")
-
+    if args.experiment != "E1_balanced":
+        raise ValueError("strict aggregation currently supports E1_balanced")
+    if args.mode == "entry-smoke":
+        input_dir = args.input_dir or ROOT / "outputs/entry_smoke/E1_ENTRY_SMOKE_seed26001/runs"
+        output_dir = args.output_dir or ROOT / "outputs/entry_smoke/E1_ENTRY_SMOKE_seed26001/aggregate"
+    else:
+        input_dir = args.input_dir or ROOT / "outputs/runs"
+        output_dir = args.output_dir or ROOT / "outputs/aggregate/E1_balanced"
+    frame = aggregate(input_dir, output_dir, mode=args.mode)
+    print(f"Aggregated {len(frame)} rows -> {output_dir / 'per_seed_metrics.parquet'}")
     return 0
 
 

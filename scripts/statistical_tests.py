@@ -36,7 +36,7 @@ _SRC = _ROOT / "src"
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
-from raven_mcs.utils.serialization import dump_json, load_json
+from raven_mcs.utils.serialization import dump_json, load_json, load_yaml
 
 
 def _bootstrap_ci(
@@ -57,7 +57,7 @@ def _bootstrap_ci(
     hi = float(np.percentile(means, 100 * (1 - alpha / 2)))
     return {
         "mean": float(np.mean(values)),
-        "std": float(np.std(values, ddof=1)),
+        "std": float(np.std(values, ddof=1)) if n > 1 else 0.0,
         "ci_lower": lo,
         "ci_upper": hi,
         "n": n,
@@ -111,7 +111,7 @@ def _no_harm_test(
 
     # Effect size (Cohen's d for paired)
     d_bar = np.mean(diffs)
-    s_bar = np.std(diffs, ddof=1)
+    s_bar = np.std(diffs, ddof=1) if len(diffs) > 1 else 0.0
     cohens_d = d_bar / s_bar if s_bar > 0 else 0.0
 
     return {
@@ -251,29 +251,48 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--input", type=Path, default=None, help="Input JSON with results")
     parser.add_argument("--input-dir", type=Path, default=None,
                         help="Directory with per_seed_metrics.parquet")
-    parser.add_argument("--output-dir", type=Path, default=Path("outputs/statistics"))
+    parser.add_argument("--output-dir", type=Path, default=None)
     parser.add_argument("--alpha", type=float, default=0.05)
     parser.add_argument("--threshold", type=float, default=0.03,
                         help="No-harm degradation threshold")
-    parser.add_argument("--baseline", default="fedavg_window",
-                        help="Baseline method for no-harm test")
-    parser.add_argument("--metric", default="rmse_mu",
+    parser.add_argument("--baseline", default=None,
+                        help="Explicit override; normally read from frozen selection")
+    parser.add_argument("--selected-baseline", type=Path,
+                        default=_ROOT / "configs/frozen/e1_selected_baseline.yaml")
+    parser.add_argument("--metric", default="RMSE_mu",
                         help="Metric to compare")
+    parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
+    if args.input_dir is None:
+        args.input_dir = (
+            _ROOT / "outputs/entry_smoke/E1_ENTRY_SMOKE_seed26001/aggregate"
+            if args.dry_run
+            else _ROOT / "outputs/aggregate" / args.experiment
+        )
 
+    if not args.selected_baseline.exists():
+        raise FileNotFoundError(
+            f"frozen selected baseline missing: {args.selected_baseline}",
+        )
+    selected = load_yaml(args.selected_baseline)
+    baseline_method = args.baseline or selected.get("selected_baseline")
+    if baseline_method not in {"fedavg_window", "fedasync_window", "timealign_agg"}:
+        raise RuntimeError("invalid or missing frozen E1 selected baseline")
+    output_dir = args.output_dir or _ROOT / "outputs/statistics" / args.experiment
     tests: dict[str, Any] = {
         "experiment": args.experiment,
         "alpha": args.alpha,
         "no_harm_threshold": args.threshold,
-        "baseline_method": args.baseline,
+        "baseline_method": baseline_method,
+        "baseline_source": str(args.selected_baseline),
         "metric": args.metric,
     }
 
     if args.input:
         results = load_json(args.input)
         tests["source"] = str(args.input)
-        args.output_dir.mkdir(parents=True, exist_ok=True)
-        out = args.output_dir / f"{args.experiment}_statistics.json"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        out = output_dir / f"{args.experiment}_statistics.json"
         dump_json(tests, out)
         print(f"Statistical tests → {out}")
         return 0
@@ -281,18 +300,58 @@ def main(argv: list[str] | None = None) -> int:
     if args.input_dir:
         try:
             df = load_per_seed_metrics(args.input_dir)
+            expected = set(df.loc[df["method"] == baseline_method, "seed"])
+            raven_seeds = set(df.loc[df["method"] == "raven", "seed"])
+            if expected != raven_seeds:
+                raise RuntimeError("paired seed mismatch or seed exclusion")
             stats = compute_all_statistics(
-                df, baseline_method=args.baseline, metric=args.metric,
+                df, baseline_method=baseline_method, methods=["raven"],
+                metric=args.metric,
                 alpha=args.alpha, threshold=args.threshold,
             )
             tests.update(stats)
-            args.output_dir.mkdir(parents=True, exist_ok=True)
-            out = args.output_dir / f"{args.experiment}_statistics.json"
-            dump_json(tests, out)
-            print(f"Statistical tests → {out}")
+            single_seed = len(expected) == 1
+            if single_seed and not args.dry_run:
+                raise RuntimeError("single-seed E1 statistics require --dry-run")
+            tests["status"] = "DRY_RUN_SCHEMA_PASS" if args.dry_run else "FORMAL"
+            tests["formal_no_harm_conclusion"] = not args.dry_run
+            if args.dry_run:
+                for result in tests.get("no_harm_tests", {}).values():
+                    result["no_harm_pass"] = None
+            output_dir.mkdir(parents=True, exist_ok=True)
+            dump_json(tests, output_dir / "no_harm_summary.json")
+            paired = df.loc[
+                df["method"].isin([baseline_method, "raven"]),
+                ["seed", "method", args.metric],
+            ].pivot(index="seed", columns="method", values=args.metric).reset_index()
+            paired["degradation"] = (
+                paired["raven"] - paired[baseline_method]
+            ) / paired[baseline_method]
+            paired.to_parquet(output_dir / "no_harm_per_seed.parquet", index=False)
+            pd.DataFrame(columns=[
+                "comparison", "statistic", "p_value",
+            ]).to_csv(output_dir / "wilcoxon_results.csv", index=False)
+            pd.DataFrame(columns=[
+                "comparison", "raw_p", "holm_significant",
+            ]).to_csv(output_dir / "holm_results.csv", index=False)
+            report = (
+                "# E1 no-harm statistics\n\n"
+                f"Status: {tests['status']}\n\n"
+                f"Frozen baseline: {baseline_method}\n\n"
+                "Single-seed entry smoke is schema validation only; no formal "
+                "no-harm PASS/FAIL is reported.\n"
+            )
+            (output_dir / "statistics_report.md").write_text(report, encoding="utf-8")
+            print(f"Statistical dry-run → {output_dir}")
             for m, nh in stats.get("no_harm_tests", {}).items():
-                print(f"  {m}: no-harm={'PASS' if nh['no_harm_pass'] else 'FAIL'}, "
-                      f"upper={nh['one_sided_upper_bound']:.4f}")
+                decision = (
+                    "DRY_RUN_ONLY" if args.dry_run
+                    else ("PASS" if nh["no_harm_pass"] else "FAIL")
+                )
+                print(
+                    f"  {m}: no-harm={decision}, "
+                    f"upper={nh['one_sided_upper_bound']:.4f}",
+                )
             return 0
         except FileNotFoundError as exc:
             print(f"Error: {exc}", file=sys.stderr)
@@ -302,8 +361,8 @@ def main(argv: list[str] | None = None) -> int:
     tests["status"] = "no_input_data"
     print("No input data provided. Provide --input-dir with per_seed_metrics.parquet "
           "from experiment outputs.")
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-    out = args.output_dir / f"{args.experiment}_statistics.json"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    out = output_dir / f"{args.experiment}_statistics.json"
     dump_json(tests, out)
     return 0
 
