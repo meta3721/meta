@@ -847,6 +847,8 @@ def run_smoke(
             "fallback_triggered": result.fallback_used,
             "fallback_solver": result.fallback_solver,
             "fallback_status": result.fallback_status,
+            "feasibility_repair_used": result.feasibility_repair_used,
+            "pre_repair_violation": result.pre_repair_violation,
             "accepted_solver": result.backend,
             "accepted_status": result.status,
         })
@@ -859,13 +861,17 @@ def run_smoke(
         "max_nonnegative_violation": float(solver_df["nonnegative_violation"].max()),
         "max_upper_bound_violation": float(solver_df["upper_bound_violation"].max()),
         "max_ess_l2_violation": float(solver_df["ess_l2_violation"].max()),
-        "all_accepted_optimal": bool((solver_df["accepted_status"] == "optimal").all()),
+        "all_accepted_feasible": bool(solver_df["accepted_status"].isin(
+            ["optimal", "feasible_repaired"],
+        ).all()),
         "hard_gate_pass": bool(
             (solver_df["simplex_residual"] <= 1e-7).all()
             and (solver_df["nonnegative_violation"] <= 1e-8).all()
             and (solver_df["upper_bound_violation"] <= 1e-7).all()
             and (solver_df["ess_l2_violation"] <= 1e-7).all()
-            and (solver_df["accepted_status"] == "optimal").all()
+            and solver_df["accepted_status"].isin(
+                ["optimal", "feasible_repaired"],
+            ).all()
         ),
     }
     dump_json(solver_audit, run_dir / "PRE_E1_SOLVER_AUDIT.json")

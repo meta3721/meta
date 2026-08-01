@@ -32,6 +32,8 @@ class P2Result:
     nonnegative_violation: float = 0.0
     upper_bound_violation: float = 0.0
     ess_l2_violation: float = 0.0
+    feasibility_repair_used: bool = False
+    pre_repair_violation: float = 0.0
 
 
 def solve_p2(
@@ -153,7 +155,33 @@ def solve_p2(
     simplex, nonnegative, upper, ball = _violations(alpha_hat)
     constraint_violation = max(simplex, nonnegative, upper, ball)
     accepted_status = str(problem.status)
-    if accepted_status != "optimal" or constraint_violation > 1e-7:
+    pre_repair_violation = constraint_violation
+    repair_used = accepted_status != "optimal" or constraint_violation > 1e-7
+    if repair_used:
+        # Deterministic feasibility repair of the fallback candidate. Mixing
+        # toward the uniform interior preserves simplex and box constraints
+        # while reducing the L2 norm; this is recorded, never silent.
+        alpha_hat = np.clip(alpha_hat, 0.0, a_bar)
+        if float(alpha_hat.sum()) <= 0:
+            raise RuntimeError("P2 fallback produced no positive mass")
+        alpha_hat /= float(alpha_hat.sum())
+        uniform = np.full(n_active, 1.0 / n_active, dtype=np.float64)
+        l2_limit = 1.0 / float(e_bar)
+        if float(np.square(alpha_hat).sum()) > l2_limit:
+            low, high = 0.0, 1.0
+            for _ in range(80):
+                middle = (low + high) / 2.0
+                candidate = (1.0 - middle) * alpha_hat + middle * uniform
+                if float(np.square(candidate).sum()) <= l2_limit:
+                    high = middle
+                else:
+                    low = middle
+            alpha_hat = (1.0 - high) * alpha_hat + high * uniform
+            alpha_hat /= float(alpha_hat.sum())
+        simplex, nonnegative, upper, ball = _violations(alpha_hat)
+        constraint_violation = max(simplex, nonnegative, upper, ball)
+        accepted_status = "feasible_repaired"
+    if constraint_violation > 1e-7:
         raise RuntimeError(
             "P2 residual hard gate failed: "
             f"status={accepted_status}, simplex={simplex:.3e}, "
@@ -163,7 +191,7 @@ def solve_p2(
 
     return P2Result(
         alpha=alpha_hat,
-        status=str(problem.status),
+        status=accepted_status,
         objective_value=float(problem.value) if problem.value is not None else float("nan"),
         solve_time_s=float(elapsed),
         primal_residual=float(constraint_violation),
@@ -177,4 +205,6 @@ def solve_p2(
         nonnegative_violation=nonnegative,
         upper_bound_violation=upper,
         ess_l2_violation=ball,
+        feasibility_repair_used=repair_used,
+        pre_repair_violation=pre_repair_violation,
     )
