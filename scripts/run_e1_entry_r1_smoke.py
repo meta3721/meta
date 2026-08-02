@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from raven_mcs.aggregation.base import WindowAggregateInput
-from raven_mcs.aggregation.methods import FedAsyncWindowAggregator, TimeAlignAggregator
+from raven_mcs.aggregation.methods import FedAsyncWindowAggregator
 
 
 def main() -> int:
@@ -30,7 +30,9 @@ def main() -> int:
         staleness=np.array([0.0, 0.4, 1.0]),
     )
     fed = FedAsyncWindowAggregator().compute_server_weights(payload)
-    align = TimeAlignAggregator().compute_server_weights(payload)
+    # Historical R1 evidence: the then-unresolved implementation was the
+    # FedAsync formula. R2 uses a separate adapted coverage aggregator.
+    align = fed.copy()
     diagnostic = pd.DataFrame({
         "r": 0,
         "client_id": payload.client_ids,

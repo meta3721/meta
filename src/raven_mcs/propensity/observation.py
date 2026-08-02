@@ -68,10 +68,23 @@ class ObservationPropensity:
         return sigmoid(X @ self.weights)
 
     def update_after_completion(self, features: np.ndarray, observed_rate: float) -> None:
-        x = np.asarray(features, dtype=np.float64).reshape(-1)
-        y = float(np.clip(observed_rate, 0.0, 1.0))
-        self.history_x.append(x)
-        self.history_y.append(y)
+        self.update_records_after_completion(
+            np.asarray(features, dtype=np.float64).reshape(1, -1),
+            np.asarray([observed_rate], dtype=np.float64),
+        )
+
+    def update_records_after_completion(
+        self, features: np.ndarray, outcomes: np.ndarray,
+    ) -> None:
+        """Add one lagged history row per completed risk record."""
+        x_batch = np.asarray(features, dtype=np.float64)
+        y_batch = np.asarray(outcomes, dtype=np.float64).reshape(-1)
+        if x_batch.ndim != 2 or x_batch.shape[1] != len(self.feature_names):
+            raise ValueError("record feature dimension mismatch")
+        if x_batch.shape[0] != len(y_batch):
+            raise ValueError("record features/outcomes length mismatch")
+        self.history_x.extend(row.copy() for row in x_batch)
+        self.history_y.extend(float(np.clip(value, 0.0, 1.0)) for value in y_batch)
         self._previous_weights = self.weights.copy()
 
         if len(self.history_y) < self.min_samples:

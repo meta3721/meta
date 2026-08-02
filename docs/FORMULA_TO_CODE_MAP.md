@@ -220,4 +220,6 @@ After each implementing phase: mark IDs IMPLEMENTED, link unit tests, record tea
 | \(\pi^{tar}_{k,s}=\Lambda_s^{tar}\lambda_{k\mid s}^{tar}\) | `correction/pi_target.py` | frozen parquet + SHA-256 |
 | \(v_{k,r}=S^2_{k,r^-}/\max(n_{eff},1)+v_{floor}\) | `FullWindowRunner` | state updated after close |
 | \(\bar\tau=\tau/S_{max}\) | `FullWindowRunner._process_window` | raw and normalized τ diagnostics |
-| TimeAlign-Agg | unresolved | no primary formula; E1 remains blocked |
+| FLAMF-TimeAlign-Adapted \(s_k=\sum_{t\in T_k}1/c_t\) | `FLAMFTimeAlignAdaptedAggregator` | teacher-frozen common-backbone adaptation |
+| Record-level p history | `ObservationPropensity.update_records_after_completion` | one row per `(client, window, unit)` after close |
+| Arrival-risk planned workload | `e1_entry._arrival_weights` | frozen train history; no raw observed count |

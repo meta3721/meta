@@ -117,33 +117,57 @@ class FedAsyncWindowAggregator(Aggregator):
 # 5. TimeAlign-Agg — staleness-aligned weights, no target correction
 # ---------------------------------------------------------------------------
 
-class TimeAlignAggregator(Aggregator):
-    """TimeAlign-Agg: same Common-NDMF backbone with time/staleness-aligned
-    weights.  No design ratio, no observation/usable correction, no
-    instant calibration, no debt, no reference, no variance —
-    staleness penalty only.
+class FLAMFTimeAlignAdaptedAggregator(Aggregator):
+    """Teacher-frozen temporal-coverage adaptation on the common backbone."""
 
-    Design §13.2 / execution instruction E1 baseline.
-    """
+    name = "flamf_timealign_adapted"
 
-    name = "timealign_agg"
-
-    def __init__(self, kappa_tau: float = 0.1, use_sample_size: bool = True) -> None:
-        self.kappa_tau = float(kappa_tau)
-        self.use_sample_size = bool(use_sample_size)
+    def __init__(self) -> None:
+        self.diagnostics_history: list[list[dict[str, object]]] = []
 
     def compute_server_weights(self, payload: WindowAggregateInput) -> np.ndarray:
-        staleness = (
-            np.asarray(payload.staleness, dtype=np.float64)
-            if payload.staleness is not None
-            else np.zeros_like(payload.raw_counts, dtype=np.float64)
-        )
-        base = (
-            payload.raw_counts.astype(np.float64)
-            if self.use_sample_size
-            else np.ones(len(payload.client_ids), dtype=np.float64)
-        )
-        return _normalize(base * np.exp(-self.kappa_tau * staleness))
+        coverage = payload.extras.get("covered_time_slots")
+        if not isinstance(coverage, dict):
+            raise ValueError(
+                "FLAMF-TimeAlign-Adapted requires covered_time_slots",
+            )
+        client_slots = {
+            client: {int(slot) for slot in coverage.get(client, [])}
+            for client in payload.client_ids
+        }
+        overlap: dict[int, int] = {}
+        for slots in client_slots.values():
+            for slot in slots:
+                overlap[slot] = overlap.get(slot, 0) + 1
+        credits = np.asarray([
+            sum(1.0 / overlap[slot] for slot in client_slots[client])
+            for client in payload.client_ids
+        ], dtype=np.float64)
+        if float(credits.sum()) <= 0.0:
+            raise RuntimeError(
+                "FLAMF-TimeAlign-Adapted total timestamp credit is zero",
+            )
+        alpha = _normalize(credits)
+        fedasync = FedAsyncWindowAggregator().compute_server_weights(payload)
+        rows = []
+        for index, client in enumerate(payload.client_ids):
+            slots = client_slots[client]
+            rows.append({
+                "client_id": client,
+                "covered_slot_count": len(coverage.get(client, [])),
+                "unique_slot_count": len(slots),
+                "shared_slot_count": sum(overlap[slot] > 1 for slot in slots),
+                "timestamp_credit": float(credits[index]),
+                "alpha_timealign": float(alpha[index]),
+                "alpha_fedasync": float(fedasync[index]),
+                "alpha_diff": float(alpha[index] - fedasync[index]),
+            })
+        self.diagnostics_history.append(rows)
+        return alpha
+
+
+# Historical import alias only; the official registry uses the adapted name.
+TimeAlignAggregator = FLAMFTimeAlignAdaptedAggregator
 
 
 # ---------------------------------------------------------------------------
@@ -499,10 +523,11 @@ def get_aggregator(name: str) -> Aggregator:
         "fedasync": FedAsyncWindowAggregator,
         "fedasync_window": FedAsyncWindowAggregator,
         # 5. TimeAlign-Agg
-        "timealign_agg": TimeAlignAggregator,
-        "timealign": TimeAlignAggregator,
-        "time_align": TimeAlignAggregator,
-        "time_align_agg": TimeAlignAggregator,
+        "flamf_timealign_adapted": FLAMFTimeAlignAdaptedAggregator,
+        "timealign_agg": FLAMFTimeAlignAdaptedAggregator,
+        "timealign": FLAMFTimeAlignAdaptedAggregator,
+        "time_align": FLAMFTimeAlignAdaptedAggregator,
+        "time_align_agg": FLAMFTimeAlignAdaptedAggregator,
         # 6. FLAMF-Original
         "flamf_original": FLAMFOriginalAggregator,
         "flamf": FLAMFOriginalAggregator,

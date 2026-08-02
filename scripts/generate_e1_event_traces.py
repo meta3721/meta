@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 from pathlib import Path
 
@@ -24,7 +25,7 @@ from raven_mcs.experiments.e1_entry import (
     stable_client_mapping,
 )
 from raven_mcs.simulation.event_trace import freeze_event_trace
-from raven_mcs.utils.hashing import sha256_json, sha256_path_tree
+from raven_mcs.utils.hashing import sha256_file, sha256_json, sha256_path_tree
 from raven_mcs.utils.serialization import dump_json, dump_yaml
 
 
@@ -35,10 +36,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--seeds", nargs="+", type=int, default=list(E1_SEEDS))
     parser.add_argument("--windows", type=int, default=100)
     parser.add_argument("--s-max", type=int, default=5)
-    parser.add_argument("--clients", type=int, default=10)
+    parser.add_argument(
+        "--num-clients", "--clients", dest="clients", type=int, default=8,
+    )
     parser.add_argument("--freeze", action="store_true")
     parser.add_argument("--output-dir", type=Path, default=ROOT / "outputs/event_traces")
     parser.add_argument("--include-events", action="store_true")
+    parser.add_argument("--require-clean-git", action="store_true")
     args = parser.parse_args(argv)
     if args.dataset != "sensorscope" or args.scenario != "balanced":
         raise ValueError("official E1 traces are SensorScope balanced only")
@@ -46,6 +50,14 @@ def main(argv: list[str] | None = None) -> int:
         raise ValueError("official E1 trace freeze requires seeds 26001..26005")
     if args.s_max != 5:
         raise ValueError("official E1 S_max is frozen to 5")
+    if args.clients != 8:
+        raise ValueError("official E1 client count is frozen to 8")
+    clean = subprocess.run(
+        ["git", "status", "--porcelain"], cwd=ROOT, check=True,
+        capture_output=True, text=True,
+    ).stdout.strip() == ""
+    if args.require_clean_git and not clean:
+        raise RuntimeError("official EventTrace generation requires clean Git")
 
     dataset = sensorscope_dataset(ROOT)
     atomic = add_e1_groups(dataset.atomic_df)
@@ -63,6 +75,9 @@ def main(argv: list[str] | None = None) -> int:
     _, group_hash = frozen_group_identity(ROOT)
     data_hash = sha256_path_tree(ROOT / "data/processed/sensorscope")
     commit = git_commit(ROOT)
+    pi_target_hash = sha256_file(
+        ROOT / "configs/frozen/e1_pi_target_client_stratum.parquet",
+    )
     identities = {}
     for seed in args.seeds:
         output = args.output_dir / f"e1_balanced_seed{seed}"
@@ -89,6 +104,7 @@ def main(argv: list[str] | None = None) -> int:
             "usable_rate": "0.60 +/- deterministic 0.02",
             "client_mapping_hash": mapping_hash,
             "target_group_hash": group_hash,
+            "pi_target_hash": pi_target_hash,
         }
         dump_yaml(config, output / "generation_config.yaml")
         manifest = {
@@ -96,6 +112,7 @@ def main(argv: list[str] | None = None) -> int:
             "dataset_hash": data_hash,
             "event_trace_hash": identity["trace_hash"],
             "generation_git_commit": commit,
+            "git_clean": clean,
             "events_sha256": identity["events_sha256"],
             "metadata_sha256": identity["metadata_sha256"],
             "audit_pass": True,
@@ -114,6 +131,8 @@ def main(argv: list[str] | None = None) -> int:
         "client_mapping_hash": mapping_hash,
         "target_group_hash": group_hash,
         "git_commit": commit,
+        "git_clean": clean,
+        "pi_target_hash": pi_target_hash,
         "traces": identities,
     }, args.output_dir / "E1_BALANCED_EVENTTRACE_MANIFEST.json")
     return 0

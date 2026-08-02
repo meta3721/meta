@@ -3,7 +3,7 @@
 **Updated:** 2026-08-01
 **Workspace root:** `D:\Cursor\raven.mcs`  
 **Source docs:** paper PDF + Cursor instruction TXT + design DOCX (`docs/SOURCES.md`)  
-**Current phase:** E1-ENTRY-R1 partial; teacher decision required
+**Current phase:** E1-ENTRY-R2 final entry seal in progress
 **Main experiments:** Not started
 
 ---
@@ -25,6 +25,7 @@
 - `E1-ENTRY-INFRASTRUCTURE = PASS`
 - `E1-ENTRY-SEMANTIC-AUDIT = FAIL`
 - `E1-ENTRY-R1 = PARTIAL`
+- `E1-ENTRY-R2 = IN PROGRESS`
 - `E1 = BLOCKED`
 
 R1 gates G1–G5 and G7–G8 pass. G6 fails because no primary source or

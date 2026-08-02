@@ -265,7 +265,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.input_dir is None:
         args.input_dir = (
-            _ROOT / "outputs/entry_smoke/E1_ENTRY_SMOKE_seed26001/aggregate"
+            _ROOT / "outputs/aggregate/E1_balanced_entry_r2"
             if args.dry_run
             else _ROOT / "outputs/aggregate" / args.experiment
         )
@@ -276,7 +276,9 @@ def main(argv: list[str] | None = None) -> int:
         )
     selected = load_yaml(args.selected_baseline)
     baseline_method = args.baseline or selected.get("selected_baseline")
-    if baseline_method not in {"fedavg_window", "fedasync_window", "timealign_agg"}:
+    if baseline_method not in {
+        "fedavg_window", "fedasync_window", "flamf_timealign_adapted",
+    }:
         raise RuntimeError("invalid or missing frozen E1 selected baseline")
     output_dir = args.output_dir or _ROOT / "outputs/statistics" / args.experiment
     tests: dict[str, Any] = {

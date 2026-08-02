@@ -1,0 +1,14 @@
+name: flamf_timealign_adapted
+display_name: FLAMF-TimeAlign-Adapted
+description: >-
+  Common-backbone adaptation of FLAMF-style timestamp-aligned asynchronous
+  aggregation using inverse overlap credit on frozen sensing slots.
+uses_design_ratio: false
+uses_observation_ipw: false
+uses_usable_ipw: false
+uses_debt: false
+uses_variance: false
+uses_staleness: false
+time_slot_source: atomic_units.time_index
+zero_total_credit: fail
+parameters: {}

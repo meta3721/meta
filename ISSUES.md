@@ -30,6 +30,11 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
   the R1 exporter.
 - **ISSUE-036 — Empty Tail/Head group returns zero.** Closed; now NaN and a
   run-stopping hard gate.
+- **ISSUE-037 — Arrival-risk uses post-outcome raw_workload.** Open for R2.
+- **ISSUE-038 — p propensity history should be record-level.** Open for R2.
+- **ISSUE-039 — Official client count is not consistently frozen as 8.** Open.
+- **ISSUE-040 — EventTrace generation commit differs from final R2 commit.**
+  Open until post-commit trace regeneration.
 
 ### ISSUE-020 — Official E1 runner ignores frozen G=4 mapping
 - **Severity:** Blocking

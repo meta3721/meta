@@ -29,7 +29,8 @@ processed dataset (SensorScope, 55×312, SHA-256 frozen)
     → reproducible run artifact (manifest + predictions + metrics + checks)
 ```
 
-Three methods evaluated on real SensorScope data (10 clients, 20 windows, seed 26001):
+Historical P10 smoke: three methods evaluated on real SensorScope data
+(10 clients, 20 windows, seed 26001; not the formal E1 client count):
 
 | Method | RMSE_mu | RMSE_rho | Gap_mis | Train Loss | Time |
 |--------|---------|----------|---------|------------|------|
@@ -170,7 +171,8 @@ Each window follows the 12-step pipeline specified in P10:
 ### 4.6 EventTrace Generation (Real Data)
 
 P10-SMOKE EventTrace was generated from real SensorScope `atomic_units.parquet`:
-- **10 clients** assigned via deterministic hash of unit_id
+- **Historical smoke configuration:** 10 clients assigned via deterministic
+  hash of unit_id. Formal E1 uses the separately frozen eight-client mapping.
 - **20 windows** partitioned by time_index modulo
 - **obs_rate=0.20** observation pattern (complete_aligned scenario)
 - **usable_rate=0.60** usable event generation

@@ -29,6 +29,12 @@ Local training labels are looked up exclusively as
 `client_measurements[(client_id, unit_id)].potential_measurement`.
 `atomic_units.target_value` is reserved for evaluation.
 
+The formal arrival-risk reconstruction uses the same pre-outcome feature
+boundary and only frozen train EventTrace history. Observation-propensity
+history is persisted one row per risk record after window close, with
+`prediction_time`, `update_time`, p-model version and source split. Current O
+is never used for its own prediction.
+
 ## Shared processed schema
 
 ### `atomic_units.parquet`

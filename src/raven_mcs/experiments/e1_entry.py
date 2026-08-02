@@ -35,13 +35,18 @@ from raven_mcs.metrics.distribution import avg_delta_ref, delta_group
 from raven_mcs.models.features import extract_features
 from raven_mcs.simulation.event_trace import EventTrace, EventTraceMetadata
 from raven_mcs.training.window_runner import FullWindowRunner, build_full_runner
-from raven_mcs.utils.hashing import environment_hash, sha256_file, sha256_path_tree
+from raven_mcs.utils.hashing import (
+    environment_hash,
+    sha256_file,
+    sha256_json,
+    sha256_path_tree,
+)
 from raven_mcs.utils.serialization import dump_json, dump_yaml, load_json, load_yaml
 
 E1_METHODS = (
     "fedavg_window",
     "fedasync_window",
-    "timealign_agg",
+    "flamf_timealign_adapted",
     "twostage_hajek",
     "raven",
 )
@@ -115,7 +120,7 @@ def add_e1_groups(frame: pd.DataFrame) -> pd.DataFrame:
 
 def stable_client_mapping(
     atomic: pd.DataFrame,
-    num_clients: int = 10,
+    num_clients: int = 8,
     client_measurements: pd.DataFrame | None = None,
 ) -> tuple[dict[str, str], dict[str, str]]:
     if client_measurements is not None:
@@ -165,7 +170,7 @@ def generate_balanced_trace(
     *,
     seed: int,
     num_windows: int = 100,
-    num_clients: int = 10,
+    num_clients: int = 8,
     s_max: int = E1_S_MAX,
 ) -> tuple[EventTrace, dict[str, str]]:
     atomic = add_e1_groups(dataset.atomic_df)
@@ -412,7 +417,11 @@ def _arrival_weights(
     clients = sorted(str(value) for value in runner.trace.events["client_id"].unique())
     history = runner.trace.events
     mean_age = history.groupby("client_id")["tau"].mean().to_dict()
-    mean_work = history.groupby("client_id")["raw_workload"].mean().to_dict()
+    if "planned_workload_pre" not in history:
+        raise RuntimeError("arrival-risk requires planned_workload_pre")
+    mean_planned_work = history.groupby(
+        "client_id",
+    )["planned_workload_pre"].mean().to_dict()
     slack = history["window_id"] + 1.0 - history["registration_time"]
     mean_slack = slack.groupby(history["client_id"]).mean().to_dict()
     opportunity = runner.opportunity_estimator.pi_hat()
@@ -426,7 +435,7 @@ def _arrival_weights(
         ])
         p[index] = np.asarray([
             runner.obs_propensity.predict(np.asarray([
-                1.0, block, np.log1p(mean_work.get(client, 1.0)),
+                1.0, block, np.log1p(mean_planned_work.get(client, 1.0)),
             ]))
             for block in blocks
         ])
@@ -676,7 +685,25 @@ def run_official_method(
         })
     pd.DataFrame(window_rows).to_parquet(run_dir / "metrics_window.parquet", index=False)
     method_rows.to_parquet(run_dir / "method_diagnostics.parquet", index=False)
+    if method == "flamf_timealign_adapted":
+        required_timealign = [
+            "window_id", "client_id", "covered_slot_count",
+            "unique_slot_count", "shared_slot_count", "timestamp_credit",
+            "alpha_timealign", "alpha_fedasync", "alpha_diff", "tau",
+            "sample_count", "model_hash_before", "model_hash_after",
+        ]
+        if not set(required_timealign).issubset(method_rows.columns):
+            raise RuntimeError("TimeAlign diagnostics are incomplete")
+        method_rows[required_timealign].dropna(
+            subset=["alpha_timealign"],
+        ).rename(columns={"window_id": "r"}).to_parquet(
+            run_dir / "method_diagnostics_timealign.parquet", index=False,
+        )
     method_rows.to_parquet(run_dir / "propensity_diagnostics.parquet", index=False)
+    p_history = pd.DataFrame(runner.p_propensity_history)
+    if p_history.empty:
+        raise RuntimeError("record-level p propensity history is empty")
+    p_history.to_parquet(run_dir / "p_propensity_history.parquet", index=False)
     if solver_df.empty:
         solver_df = pd.DataFrame(columns=[
             "window_id", "primary_status", "accepted_status", "fallback_used",
@@ -714,6 +741,12 @@ def run_official_method(
         "total_runtime": runtime,
         "total_communication": int(sum(item.a_r_size for item in active)),
         "status": "completed",
+        "p_history_record_count": int(len(p_history)),
+        "p_history_positive_count": int(p_history["O"].sum()),
+        "p_history_negative_count": int((p_history["O"] == 0).sum()),
+        "p_warmup_fallback_count": int(min(
+            runner.obs_propensity.min_samples, len(p_history),
+        )),
     }
     if not all(np.isfinite(value) for key, value in metrics_run.items()
                if isinstance(value, (float, int)) and key not in {"seed"}):
@@ -748,6 +781,9 @@ def run_official_method(
     )
     (run_dir / "stderr.log").write_text("", encoding="utf-8")
     data_hash = sha256_path_tree(root / "data/processed/sensorscope")
+    split_hash = sha256_json(
+        grouped[["unit_id", "split"]].astype(str).to_dict(orient="records"),
+    )
     protocol_path = root / "configs/frozen/e1_sensorscope_balanced.yaml"
     client_mapping_path = root / "configs/frozen/e1_sensorscope_clients.yaml"
     protocol_config_hash = sha256_file(protocol_path)
@@ -765,6 +801,7 @@ def run_official_method(
         "protocol_config_hash": protocol_config_hash,
         "resolved_run_config_hash": resolved_run_config_hash,
         "data_hash": data_hash,
+        "split_hash": split_hash,
         "event_trace_hash": identity["trace_hash"],
         "target_group_hash": group_hash,
         "client_mapping_hash": client_mapping_hash,
@@ -790,9 +827,12 @@ def run_official_method(
         "metrics_window.parquet", "metrics_run.json",
         "predictions_test.parquet", "arrival_weights_test.parquet",
         "propensity_diagnostics.parquet", "solver_diagnostics.parquet",
+        "p_propensity_history.parquet",
         "system_metrics.json", "method_diagnostics.parquet",
         "stdout.log", "stderr.log", "checkpoints",
     }
+    if method == "flamf_timealign_adapted":
+        required.add("method_diagnostics_timealign.parquet")
     if not all((run_dir / name).exists() for name in required):
         raise RuntimeError("official E1 artifact completeness gate failed")
     return run_dir

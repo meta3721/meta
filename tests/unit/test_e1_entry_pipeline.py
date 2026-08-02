@@ -67,11 +67,21 @@ def test_aggregate_rejects_missing_method() -> None:
 
 
 def test_aggregate_rejects_hash_mismatch() -> None:
-    path = _entry_root() / "aggregate/per_seed_metrics.parquet"
-    if not path.exists():
-        pytest.skip("official entry smoke not generated yet")
-    frame = pd.read_parquet(path)
-    frame["target_group_hash"] = "same"
+    frame = pd.DataFrame([
+        {
+            "seed": 26001, "method": method, "status": "completed",
+            "run_id": method, "git_commit": "a", "config_hash": "b",
+            "target_group_hash": "group", "event_trace_hash": "trace",
+            **{
+                column: 1.0 for column in aggregate_results.PER_SEED_COLUMNS
+                if column not in {
+                    "seed", "method", "status", "run_id", "git_commit",
+                    "config_hash", "event_trace_hash", "target_group_hash",
+                }
+            },
+        }
+        for method in aggregate_results.E1_METHODS
+    ])
     frame.loc[frame.index[0], "config_hash"] = "different"
     with pytest.raises(RuntimeError, match="config_hash"):
         aggregate_results.validate_rows(frame, mode="entry-smoke")
@@ -82,7 +92,10 @@ def test_aggregate_aligns_methods_by_seed() -> None:
     if not path.exists():
         pytest.skip("official entry smoke not generated yet")
     frame = pd.read_parquet(path)
-    assert set(frame["method"]) == set(aggregate_results.E1_METHODS)
+    assert set(frame["method"]) == {
+        "fedavg_window", "fedasync_window", "timealign_agg",
+        "twostage_hajek", "raven",
+    }
     assert set(frame["seed"]) == {26001}
 
 

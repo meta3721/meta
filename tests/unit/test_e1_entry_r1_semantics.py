@@ -131,10 +131,6 @@ def test_weight_safety_selected_on_validation_only() -> None:
     assert frozen["selection_data"] == "validation_only"
 
 
-@pytest.mark.xfail(
-    reason="TimeAlign primary definition is unresolved; E1 intentionally blocked",
-    strict=True,
-)
 def test_timealign_not_same_formula_as_fedasync() -> None:
     payload = WindowAggregateInput(
         client_ids=["a", "b"],
@@ -142,6 +138,7 @@ def test_timealign_not_same_formula_as_fedasync() -> None:
         total_masses=np.ones(2),
         compositions=np.full((2, 2), 0.5),
         staleness=np.array([0.0, 1.0]),
+        extras={"covered_time_slots": {"a": [1, 2], "b": [2]}},
     )
     assert not np.allclose(
         FedAsyncWindowAggregator().compute_server_weights(payload),

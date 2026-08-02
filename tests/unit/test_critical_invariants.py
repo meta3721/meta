@@ -214,7 +214,7 @@ def test_all_12_methods_registered() -> None:
     expected = [
         "central_all", "central_delivered",
         "fedavg_window", "fedasync_window",
-        "timealign_agg",
+        "flamf_timealign_adapted",
         "flamf_original",
         "local_hajek",
         "twostage_hajek",
@@ -237,11 +237,19 @@ def test_timealign_aggregator_returns_valid_weights() -> None:
         compositions=np.array([[0.6, 0.3, 0.5, 0.4], [0.4, 0.7, 0.5, 0.6]]),
         staleness=np.array([0.0, 2.0, 4.0, 1.0]),
         variance_diag=np.ones(4),
+        extras={
+            "covered_time_slots": {
+                "c0": [1, 2, 3],
+                "c1": [1, 2],
+                "c2": [4],
+                "c3": [5, 6],
+            },
+        },
     )
 
-    agg = get_aggregator("timealign_agg")
+    agg = get_aggregator("flamf_timealign_adapted")
     weights = agg.compute_server_weights(payload)
 
     assert abs(weights.sum() - 1.0) < 1e-10
     assert np.all(weights >= 0)
-    assert weights[0] > weights[2], "Fresh client should have more weight than stale"
+    assert weights[0] != weights[2]

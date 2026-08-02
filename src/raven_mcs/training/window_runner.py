@@ -126,6 +126,8 @@ class FullWindowRunner:
     variance_count: dict[str, int] = field(default_factory=dict)
     model_versions: dict[int, dict[str, torch.Tensor]] = field(default_factory=dict)
     diagnostics: list[dict[str, Any]] = field(default_factory=list)
+    p_propensity_history: list[dict[str, Any]] = field(default_factory=list)
+    p_model_version: int = 0
 
     def __post_init__(self) -> None:
         self.mu = np.asarray(self.mu, dtype=np.float64)
@@ -464,6 +466,15 @@ class FullWindowRunner:
             + self.v_floor
             for i, cid in enumerate(a_r_clients)
         ], dtype=np.float64)
+        covered_time_slots = {
+            cid: [
+                int(unit.time_index)
+                for unit_id in client_data[cid]["record"].observed_unit_ids
+                for unit in [self.dataset.get_atomic_by_id(unit_id)]
+                if unit is not None
+            ]
+            for cid in a_r_clients
+        }
 
         payload = WindowAggregateInput(
             client_ids=a_r_clients,
@@ -475,6 +486,7 @@ class FullWindowRunner:
             variance_diag=variance_diag,
             debt=self.debt,
             mu=self.mu,
+            extras={"covered_time_slots": covered_time_slots},
         )
 
         alpha = self.aggregator.compute_server_weights(payload)
@@ -507,6 +519,14 @@ class FullWindowRunner:
 
         after_hash = self._theta_hash()
         by_client = {row["client_id"]: row for row in self.diagnostics if row["window_id"] == window_id}
+        timealign_rows = {
+            str(row["client_id"]): row
+            for row in (
+                self.aggregator.diagnostics_history[-1]
+                if getattr(self.aggregator, "diagnostics_history", [])
+                else []
+            )
+        }
         for i, cid in enumerate(a_r_clients):
             if cid in by_client:
                 by_client[cid].update({
@@ -522,6 +542,14 @@ class FullWindowRunner:
                     "variance_state_updated_after_close": True,
                     "global_model_hash": after_hash,
                 })
+                if cid in timealign_rows:
+                    by_client[cid].update({
+                        **timealign_rows[cid],
+                        "model_hash_before": before_hash,
+                        "model_hash_after": after_hash,
+                        "tau": float(raw_staleness[i]),
+                        "sample_count": float(raw_counts[i]),
+                    })
 
         n_eff_values = [
             client_data[cid]["n_eff"] for cid in a_r_clients if cid in client_data
@@ -567,16 +595,34 @@ class FullWindowRunner:
 
             # Update observation propensity
             if self.obs_propensity is not None and len(rec.risk_set_unit_ids) > 0:
-                mean_block = float(np.mean([
-                    self._hour_block(stratum) for stratum in rec.opportunity_strata
-                ]))
-                features = np.array([
-                    1.0, mean_block,
-                    float(np.log1p(rec.planned_workload_pre)),
-                ])
-                self.obs_propensity.update_after_completion(
-                    features, float(np.mean(rec.O)),
+                features = np.asarray([
+                    [
+                        1.0,
+                        self._hour_block(stratum),
+                        float(np.log1p(rec.planned_workload_pre)),
+                    ]
+                    for stratum in rec.opportunity_strata
+                ], dtype=np.float64)
+                prediction_version = self.p_model_version
+                self.obs_propensity.update_records_after_completion(
+                    features, rec.O,
                 )
+                for index, unit_id in enumerate(rec.risk_set_unit_ids):
+                    self.p_propensity_history.append({
+                        "client_id": cid,
+                        "window_id": rec.window_id,
+                        "unit_id": str(unit_id),
+                        "opportunity_stratum": rec.opportunity_strata[index],
+                        "bias": float(features[index, 0]),
+                        "hour_block": float(features[index, 1]),
+                        "planned_workload_pre": float(features[index, 2]),
+                        "O": int(rec.O[index]),
+                        "prediction_time": float(rec.registration_time),
+                        "update_time": float(rec.window_close_time),
+                        "model_version": prediction_version,
+                        "source_split": "train",
+                    })
+                self.p_model_version += 1
             if self.usable_propensity is not None:
                 self.usable_propensity.update_lagged(
                     np.array([

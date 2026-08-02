@@ -42,6 +42,7 @@ POLICY_MAP: dict[str, MethodPolicy] = {
     "timealign_agg": MethodPolicy(
         uses_staleness_penalty=True,
     ),
+    "flamf_timealign_adapted": MethodPolicy(),
     "flamf_original": MethodPolicy(
         is_external_baseline=True,
     ),

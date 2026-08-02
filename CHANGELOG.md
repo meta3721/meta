@@ -1,5 +1,14 @@
 # Changelog
 
+## E1-ENTRY-R2 final entry semantics
+
+- Added the teacher-frozen FLAMF-TimeAlign-Adapted temporal-coverage baseline,
+  distinct from FedAsync and transparent about its adaptation boundary.
+- Removed post-outcome raw workload from formal arrival-risk reconstruction.
+- Changed observation-propensity history to one lagged row per risk record.
+- Froze the formal SensorScope E1 client count at eight and added clean-commit
+  EventTrace generation gates plus R2 official smoke/aggregation entry points.
+
 ## E1-ENTRY-R1 semantic audit
 
 - Replaced global time quartiles with repeatable UTC six-hour groups.

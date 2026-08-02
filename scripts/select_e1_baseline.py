@@ -18,7 +18,9 @@ from raven_mcs.experiments.e1_entry import git_commit, run_official_method
 from raven_mcs.utils.hashing import sha256_file, sha256_path_tree
 from raven_mcs.utils.serialization import dump_json, dump_yaml, load_json, load_yaml
 
-CANDIDATES = ("fedavg_window", "fedasync_window", "timealign_agg")
+CANDIDATES = (
+    "fedavg_window", "fedasync_window", "flamf_timealign_adapted",
+)
 PRIORITY = {method: index for index, method in enumerate(CANDIDATES)}
 
 
@@ -46,27 +48,25 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--seed", type=int, default=26001)
     parser.add_argument("--windows", type=int, default=20)
     parser.add_argument("--local-steps", type=int, default=2)
-    parser.add_argument("--output-dir", type=Path, default=ROOT / "outputs/validation/e1_baseline_selection")
+    parser.add_argument("--methods", nargs="+", default=list(CANDIDATES))
+    parser.add_argument(
+        "--output-dir", type=Path, default=ROOT / "outputs/validation",
+    )
     args = parser.parse_args(argv)
     if not args.validation_only:
         raise ValueError("--validation-only is mandatory")
-    timealign_spec = (
-        ROOT / "docs/baselines/TIMEALIGN_BASELINE_SPEC.md"
-    ).read_text(encoding="utf-8")
-    if "BASELINE_UNRESOLVED" in timealign_spec:
-        raise RuntimeError(
-            "TimeAlign baseline is unresolved; baseline selection is blocked",
-        )
+    if tuple(args.methods) != CANDIDATES:
+        raise ValueError("R2 baseline methods must match the frozen candidates")
     cfg = load_yaml(args.config)
     if cfg.get("dataset") != "sensorscope":
         raise RuntimeError("E1 validation config must be SensorScope")
     args.output_dir.mkdir(parents=True, exist_ok=True)
     rows = []
-    for method in CANDIDATES:
+    for method in args.methods:
         run_dir = run_official_method(
             ROOT, method=method, seed=args.seed, num_windows=args.windows,
             local_steps=args.local_steps, device="cpu",
-            output_root=args.output_dir / "runs",
+            output_root=args.output_dir / "e1_r2_baseline_runs",
             evaluation_split="validation",
         )
         metrics = load_json(run_dir / "metrics_run.json")
@@ -83,7 +83,9 @@ def main(argv: list[str] | None = None) -> int:
         })
     frame = pd.DataFrame(rows)
     selected = choose_baseline(frame)
-    frame.to_parquet(args.output_dir / "per_seed_validation.parquet", index=False)
+    frame.to_parquet(
+        args.output_dir / "e1_r2_baseline_selection.parquet", index=False,
+    )
     report = {
         "selected_baseline": selected,
         "candidate_methods": list(CANDIDATES),
@@ -92,12 +94,15 @@ def main(argv: list[str] | None = None) -> int:
         "validation_rmse_mu": {
             row["method"]: row["RMSE_mu"] for row in rows
         },
-        "tie_break_rule": "within 1e-6: FedAvg, FedAsync, TimeAlign",
+        "tie_break_rule": (
+            "within 1e-6: FedAvg, FedAsync, FLAMF-TimeAlign-Adapted"
+        ),
         "test_metrics_read": False,
         "status": "FROZEN_FROM_VALIDATION",
     }
-    dump_json(report, args.output_dir / "selection_report.json")
-    report_hash = sha256_file(args.output_dir / "selection_report.json")
+    report_path = args.output_dir / "e1_r2_baseline_selection_report.json"
+    dump_json(report, report_path)
+    report_hash = sha256_file(report_path)
     frozen = {
         **report,
         "validation_config_hash": sha256_file(args.config),
