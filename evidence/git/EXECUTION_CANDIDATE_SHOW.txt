@@ -1,0 +1,12 @@
+﻿commit bb597a10e6369a49e18ccb6dc642a200bda1868c
+Author:     szr <2025198754@qq.com>
+AuthorDate: Sun Aug 2 20:50:53 2026 +0800
+Commit:     szr <2025198754@qq.com>
+CommitDate: Sun Aug 2 20:50:53 2026 +0800
+
+    Avoid embedding execution HEAD in tracked freeze preflight docs
+    
+    Co-authored-by: Cursor <cursoragent@cursor.com>
+
+ docs/reports/E1_FORMAL_FREEZE_R1_PREFLIGHT.md | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)

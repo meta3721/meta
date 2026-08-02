@@ -1,0 +1,32 @@
+{
+  "authorized_commit": "53e277c53b01695330652b8e1bc8a234909d56e5",
+  "candidate_commit": "bb597a10e6369a49e18ccb6dc642a200bda1868c",
+  "changed_e1_entry_functions": [
+    {
+      "component": "e1_entry",
+      "function": "enforce_frozen_local_steps",
+      "path": "src/raven_mcs/experiments/e1_entry.py",
+      "status": "CHANGED"
+    },
+    {
+      "component": "e1_entry",
+      "function": "frozen_local_steps",
+      "path": "src/raven_mcs/experiments/e1_entry.py",
+      "status": "CHANGED"
+    },
+    {
+      "component": "e1_entry",
+      "function": "load_frozen_protocol",
+      "path": "src/raven_mcs/experiments/e1_entry.py",
+      "status": "CHANGED"
+    },
+    {
+      "component": "e1_entry",
+      "function": "run_official_method",
+      "path": "src/raven_mcs/experiments/e1_entry.py",
+      "status": "CHANGED"
+    }
+  ],
+  "changed_function_count": 4,
+  "table": "CORE_FUNCTION_EQUIVALENCE.parquet"
+}

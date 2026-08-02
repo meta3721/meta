@@ -1,0 +1,11 @@
+{
+  "disclosure": "Validation selection ran during freeze on the progressing candidate tree; algorithm authorization remains separate.",
+  "frozen_baseline_path": "configs\\frozen\\e1_selected_baseline.yaml",
+  "selected_baseline": "flamf_timealign_adapted",
+  "selection_authorized_algorithm_commit": "53e277c53b01695330652b8e1bc8a234909d56e5",
+  "selection_local_steps": 2,
+  "selection_protocol_hash": "4dda5b646e66886dd507af4918c0f53c742db6b56c49006917d1e6c4531e4787",
+  "selection_runtime_execution_commit": "bb597a10e6369a49e18ccb6dc642a200bda1868c",
+  "selection_split": "validation",
+  "test_read_count": 0
+}

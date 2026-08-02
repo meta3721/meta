@@ -1,0 +1,10 @@
+{
+  "archive_sha256": "87cf57aca36e2c58e9425e675cd03502053846bda47f7f05763723a7e31115ab",
+  "bundle_sha256": "0a11462ef57ff705af4b10808df5bd8334ab1a6b576858a9b3cb09264fb05c5f",
+  "candidate_commit": "bb597a10e6369a49e18ccb6dc642a200bda1868c",
+  "authorized_commit": "53e277c53b01695330652b8e1bc8a234909d56e5",
+  "archive_file_count": 295,
+  "bundle_verify_status": "PASS",
+  "bundle_range": "--all",
+  "bundle_verify_log": "evidence/source/GIT_BUNDLE_VERIFY.txt"
+}

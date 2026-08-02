@@ -1,0 +1,161 @@
+{
+  "all_core_blobs_identical": true,
+  "authorized_commit": "53e277c53b01695330652b8e1bc8a234909d56e5",
+  "candidate_commit": "bb597a10e6369a49e18ccb6dc642a200bda1868c",
+  "components": [
+    {
+      "authorized_blob": "15af14301499c9cc5150a3304b7fc864bf6fe50a",
+      "candidate_blob": "15af14301499c9cc5150a3304b7fc864bf6fe50a",
+      "component": "local training",
+      "function": null,
+      "kind": "component",
+      "path": "src/raven_mcs/training/client.py",
+      "status": "UNCHANGED"
+    },
+    {
+      "authorized_blob": "9571e5a6f70e598d5cf185e3f4ae8bbb5005b071",
+      "candidate_blob": "9571e5a6f70e598d5cf185e3f4ae8bbb5005b071",
+      "component": "local training",
+      "function": null,
+      "kind": "component",
+      "path": "src/raven_mcs/training/local_objective.py",
+      "status": "UNCHANGED"
+    },
+    {
+      "authorized_blob": "a1143fa3239979242af528b4f21f545946742fc2",
+      "candidate_blob": "a1143fa3239979242af528b4f21f545946742fc2",
+      "component": "p_obs",
+      "function": null,
+      "kind": "component",
+      "path": "src/raven_mcs/propensity/observation.py",
+      "status": "UNCHANGED"
+    },
+    {
+      "authorized_blob": "1c4aad1ece97f05caa01772c0749d810c2e87fdd",
+      "candidate_blob": "1c4aad1ece97f05caa01772c0749d810c2e87fdd",
+      "component": "q_use",
+      "function": null,
+      "kind": "component",
+      "path": "src/raven_mcs/propensity/usable.py",
+      "status": "UNCHANGED"
+    },
+    {
+      "authorized_blob": "bd88195e8f5dfa520769ad8a8bcad2848d695b3a",
+      "candidate_blob": "bd88195e8f5dfa520769ad8a8bcad2848d695b3a",
+      "component": "opportunity EMA",
+      "function": null,
+      "kind": "component",
+      "path": "src/raven_mcs/opportunities/estimator.py",
+      "status": "UNCHANGED"
+    },
+    {
+      "authorized_blob": "894c4f30e2f080e57493c117c985ca989e5f0c4a",
+      "candidate_blob": "894c4f30e2f080e57493c117c985ca989e5f0c4a",
+      "component": "zeta",
+      "function": null,
+      "kind": "component",
+      "path": "src/raven_mcs/correction/design_ratio.py",
+      "status": "UNCHANGED"
+    },
+    {
+      "authorized_blob": "c92610d9edfb6d29c2807ec0e0c2e26895c8022d",
+      "candidate_blob": "c92610d9edfb6d29c2807ec0e0c2e26895c8022d",
+      "component": "Hajek weights",
+      "function": null,
+      "kind": "component",
+      "path": "src/raven_mcs/correction/hajek.py",
+      "status": "UNCHANGED"
+    },
+    {
+      "authorized_blob": "4b7cbc40b4e84e894309d70d04a6e5f64db27079",
+      "candidate_blob": "4b7cbc40b4e84e894309d70d04a6e5f64db27079",
+      "component": "second-stage",
+      "function": null,
+      "kind": "component",
+      "path": "src/raven_mcs/aggregation/methods.py",
+      "status": "UNCHANGED"
+    },
+    {
+      "authorized_blob": "9efd52cd97f3e7a4457e0736a636a30115a0b4ba",
+      "candidate_blob": "9efd52cd97f3e7a4457e0736a636a30115a0b4ba",
+      "component": "TimeAlign",
+      "function": null,
+      "kind": "component",
+      "path": "src/raven_mcs/aggregation/method_policy.py",
+      "status": "UNCHANGED"
+    },
+    {
+      "authorized_blob": "6b28f15fe6d2ddc259805c3b59efd9a6089f039b",
+      "candidate_blob": "6b28f15fe6d2ddc259805c3b59efd9a6089f039b",
+      "component": "P2",
+      "function": null,
+      "kind": "component",
+      "path": "src/raven_mcs/aggregation/p2_cvxpy.py",
+      "status": "UNCHANGED"
+    },
+    {
+      "authorized_blob": "7dad5d4f13f7f5642ba88cfb66c1ea0e00dc41bb",
+      "candidate_blob": "7dad5d4f13f7f5642ba88cfb66c1ea0e00dc41bb",
+      "component": "debt",
+      "function": null,
+      "kind": "component",
+      "path": "src/raven_mcs/aggregation/debt.py",
+      "status": "UNCHANGED"
+    },
+    {
+      "authorized_blob": "7cdbf32226c8af35cca595255b20e35cc00e629b",
+      "candidate_blob": "7cdbf32226c8af35cca595255b20e35cc00e629b",
+      "component": "debt",
+      "function": null,
+      "kind": "component",
+      "path": "src/raven_mcs/metrics/debt.py",
+      "status": "UNCHANGED"
+    },
+    {
+      "authorized_blob": "80e76809e0e7c2ca9be7a9e88167423a42a6643c",
+      "candidate_blob": "80e76809e0e7c2ca9be7a9e88167423a42a6643c",
+      "component": "variance",
+      "function": null,
+      "kind": "component",
+      "path": "src/raven_mcs/metrics/variance.py",
+      "status": "UNCHANGED"
+    },
+    {
+      "authorized_blob": "c5d2f97aae74c7415ae2d0b134bd49184712c855",
+      "candidate_blob": "c5d2f97aae74c7415ae2d0b134bd49184712c855",
+      "component": "arrival risk",
+      "function": null,
+      "kind": "component",
+      "path": "src/raven_mcs/training/window_runner.py",
+      "status": "UNCHANGED"
+    },
+    {
+      "authorized_blob": "ffd232f060648102ebd6097364f52ed4f520bb41",
+      "candidate_blob": "ffd232f060648102ebd6097364f52ed4f520bb41",
+      "component": "RMSE_mu",
+      "function": null,
+      "kind": "component",
+      "path": "src/raven_mcs/metrics/accuracy.py",
+      "status": "UNCHANGED"
+    },
+    {
+      "authorized_blob": "ffd232f060648102ebd6097364f52ed4f520bb41",
+      "candidate_blob": "ffd232f060648102ebd6097364f52ed4f520bb41",
+      "component": "RMSE_rho",
+      "function": null,
+      "kind": "component",
+      "path": "src/raven_mcs/metrics/accuracy.py",
+      "status": "UNCHANGED"
+    },
+    {
+      "authorized_blob": "ffd232f060648102ebd6097364f52ed4f520bb41",
+      "candidate_blob": "ffd232f060648102ebd6097364f52ed4f520bb41",
+      "component": "Gap_mis",
+      "function": null,
+      "kind": "component",
+      "path": "src/raven_mcs/metrics/accuracy.py",
+      "status": "UNCHANGED"
+    }
+  ],
+  "all_unchanged": true
+}

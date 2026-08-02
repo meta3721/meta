@@ -1,0 +1,74 @@
+{
+  "authorized_commit": "53e277c53b01695330652b8e1bc8a234909d56e5",
+  "candidate_commit": "bb597a10e6369a49e18ccb6dc642a200bda1868c",
+  "core_algorithm_change_count": 0,
+  "counts": {
+    "CONFIG_FREEZE_ONLY": 2,
+    "CORE_ALGORITHM_CHANGE": 0,
+    "EVIDENCE_ONLY": 0,
+    "IDENTITY_ONLY": 1,
+    "MANIFEST_ONLY": 3,
+    "ORCHESTRATION_ONLY": 1,
+    "PREFLIGHT_ONLY": 0,
+    "TESTABILITY_ONLY": 0
+  },
+  "hunks": [
+    {
+      "added": 26,
+      "category": "CONFIG_FREEZE_ONLY",
+      "header": "@@ -106,6 +106,32 @@ def git_commit(root: Path) -> str:",
+      "hunk": 1,
+      "rationale": "Frozen protocol local_steps loading/enforcement.",
+      "removed": 0
+    },
+    {
+      "added": 1,
+      "category": "CONFIG_FREEZE_ONLY",
+      "header": "@@ -571,7 +597,7 @@ def run_official_method(",
+      "hunk": 2,
+      "rationale": "Frozen protocol local_steps loading/enforcement.",
+      "removed": 1
+    },
+    {
+      "added": 2,
+      "category": "ORCHESTRATION_ONLY",
+      "header": "@@ -580,6 +606,8 @@ def run_official_method(",
+      "hunk": 3,
+      "rationale": "Frozen protocol is loaded before official execution.",
+      "removed": 0
+    },
+    {
+      "added": 6,
+      "category": "IDENTITY_ONLY",
+      "header": "@@ -981,10 +1009,16 @@ def run_official_method(",
+      "hunk": 4,
+      "rationale": "Resolved configuration identity fields.",
+      "removed": 0
+    },
+    {
+      "added": 19,
+      "category": "MANIFEST_ONLY",
+      "header": "@@ -1015,13 +1049,32 @@ def run_official_method(",
+      "hunk": 5,
+      "rationale": "Manifest identity fields or config-hash guards.",
+      "removed": 0
+    },
+    {
+      "added": 6,
+      "category": "MANIFEST_ONLY",
+      "header": "@@ -1032,10 +1085,16 @@ def run_official_method(",
+      "hunk": 6,
+      "rationale": "Manifest identity fields or config-hash guards.",
+      "removed": 0
+    },
+    {
+      "added": 4,
+      "category": "MANIFEST_ONLY",
+      "header": "@@ -1051,6 +1110,10 @@ def run_official_method(",
+      "hunk": 7,
+      "rationale": "Manifest identity fields or config-hash guards.",
+      "removed": 0
+    }
+  ],
+  "hunk_count": 7
+}

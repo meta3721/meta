@@ -1,0 +1,14 @@
+The bundle contains these 10 refs:
+b997899ee74bc68dcef2080b15894d825619f9e4 refs/heads/e1-entry-r1-semantic-seal
+b7118d4abdfe12c7f37111f9c1e7d37106df777a refs/heads/e1-entry-r2-final-seal
+49a2f88d7861e7bb2cf7299e9f4198849453dd5f refs/heads/e1-entry-r3-opportunity-support-seal
+53e277c53b01695330652b8e1bc8a234909d56e5 refs/heads/e1-entry-r4-stage2-arrival-seal
+e2b36d51622cd19856ef5a5c4c2fd8bcc468e113 refs/heads/e1-entry-seal
+bb597a10e6369a49e18ccb6dc642a200bda1868c refs/heads/e1-formal-freeze-r1
+44a70d201b697f136fb4bc300a53b14038deb298 refs/heads/main
+b4f1661944e100b86295da6583d6449106e7c8af refs/heads/p10-end-to-end-integration
+d273c17039f5e9479449756243f4772059e0296c refs/heads/p10-r1-time-metrics-audit
+bb597a10e6369a49e18ccb6dc642a200bda1868c HEAD
+The bundle records a complete history.
+The bundle uses this hash algorithm: sha1
+D:/Cursor/raven.mcs/evidence/source/RAVEN_MCS_EXECUTION_CANDIDATE.bundle is okay

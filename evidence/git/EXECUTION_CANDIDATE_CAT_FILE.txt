@@ -1,0 +1,8 @@
+﻿tree cb4dc4b2e7006c0164d2c37aa0d1e7185eeab3f5
+parent ba679a5b2ecfd5458d9a9f61fc976d4c9e459d53
+author szr <2025198754@qq.com> 1785675053 +0800
+committer szr <2025198754@qq.com> 1785675053 +0800
+
+Avoid embedding execution HEAD in tracked freeze preflight docs
+
+Co-authored-by: Cursor <cursoragent@cursor.com>

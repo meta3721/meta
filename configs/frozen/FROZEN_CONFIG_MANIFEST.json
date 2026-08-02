@@ -41,8 +41,8 @@
     },
     "configs/frozen/e1_selected_baseline.yaml": {
       "semantic_role": "selected_baseline",
-      "sha256": "08886385bea51bf30740f10d7700adf1f3540febf19f440d35c5440b13a6b074",
-      "size_bytes": 1034
+      "sha256": "3e22445f226a1cddd46e96036b9c272495dc578421e34db8f976d8dc1596ced1",
+      "size_bytes": 1237
     },
     "configs/frozen/e1_sensorscope_balanced.yaml": {
       "semantic_role": "protocol",
@@ -82,7 +82,7 @@
   ],
   "selected_baseline": {
     "file_path": "configs/frozen/e1_selected_baseline.yaml",
-    "file_sha256": "08886385bea51bf30740f10d7700adf1f3540febf19f440d35c5440b13a6b074",
+    "file_sha256": "3e22445f226a1cddd46e96036b9c272495dc578421e34db8f976d8dc1596ced1",
     "method": "flamf_timealign_adapted"
   },
   "target_group_file_hash": "11f5974839e18716fa53f69c44b570106a944dcd50ccfebc3ff1b4f25399c579",

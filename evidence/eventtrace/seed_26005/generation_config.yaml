@@ -1,0 +1,16 @@
+dataset: sensorscope
+scenario: balanced
+seed: 26005
+window_count: 100
+s_max: 5
+clients: 8
+observation_rate: 0.20 +/- deterministic 0.015
+usable_rate: 0.60 +/- deterministic 0.02
+client_mapping_payload_hash: e0adcf5f40cba6093cf9764b8badd297bd0f25b3b64104cc8b2470c6699ad7ff
+client_mapping_file_hash: 804dd0fdb9f9f8865f70e42e4fba57926314d85205642e86972b98d560b3a64c
+target_group_payload_hash: abf2b601b42c27be4f5636e2816430659ad0fff0128c72e9cd28dd0be2381b26
+target_group_file_hash: 11f5974839e18716fa53f69c44b570106a944dcd50ccfebc3ff1b4f25399c579
+client_mapping_hash: e0adcf5f40cba6093cf9764b8badd297bd0f25b3b64104cc8b2470c6699ad7ff
+target_group_hash: 11f5974839e18716fa53f69c44b570106a944dcd50ccfebc3ff1b4f25399c579
+pi_target_hash: 04f6aa0b485b3ea431f304368eb4cb6f72b412b274c5e0ca5cfec69eeee8d254
+protocol_config_hash: 5cbd202c0dd64f76b046d275109a200c6cad840ca2a34149d97994689c7e2f9e

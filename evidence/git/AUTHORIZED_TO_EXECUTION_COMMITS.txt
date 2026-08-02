@@ -1,0 +1,5 @@
+* bb597a1 (HEAD -> e1-formal-freeze-r1) Avoid embedding execution HEAD in tracked freeze preflight docs
+* ba679a5 Keep final-candidate preflight from dirtying clean HEAD
+* a1c5c45 Record final-candidate freeze preflight on clean HEAD
+* 314c85a Ignore generated E1 formal preflight outputs
+* c8f1b70 Seal E1 formal protocol and execution identity

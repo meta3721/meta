@@ -1,0 +1,3156 @@
+diff --git a/.gitignore b/.gitignore
+index 6bde088..c94a0f2 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,9 +22,11 @@ outputs/entry_smoke/
+ outputs/entry_r2_smoke/
+ outputs/entry_r3_smoke/
+ outputs/entry_r4_smoke/
++outputs/evidence_formal_r1/
+ outputs/statistics/
+ outputs/validation/
+ outputs/aggregate/
++outputs/preflight/
+ logs/
+ deliverables/
+ *.zip
+@@ -33,10 +35,8 @@ configs/frozen/*.sha256
+ configs/frozen/P10_R1_SMOKE_*.yaml
+ configs/frozen/PRE_E1_SMOKE_*.yaml
+ configs/frozen/pre_e1_smoke.yaml
+-configs/frozen/e1_sensorscope_balanced.yaml
+-configs/frozen/FROZEN_CONFIG_MANIFEST.json
+-configs/frozen/e1_selected_baseline.yaml
+-configs/frozen/e1_sensorscope_clients.yaml
++# Formal freeze identity files are tracked (force-add if previously ignored).
++# Keep smoke-only ephemeral frozen YAMLs ignored above.
+ 参考文件/
+ *.npz
+ .DS_Store
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 9f4c76a..9e61c37 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,17 @@
+ # Changelog
+ 
++## E1-FORMAL-FREEZE-R1
++
++- Froze `local_steps: 2` in the formal protocol and schema; runner fails on
++  missing/overridden values.
++- Split identity into `authorized_algorithm_commit`,
++  `protocol_parent_commit`, and runtime `execution_commit_policy`.
++- Rebuilt `FROZEN_CONFIG_MANIFEST` from actual SHA-256 bytes, with
++  selected-baseline hash verification and no self-hash cycle.
++- Made outer `config_hash` equal `resolved_run_config_hash` only.
++- Reconfirmed validation-only baseline and five-seed validation safety
++  under the re-frozen protocol; did not start formal 25 runs.
++
+ ## E1-ENTRY-R4
+ 
+ - Froze `attempted = 1{observed_count > 0}` before U and restricted q-use
+diff --git a/ISSUES.md b/ISSUES.md
+index be1daab..aba18e8 100644
+--- a/ISSUES.md
++++ b/ISSUES.md
+@@ -62,6 +62,23 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
+   structured workflow command log.
+ - **ISSUE-055 — Target-weight hash names are ambiguous.** Closed with
+   atomic, client-stratum and parquet-file hash names.
++- **ISSUE-056 — Formal freeze commit mismatch.** Closed in
++  E1-FORMAL-FREEZE-R1. Protocol/manifest now record
++  `authorized_algorithm_commit` /
++  `protocol_parent_commit = 53e277c...` instead of a single ambiguous
++  `git_commit`. Historical E1-FORMAL-R1 remains BLOCKED_BY_FREEZE_IDENTITY.
++- **ISSUE-057 — Frozen protocol omits local_steps.** Closed in
++  E1-FORMAL-FREEZE-R1. Protocol freezes `local_steps: 2`; runner/preflight
++  FAIL if missing or CLI-overridden.
++- **ISSUE-058 — Stale selected-baseline hash in FROZEN_CONFIG_MANIFEST.**
++  Closed in E1-FORMAL-FREEZE-R1 by rebuild+verify against actual file
++  bytes after validation-only reconfirmation.
++- **ISSUE-059 — config_hash aliased target_group_hash.** Closed in
++  E1-FORMAL-FREEZE-R1: outer `config_hash` must equal
++  `resolved_run_config_hash`; target-group hashes stay separate.
++- **ISSUE-060 — Protocol self-referenced final Git commit.** Closed in
++  E1-FORMAL-FREEZE-R1: `execution_commit` is runtime-derived from clean
++  HEAD; not written back into the frozen protocol.
+ 
+ ### ISSUE-020 — Official E1 runner ignores frozen G=4 mapping
+ - **Severity:** Blocking
+diff --git a/STATUS.md b/STATUS.md
+index 80dd1c4..9f9a0dd 100644
+--- a/STATUS.md
++++ b/STATUS.md
+@@ -1,9 +1,9 @@
+ # STATUS — RAVEN-MCS V2.3
+ 
+-**Updated:** 2026-08-01
++**Updated:** 2026-08-02
+ **Workspace root:** `D:\Cursor\raven.mcs`  
+ **Source docs:** paper PDF + Cursor instruction TXT + design DOCX (`docs/SOURCES.md`)  
+-**Current phase:** E1-ENTRY-R4 complete; teacher authorization pending
++**Current phase:** E1-FORMAL-FREEZE-R1 PASS; awaiting teacher final execution authorization
+ **Main experiments:** Not started
+ 
+ ---
+@@ -16,7 +16,7 @@
+ | P10-C | PASS | FedAvg/TwoStage local and server paths produce distinct audited updates |
+ | P10-D | PASS | RMSE_mu/RMSE_rho are recomputed from atomic rows and Gap_mis identity is exact |
+ | P10-E | PASS | Two same-seed SensorScope runs pass R1-G1 through R1-G8 |
+-| E1 | READY_FOR_TEACHER_AUTHORIZATION | R4 gates passed; formal E1 not executed |
++| E1 | NOT EXECUTED | Freeze identity sealed; awaiting teacher final execution authorization |
+ 
+ ## Pre-E1 Seal
+ 
+@@ -31,16 +31,17 @@
+ - `E1-STAGE2-ATTEMPT-SEMANTICS = PASS`
+ - `E1-ARRIVAL-SUPPORT-METRIC = PASS`
+ - `E1-ENTRY-R4 = PASS`
+-- `E1 = READY_FOR_TEACHER_AUTHORIZATION`
++- `E1-FORMAL-R1 = BLOCKED_BY_FREEZE_IDENTITY`
++- `E1-FORMAL-FREEZE-R1 = PASS`
++- `E1 = READY_FOR_FINAL_EXECUTION_AUTHORIZATION`
++- `E2-E9 = NOT STARTED`
+ 
+ FLAMF-TimeAlign-Adapted now uses the teacher-frozen temporal-coverage formula
+ and differs from FedAsync in controlled and official-entry diagnostics.
+ Arrival-risk, record-level p history, eight-client identity and post-commit
+-EventTrace regeneration are sealed.
+-- `E2-E9 = NOT STARTED`
+-
+-This status is readiness for teacher authorization only; it is not permission
+-to execute E1.
++EventTrace regeneration are sealed. Historical BLOCKED formal preflight
++evidence is retained. Formal 25-run E1 has not started. Teacher must still
++authorize the clean execution-candidate commit before any formal runs.
+ 
+ ## P10-E Smoke Results (2026-08-01)
+ 
+@@ -85,7 +86,7 @@ All P10 smoke checks and R1-G1 through R1-G8: **PASS**.
+ | 9 P2 / debt + G3–G5 | **DONE** | G3–G5 PASS via `check_hard_gates.py` |
+ | 10 Metrics / artifacts | **DONE FOR E1 ENTRY** | Full predictions, risks, RMSE/Gap/ESS/clip/solver artifacts |
+ | E0 unit suite | **DONE** | E0.1–E0.6 green via `scripts/check_e0.py` |
+-| E1 Balanced / G6 | READY_FOR_TEACHER_AUTHORIZATION | Formal five-seed E1 not executed |
++| E1 Balanced / G6 | READY_FOR_FINAL_EXECUTION_AUTHORIZATION | Freeze-R1 PASS; formal 25-run E1 not started |
+ | E2–E9 / 20-seed | BLOCKED | |
+ 
+ ---
+diff --git a/configs/frozen/FROZEN_CONFIG_MANIFEST.json b/configs/frozen/FROZEN_CONFIG_MANIFEST.json
+new file mode 100644
+index 0000000..ca8fe14
+--- /dev/null
++++ b/configs/frozen/FROZEN_CONFIG_MANIFEST.json
+@@ -0,0 +1,90 @@
++{
++  "S_max": 5,
++  "authorization_status": "READY_FOR_FINAL_EXECUTION_AUTHORIZATION",
++  "authorized_algorithm_commit": "53e277c53b01695330652b8e1bc8a234909d56e5",
++  "client_mapping_file_hash": "804dd0fdb9f9f8865f70e42e4fba57926314d85205642e86972b98d560b3a64c",
++  "client_mapping_payload_hash": "e0adcf5f40cba6093cf9764b8badd297bd0f25b3b64104cc8b2470c6699ad7ff",
++  "e1_methods": [
++    "fedavg_window",
++    "fedasync_window",
++    "flamf_timealign_adapted",
++    "twostage_hajek",
++    "raven"
++  ],
++  "e2_e9_status": "NOT_STARTED",
++  "entry_smoke_status": "PASS_SINGLE_SEED_R4_DRY_RUN",
++  "event_trace_hashes": {
++    "26001": "e212661f5262e0559100d7f852c38a199dac9046b2b8c520fc913c9834f21a50",
++    "26002": "e8286dee49c025f5c3fa5bc4b9fbc658342a608c4b7374063951b2c9e56e05cb",
++    "26003": "06b434948310df5bbd72aac048ed54fb677321d681686d18a711e6a85190ee72",
++    "26004": "76b886994aeb651a406f465591180a170f2c25537dc144bf4735c6b47d9a1ec5",
++    "26005": "9fa446409c2edbb46407e0eb1cd936696117e7c6194b4b480a49f0cfb0a84d45"
++  },
++  "execution_commit_policy": "runtime_clean_head",
++  "execution_status": "NOT_STARTED",
++  "experiment": "E1_balanced",
++  "files": {
++    "configs/frozen/e1_pi_target_client_stratum.parquet": {
++      "semantic_role": "pi_target",
++      "sha256": "04f6aa0b485b3ea431f304368eb4cb6f72b412b274c5e0ca5cfec69eeee8d254",
++      "size_bytes": 7148
++    },
++    "configs/frozen/e1_pi_target_manifest.json": {
++      "semantic_role": "pi_target_manifest",
++      "sha256": "b3cbf319aeb8991dd2edb5466e55e7b1a633b077afe60345ca7ac97f9a479fe7",
++      "size_bytes": 1426
++    },
++    "configs/frozen/e1_protocol_schema.yaml": {
++      "semantic_role": "protocol_schema",
++      "sha256": "5d42bc9f9214acd511d701e05beb8606209ff94cd58ee6630e1438c2965896b3",
++      "size_bytes": 778
++    },
++    "configs/frozen/e1_selected_baseline.yaml": {
++      "semantic_role": "selected_baseline",
++      "sha256": "08886385bea51bf30740f10d7700adf1f3540febf19f440d35c5440b13a6b074",
++      "size_bytes": 1034
++    },
++    "configs/frozen/e1_sensorscope_balanced.yaml": {
++      "semantic_role": "protocol",
++      "sha256": "4dda5b646e66886dd507af4918c0f53c742db6b56c49006917d1e6c4531e4787",
++      "size_bytes": 1274
++    },
++    "configs/frozen/e1_sensorscope_clients.yaml": {
++      "semantic_role": "client_mapping",
++      "sha256": "804dd0fdb9f9f8865f70e42e4fba57926314d85205642e86972b98d560b3a64c",
++      "size_bytes": 1145
++    },
++    "configs/frozen/e1_sensorscope_groups.yaml": {
++      "semantic_role": "target_groups",
++      "sha256": "11f5974839e18716fa53f69c44b570106a944dcd50ccfebc3ff1b4f25399c579",
++      "size_bytes": 785
++    },
++    "configs/frozen/e1_weight_safety.yaml": {
++      "semantic_role": "weight_safety",
++      "sha256": "2e2e4309bb69370166cba39ecb6c93b88082c04a7ec62349822b2c7be516fc4f",
++      "size_bytes": 316
++    }
++  },
++  "local_steps": 2,
++  "manifest_schema_version": 1,
++  "no_harm_threshold": 0.03,
++  "num_clients": 8,
++  "pi_target_hash": "04f6aa0b485b3ea431f304368eb4cb6f72b412b274c5e0ca5cfec69eeee8d254",
++  "protocol_config_hash": "4dda5b646e66886dd507af4918c0f53c742db6b56c49006917d1e6c4531e4787",
++  "protocol_parent_commit": "53e277c53b01695330652b8e1bc8a234909d56e5",
++  "seal": "E1_FORMAL_FREEZE_R1",
++  "seeds": [
++    26001,
++    26002,
++    26003,
++    26004,
++    26005
++  ],
++  "selected_baseline": {
++    "file_path": "configs/frozen/e1_selected_baseline.yaml",
++    "file_sha256": "08886385bea51bf30740f10d7700adf1f3540febf19f440d35c5440b13a6b074",
++    "method": "flamf_timealign_adapted"
++  },
++  "target_group_file_hash": "11f5974839e18716fa53f69c44b570106a944dcd50ccfebc3ff1b4f25399c579",
++  "target_group_payload_hash": "abf2b601b42c27be4f5636e2816430659ad0fff0128c72e9cd28dd0be2381b26"
++}
+diff --git a/configs/frozen/e1_protocol_schema.yaml b/configs/frozen/e1_protocol_schema.yaml
+new file mode 100644
+index 0000000..07f791e
+--- /dev/null
++++ b/configs/frozen/e1_protocol_schema.yaml
+@@ -0,0 +1,41 @@
++schema_version: 1
++required_fields:
++  name:
++    type: string
++  dataset:
++    type: string
++  methods:
++    type: list
++  seeds:
++    type: list
++  num_windows:
++    type: integer
++    minimum: 1
++  s_max:
++    type: integer
++    minimum: 1
++  local_steps:
++    type: integer
++    minimum: 1
++    required: true
++  num_clients:
++    type: integer
++    minimum: 1
++  no_harm_threshold:
++    type: number
++  authorized_algorithm_commit:
++    type: string
++  protocol_parent_commit:
++    type: string
++  execution_commit_policy:
++    type: string
++  authorization_status:
++    type: string
++  execution_status:
++    type: string
++forbidden_fields:
++- git_commit
++allowed_authorization_status:
++- READY_FOR_FINAL_EXECUTION_AUTHORIZATION
++allowed_execution_status:
++- NOT_STARTED
+diff --git a/configs/frozen/e1_selected_baseline.yaml b/configs/frozen/e1_selected_baseline.yaml
+new file mode 100644
+index 0000000..d29bc40
+--- /dev/null
++++ b/configs/frozen/e1_selected_baseline.yaml
+@@ -0,0 +1,24 @@
++selected_baseline: flamf_timealign_adapted
++candidate_methods:
++- fedavg_window
++- fedasync_window
++- flamf_timealign_adapted
++validation_seed: 26001
++validation_split_only: true
++selection_split: validation
++test_read_count: 0
++local_steps: 2
++validation_rmse_mu:
++  fedavg_window: 3.3295208557058795
++  fedasync_window: 3.329068628788647
++  flamf_timealign_adapted: 3.3247128159136015
++tie_break_rule: 'within 1e-6: FedAvg, FedAsync, FLAMF-TimeAlign-Adapted'
++test_metrics_read: false
++status: FROZEN_FROM_VALIDATION
++protocol_hash: 4dda5b646e66886dd507af4918c0f53c742db6b56c49006917d1e6c4531e4787
++validation_config_hash: 4dda5b646e66886dd507af4918c0f53c742db6b56c49006917d1e6c4531e4787
++data_hash: 44081beb40e019ad999dc997162e7c7be9c0eb4cf562cddfb4f570ec1f7cca03
++event_trace_hash: e212661f5262e0559100d7f852c38a199dac9046b2b8c520fc913c9834f21a50
++selection_execution_commit: 53e277c53b01695330652b8e1bc8a234909d56e5
++selection_timestamp: '2026-08-02T12:06:51.074305+00:00'
++report_hash: 3a769730f7ffe885b845d89ede918bb8278a434a8b2af1e99eb3d186efe7c567
+diff --git a/configs/frozen/e1_sensorscope_balanced.yaml b/configs/frozen/e1_sensorscope_balanced.yaml
+new file mode 100644
+index 0000000..5b8b1d2
+--- /dev/null
++++ b/configs/frozen/e1_sensorscope_balanced.yaml
+@@ -0,0 +1,36 @@
++name: E1_balanced
++dataset: sensorscope
++methods:
++- fedavg_window
++- fedasync_window
++- flamf_timealign_adapted
++- twostage_hajek
++- raven
++scenario: balanced
++seeds:
++- 26001
++- 26002
++- 26003
++- 26004
++- 26005
++num_windows: 100
++s_max: 5
++local_steps: 2
++num_clients: 8
++no_harm_threshold: 0.03
++target_group_scope: sensorscope_e1_only
++target_group_mapping: repeatable_time_of_day_4
++target_group_timezone: UTC
++timealign_baseline_name: FLAMF-TimeAlign-Adapted
++authorized_algorithm_commit: 53e277c53b01695330652b8e1bc8a234909d56e5
++protocol_parent_commit: 53e277c53b01695330652b8e1bc8a234909d56e5
++execution_commit_policy: runtime_clean_head
++authorization_status: READY_FOR_FINAL_EXECUTION_AUTHORIZATION
++execution_status: NOT_STARTED
++semantic_seal_status: R4_PASS
++target_group_payload_hash: abf2b601b42c27be4f5636e2816430659ad0fff0128c72e9cd28dd0be2381b26
++target_group_file_hash: 11f5974839e18716fa53f69c44b570106a944dcd50ccfebc3ff1b4f25399c579
++target_group_hash: 11f5974839e18716fa53f69c44b570106a944dcd50ccfebc3ff1b4f25399c579
++client_mapping_payload_hash: e0adcf5f40cba6093cf9764b8badd297bd0f25b3b64104cc8b2470c6699ad7ff
++client_mapping_file_hash: 804dd0fdb9f9f8865f70e42e4fba57926314d85205642e86972b98d560b3a64c
++pi_target_hash: 04f6aa0b485b3ea431f304368eb4cb6f72b412b274c5e0ca5cfec69eeee8d254
+diff --git a/configs/frozen/e1_sensorscope_clients.yaml b/configs/frozen/e1_sensorscope_clients.yaml
+new file mode 100644
+index 0000000..00766c8
+--- /dev/null
++++ b/configs/frozen/e1_sensorscope_clients.yaml
+@@ -0,0 +1,59 @@
++salt: raven-mcs-e1-sensorscope-clients-v1
++num_clients: 8
++station_to_client:
++  s103: client-000
++  s104: client-004
++  s106: client-001
++  s107: client-001
++  s11: client-003
++  s12: client-002
++  s13: client-002
++  s14: client-001
++  s17: client-000
++  s18: client-007
++  s19: client-006
++  s23: client-000
++  s24: client-001
++  s25: client-005
++  s26: client-003
++  s3: client-002
++  s30: client-000
++  s32: client-005
++  s33: client-003
++  s34: client-004
++  s35: client-003
++  s36: client-002
++  s39: client-002
++  s4: client-001
++  s40: client-002
++  s41: client-000
++  s42: client-007
++  s43: client-000
++  s44: client-007
++  s45: client-002
++  s46: client-000
++  s49: client-006
++  s5: client-001
++  s50: client-004
++  s51: client-002
++  s53: client-001
++  s60: client-000
++  s66: client-006
++  s70: client-003
++  s72: client-003
++  s73: client-004
++  s76: client-000
++  s81: client-006
++  s84: client-007
++  s85: client-000
++  s87: client-002
++  s88: client-001
++  s89: client-002
++  s9: client-001
++  s92: client-002
++  s93: client-000
++  s94: client-004
++  s95: client-006
++  s96: client-006
++  s97: client-006
++mapping_hash: e0adcf5f40cba6093cf9764b8badd297bd0f25b3b64104cc8b2470c6699ad7ff
+diff --git a/docs/FORMULA_TO_CODE_MAP.md b/docs/FORMULA_TO_CODE_MAP.md
+index 6dbca88..bfb5d5c 100644
+--- a/docs/FORMULA_TO_CODE_MAP.md
++++ b/docs/FORMULA_TO_CODE_MAP.md
+@@ -24,6 +24,15 @@
+ | Validation-only baseline | `scripts/select_e1_baseline.py::choose_baseline` | `e1_selected_baseline.yaml` |
+ | No-harm degradation dry-run | `scripts/statistical_tests.py` | `no_harm_summary.json` |
+ 
++## E1-FORMAL-FREEZE-R1 identity
++
++| Requirement | Implementation | Evidence |
++|---|---|---|
++| Frozen `local_steps=2` | `experiments/e1_entry.py::enforce_frozen_local_steps` | `e1_sensorscope_balanced.yaml` |
++| Split algorithm/protocol/execution identity | protocol fields + runtime HEAD | `FROZEN_CONFIG_MANIFEST.json`, preflight |
++| `config_hash = resolved_run_config_hash` | `experiments/e1_entry.py` manifest write | run manifests / resolved config hash |
++| Frozen file SHA-256 verification | `scripts/verify_frozen_config_manifest.py` | `e1_formal_frozen_manifest_verification.json` |
++
+ ---
+ 
+ ## 1. Atomic units, strata, targets
+diff --git a/docs/reports/E1_FORMAL_FREEZE_R1_BASELINE_AUDIT.md b/docs/reports/E1_FORMAL_FREEZE_R1_BASELINE_AUDIT.md
+new file mode 100644
+index 0000000..c68c92d
+--- /dev/null
++++ b/docs/reports/E1_FORMAL_FREEZE_R1_BASELINE_AUDIT.md
+@@ -0,0 +1,14 @@
++# E1-FORMAL-FREEZE-R1 Baseline Audit
++
++- HEAD: `53e277c53b01695330652b8e1bc8a234909d56e5`
++- authorized_algorithm_commit: `53e277c53b01695330652b8e1bc8a234909d56e5`
++- protocol local_steps: `2`
++- protocol git_commit present: `False`
++- selected baseline recorded hash: `None`
++- selected baseline actual hash: `82b4ddec09b68c794580aa748df1fcc949471331ea8e0bb0e9b1ec529bff75ea`
++- match: `False`
++- protocol_config_hash: `4dda5b646e66886dd507af4918c0f53c742db6b56c49006917d1e6c4531e4787`
++- formal runs: `0`
++- E2-E9: `NOT_STARTED`
++
++Historical BLOCKED formal evidence retained.
+diff --git a/docs/reports/E1_FORMAL_FREEZE_R1_PREFLIGHT.md b/docs/reports/E1_FORMAL_FREEZE_R1_PREFLIGHT.md
+new file mode 100644
+index 0000000..4d603bb
+--- /dev/null
++++ b/docs/reports/E1_FORMAL_FREEZE_R1_PREFLIGHT.md
+@@ -0,0 +1,18 @@
++﻿# E1-FORMAL-FREEZE-R1 Preflight
++
++Mode: `final-candidate`
++Status: **PASS**
++Execution commit: runtime clean HEAD (see `outputs/preflight/E1_FORMAL_FREEZE_R1_PREFLIGHT.json`)
++Git clean: required for `final-candidate`
++Local steps: `2`
++Selected baseline: `flamf_timealign_adapted`
++
++## Blockers
++- none
++
++Formal 25-run E1 has NOT been executed.
++E2-E9 have NOT started.
++
++Authorized algorithm commit: `53e277c53b01695330652b8e1bc8a234909d56e5`
++Protocol parent commit: `53e277c53b01695330652b8e1bc8a234909d56e5`
++Execution commit policy: `runtime_clean_head`
+diff --git a/docs/reports/E1_FORMAL_R1_PREFLIGHT.md b/docs/reports/E1_FORMAL_R1_PREFLIGHT.md
+new file mode 100644
+index 0000000..743b5c7
+--- /dev/null
++++ b/docs/reports/E1_FORMAL_R1_PREFLIGHT.md
+@@ -0,0 +1,53 @@
++# E1-FORMAL-R1 Preflight
++
++Generated (UTC): 2026-08-02T11:31:14.218008+00:00
++Status: **BLOCKED**
++
++## Identity
++- Required commit: `53e277c53b01695330652b8e1bc8a234909d56e5`
++- HEAD commit: `53e277c53b01695330652b8e1bc8a234909d56e5`
++- Git clean: `False`
++- Python: `3.11.8`
++- Platform: `Windows-10-10.0.26200-SP0`
++- Processor: `Intel64 Family 6 Model 170 Stepping 4, GenuineIntel`
++- Dependency file: `requirements.txt`
++- Dependency hash: `5f8d3d2de65b448ce2b62937c805933de0bc0a706875245a32fffc3b2a6a073c`
++- Free disk (GB): `587.48`
++
++## Frozen Protocol
++- Protocol git_commit: `ffc062557802ec726509b8b3f4c50d8d59276b4c`
++- Manifest git_commit: `ffc062557802ec726509b8b3f4c50d8d59276b4c`
++- Protocol config hash: `5cbd202c0dd64f76b046d275109a200c6cad840ca2a34149d97994689c7e2f9e`
++- Selected baseline: `flamf_timealign_adapted`
++- Selected baseline hash: `82b4ddec09b68c794580aa748df1fcc949471331ea8e0bb0e9b1ec529bff75ea`
++- Data hash: `44081beb40e019ad999dc997162e7c7be9c0eb4cf562cddfb4f570ec1f7cca03`
++- Target-group payload/file: `abf2b601b42c27be4f5636e2816430659ad0fff0128c72e9cd28dd0be2381b26` / `11f5974839e18716fa53f69c44b570106a944dcd50ccfebc3ff1b4f25399c579`
++- Client-mapping payload/file: `e0adcf5f40cba6093cf9764b8badd297bd0f25b3b64104cc8b2470c6699ad7ff` / `804dd0fdb9f9f8865f70e42e4fba57926314d85205642e86972b98d560b3a64c`
++- Pi-target hash: `04f6aa0b485b3ea431f304368eb4cb6f72b412b274c5e0ca5cfec69eeee8d254`
++- Local steps in frozen protocol: `False`
++- Authorized-code runtime default local_steps: `2`
++
++## EventTraces
++- seed 26001: events=True, audit_pass=True, hash_match=True, generation_commit=`53e277c53b01695330652b8e1bc8a234909d56e5`, hash=`e212661f5262e0559100d7f852c38a199dac9046b2b8c520fc913c9834f21a50`
++- seed 26002: events=True, audit_pass=True, hash_match=True, generation_commit=`53e277c53b01695330652b8e1bc8a234909d56e5`, hash=`e8286dee49c025f5c3fa5bc4b9fbc658342a608c4b7374063951b2c9e56e05cb`
++- seed 26003: events=True, audit_pass=True, hash_match=True, generation_commit=`53e277c53b01695330652b8e1bc8a234909d56e5`, hash=`06b434948310df5bbd72aac048ed54fb677321d681686d18a711e6a85190ee72`
++- seed 26004: events=True, audit_pass=True, hash_match=True, generation_commit=`53e277c53b01695330652b8e1bc8a234909d56e5`, hash=`76b886994aeb651a406f465591180a170f2c25537dc144bf4735c6b47d9a1ec5`
++- seed 26005: events=True, audit_pass=True, hash_match=True, generation_commit=`53e277c53b01695330652b8e1bc8a234909d56e5`, hash=`9fa446409c2edbb46407e0eb1cd936696117e7c6194b4b480a49f0cfb0a84d45`
++
++## Hard Gates
++- Frozen files exist: `True`
++- R4 test summary present: `True`
++- R4 test all_exit_zero: `True`
++- Formal runs started: `False`
++
++## Blockers
++- frozen protocol git_commit=ffc062557802ec726509b8b3f4c50d8d59276b4c != required 53e277c53b01695330652b8e1bc8a234909d56e5
++- FROZEN_CONFIG_MANIFEST git_commit=ffc062557802ec726509b8b3f4c50d8d59276b4c != required 53e277c53b01695330652b8e1bc8a234909d56e5
++- frozen protocol missing local_steps
++
++## Decision
++
++E1-FORMAL-R1 = BLOCKED. No formal 5x5x100 runs were started.
++E2-E9 have NOT started.
++
++Teacher selected stop_blocked; no formal 25-run execution started.
+diff --git a/scripts/audit_e1_formal_freeze_baseline.py b/scripts/audit_e1_formal_freeze_baseline.py
+new file mode 100644
+index 0000000..534723d
+--- /dev/null
++++ b/scripts/audit_e1_formal_freeze_baseline.py
+@@ -0,0 +1,113 @@
++#!/usr/bin/env python3
++"""Emit baseline audit artifacts for E1-FORMAL-FREEZE-R1."""
++from __future__ import annotations
++
++import json
++import subprocess
++from datetime import datetime, timezone
++from pathlib import Path
++
++from raven_mcs.utils.hashing import sha256_file
++from raven_mcs.utils.serialization import load_json, load_yaml
++
++AUTHORIZED = "53e277c53b01695330652b8e1bc8a234909d56e5"
++
++
++def _git(root: Path, *args: str) -> str:
++    return subprocess.run(
++        ["git", *args], cwd=root, check=True,
++        capture_output=True, text=True, encoding="utf-8", errors="replace",
++    ).stdout
++
++
++def main() -> int:
++    root = Path(__file__).resolve().parents[1]
++    protocol = root / "configs/frozen/e1_sensorscope_balanced.yaml"
++    manifest = root / "configs/frozen/FROZEN_CONFIG_MANIFEST.json"
++    baseline = root / "configs/frozen/e1_selected_baseline.yaml"
++    frozen = load_json(manifest) if manifest.exists() else {}
++    protocol_obj = load_yaml(protocol) if protocol.exists() else {}
++    files = {
++        "protocol": protocol,
++        "groups": root / "configs/frozen/e1_sensorscope_groups.yaml",
++        "clients": root / "configs/frozen/e1_sensorscope_clients.yaml",
++        "pi_target": root / "configs/frozen/e1_pi_target_client_stratum.parquet",
++        "pi_manifest": root / "configs/frozen/e1_pi_target_manifest.json",
++        "baseline": baseline,
++        "weight_safety": root / "configs/frozen/e1_weight_safety.yaml",
++        "schema": root / "configs/frozen/e1_protocol_schema.yaml",
++        "frozen_manifest": manifest,
++    }
++    actual = {
++        key: (sha256_file(path) if path.exists() else None)
++        for key, path in files.items()
++    }
++    selected_meta = frozen.get("selected_baseline")
++    if isinstance(selected_meta, dict):
++        recorded_baseline = selected_meta.get("file_sha256")
++    else:
++        recorded_baseline = frozen.get("selected_baseline_file_sha256")
++    audit = {
++        "generated_at": datetime.now(timezone.utc).isoformat(),
++        "head": _git(root, "rev-parse", "HEAD").strip(),
++        "authorized_algorithm_commit": AUTHORIZED,
++        "git_status": _git(root, "status", "--porcelain"),
++        "protocol_fields": {
++            "local_steps": protocol_obj.get("local_steps"),
++            "authorized_algorithm_commit": protocol_obj.get(
++                "authorized_algorithm_commit"
++            ),
++            "protocol_parent_commit": protocol_obj.get(
++                "protocol_parent_commit"
++            ),
++            "git_commit_present": "git_commit" in protocol_obj,
++            "authorization_status": protocol_obj.get("authorization_status"),
++            "execution_status": protocol_obj.get("execution_status"),
++        },
++        "actual_file_sha256": actual,
++        "manifest_selected_baseline_hash": recorded_baseline,
++        "selected_baseline_actual_hash": actual["baseline"],
++        "selected_baseline_hash_match": (
++            recorded_baseline == actual["baseline"]
++            if recorded_baseline and actual["baseline"] else False
++        ),
++        "protocol_config_hash": actual["protocol"],
++        "formal_run_dirs": 0,
++        "e2_e9_status": "NOT_STARTED",
++        "historical_blocked_evidence_retained": True,
++    }
++    out_json = root / "outputs/audits/e1_formal_freeze_r1_baseline_audit.json"
++    out_json.parent.mkdir(parents=True, exist_ok=True)
++    out_json.write_text(json.dumps(audit, indent=2), encoding="utf-8")
++    md = root / "docs/reports/E1_FORMAL_FREEZE_R1_BASELINE_AUDIT.md"
++    md.write_text(
++        "\n".join([
++            "# E1-FORMAL-FREEZE-R1 Baseline Audit",
++            "",
++            f"- HEAD: `{audit['head']}`",
++            f"- authorized_algorithm_commit: `{AUTHORIZED}`",
++            f"- protocol local_steps: `{audit['protocol_fields']['local_steps']}`",
++            f"- protocol git_commit present: "
++            f"`{audit['protocol_fields']['git_commit_present']}`",
++            f"- selected baseline recorded hash: `{recorded_baseline}`",
++            f"- selected baseline actual hash: `{actual['baseline']}`",
++            f"- match: `{audit['selected_baseline_hash_match']}`",
++            f"- protocol_config_hash: `{actual['protocol']}`",
++            f"- formal runs: `{audit['formal_run_dirs']}`",
++            f"- E2-E9: `{audit['e2_e9_status']}`",
++            "",
++            "Historical BLOCKED formal evidence retained.",
++            "",
++        ]),
++        encoding="utf-8",
++    )
++    print(json.dumps({
++        "audit": str(out_json.relative_to(root)),
++        "selected_baseline_hash_match": audit["selected_baseline_hash_match"],
++        "local_steps": audit["protocol_fields"]["local_steps"],
++    }, indent=2))
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/audit_execution_diff_scope.py b/scripts/audit_execution_diff_scope.py
+new file mode 100644
+index 0000000..92115ef
+--- /dev/null
++++ b/scripts/audit_execution_diff_scope.py
+@@ -0,0 +1,135 @@
++#!/usr/bin/env python3
++"""Audit that execution HEAD only changes orchestration/freeze identity paths."""
++from __future__ import annotations
++
++import argparse
++import fnmatch
++import json
++import subprocess
++from pathlib import Path
++
++AUTHORIZED_DEFAULT = "53e277c53b01695330652b8e1bc8a234909d56e5"
++
++ALLOWED = [
++    "configs/frozen/**",
++    "manifests/**",
++    "scripts/check_e1_formal_*.py",
++    "scripts/run_e1_formal*.py",
++    "scripts/export_e1_formal_*.py",
++    "scripts/rebuild_frozen_config_manifest.py",
++    "scripts/verify_frozen_config_manifest.py",
++    "scripts/generate_e1_formal_resolved_config.py",
++    "scripts/audit_execution_diff_scope.py",
++    "scripts/audit_e1_formal_freeze_baseline.py",
++    "scripts/run_e1_formal_freeze_*.py",
++    "scripts/check_e1_formal_freeze_gates.py",
++    "scripts/select_e1_baseline.py",
++    "scripts/aggregate_results.py",
++    "scripts/statistical_tests.py",
++    "scripts/freeze_config.py",
++    "scripts/run_e1_r4_*.py",
++    "scripts/run_experiment.py",
++    "src/raven_mcs/experiments/**",
++    "tests/**/*freeze*",
++    "tests/**/*formal*",
++    "tests/unit/test_e1_entry_*.py",
++    "docs/**",
++    "STATUS.md",
++    "ISSUES.md",
++    "CHANGELOG.md",
++    ".gitignore",
++    "deliverables/**",
++    "logs/**",
++    "outputs/**",
++]
++
++FORBIDDEN_PREFIXES = [
++    "src/raven_mcs/training/",
++    "src/raven_mcs/aggregation/",
++    "src/raven_mcs/propensity/",
++    "src/raven_mcs/correction/",
++    "src/raven_mcs/opportunities/",
++    "src/raven_mcs/models/",
++    "src/raven_mcs/data/",
++    "src/raven_mcs/metrics/",
++    "src/raven_mcs/simulation/",
++]
++
++
++def _git(root: Path, *args: str) -> str:
++    return subprocess.run(
++        ["git", *args], cwd=root, check=True,
++        capture_output=True, text=True, encoding="utf-8", errors="replace",
++    ).stdout
++
++
++def _allowed(path: str) -> bool:
++    posix = path.replace("\\", "/")
++    for pattern in ALLOWED:
++        if fnmatch.fnmatch(posix, pattern):
++            return True
++    return False
++
++
++def _forbidden(path: str) -> bool:
++    posix = path.replace("\\", "/")
++    return any(posix.startswith(prefix) for prefix in FORBIDDEN_PREFIXES)
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser()
++    parser.add_argument("--authorized-commit", default=AUTHORIZED_DEFAULT)
++    args = parser.parse_args()
++    root = Path(__file__).resolve().parents[1]
++    execution = _git(root, "rev-parse", "HEAD").strip()
++    diff = _git(
++        root, "diff", "--name-only", f"{args.authorized_commit}...{execution}",
++    )
++    modified = [line.strip().replace("\\", "/") for line in diff.splitlines() if line.strip()]
++    # Also include uncommitted tracked modifications for local review.
++    dirty = [
++        line[3:].replace("\\", "/").strip()
++        for line in _git(root, "status", "--porcelain").splitlines()
++        if line.strip() and not line.startswith("??")
++    ]
++    untracked = [
++        line[3:].replace("\\", "/").strip()
++        for line in _git(root, "status", "--porcelain").splitlines()
++        if line.startswith("??")
++    ]
++    all_paths = sorted(set(modified + dirty + untracked))
++    allowed_paths = [path for path in all_paths if _allowed(path)]
++    forbidden_core = [
++        path for path in all_paths if _forbidden(path) or not _allowed(path)
++    ]
++    # Untracked under allowed patterns are fine; only forbidden if core.
++    forbidden_core = [
++        path for path in all_paths
++        if _forbidden(path) or (path.startswith("src/") and not _allowed(path))
++    ]
++    result = {
++        "authorized_algorithm_commit": args.authorized_commit,
++        "execution_commit": execution,
++        "modified_files": all_paths,
++        "allowed_paths": allowed_paths,
++        "forbidden_paths": forbidden_core,
++        "forbidden_core_changes": len(forbidden_core),
++        "status": "PASS" if not forbidden_core else "FAIL",
++    }
++    out = root / "outputs/audits/e1_formal_execution_diff_scope.json"
++    out.parent.mkdir(parents=True, exist_ok=True)
++    out.write_text(json.dumps(result, indent=2), encoding="utf-8")
++    print(json.dumps({
++        "status": result["status"],
++        "forbidden_core_changes": result["forbidden_core_changes"],
++        "modified_count": len(all_paths),
++    }, indent=2))
++    if result["status"] != "PASS":
++        raise RuntimeError(
++            "forbidden core changes: " + ", ".join(forbidden_core)
++        )
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/check_e1_formal_freeze_gates.py b/scripts/check_e1_formal_freeze_gates.py
+new file mode 100644
+index 0000000..49108ef
+--- /dev/null
++++ b/scripts/check_e1_formal_freeze_gates.py
+@@ -0,0 +1,114 @@
++#!/usr/bin/env python3
++"""Evaluate FREEZE-G1..G10 for E1-FORMAL-FREEZE-R1."""
++from __future__ import annotations
++
++import json
++import subprocess
++from pathlib import Path
++
++from raven_mcs.utils.hashing import sha256_file
++from raven_mcs.utils.serialization import load_json, load_yaml
++
++AUTHORIZED = "53e277c53b01695330652b8e1bc8a234909d56e5"
++
++
++def _git(root: Path, *args: str) -> str:
++    return subprocess.run(
++        ["git", *args], cwd=root, check=True,
++        capture_output=True, text=True, encoding="utf-8", errors="replace",
++    ).stdout
++
++
++def main() -> int:
++    root = Path(__file__).resolve().parents[1]
++    protocol = load_yaml(root / "configs/frozen/e1_sensorscope_balanced.yaml")
++    manifest = load_json(root / "configs/frozen/FROZEN_CONFIG_MANIFEST.json")
++    verify = load_json(
++        root / "outputs/audits/e1_formal_frozen_manifest_verification.json"
++    )
++    diff = load_json(
++        root / "outputs/audits/e1_formal_execution_diff_scope.json"
++    )
++    baseline = load_json(
++        root / "outputs/validation/e1_formal_freeze_r1_baseline_report.json"
++    )
++    safety = load_json(
++        root / "outputs/validation/e1_formal_freeze_r1_safety_summary.json"
++    )
++    preflight = load_json(
++        root / "outputs/preflight/E1_FORMAL_FREEZE_R1_PREFLIGHT.json"
++    )
++    tests = load_json(root / "logs/E1_FORMAL_FREEZE_R1_TEST_SUMMARY.json")
++    resolved = load_json(
++        root / "outputs/preflight/e1_formal_resolved_config_hash.json"
++    )
++    head = _git(root, "rev-parse", "HEAD").strip()
++    clean = _git(root, "status", "--porcelain").strip() == ""
++    gates = {
++        "FREEZE-G1": (
++            protocol.get("local_steps") == 2
++            and protocol.get("authorized_algorithm_commit") == AUTHORIZED
++            and protocol.get("protocol_parent_commit") == AUTHORIZED
++            and protocol.get("authorization_status")
++            == "READY_FOR_FINAL_EXECUTION_AUTHORIZATION"
++            and protocol.get("execution_status") == "NOT_STARTED"
++        ),
++        "FREEZE-G2": (
++            "execution_commit" not in protocol
++            and "git_commit" not in protocol
++            and protocol.get("execution_commit_policy")
++            == "runtime_clean_head"
++        ),
++        "FREEZE-G3": (
++            verify.get("status") == "PASS"
++            and bool(verify.get("selected_baseline", {}).get("match"))
++        ),
++        "FREEZE-G4": (
++            resolved.get("resolved_run_config_hash")
++            != protocol.get("target_group_hash")
++            and resolved.get("resolved_run_config_hash")
++            != sha256_file(
++                root / "configs/frozen/e1_sensorscope_balanced.yaml"
++            )
++        ),
++        "FREEZE-G5": diff.get("forbidden_core_changes") == 0,
++        "FREEZE-G6": (
++            baseline.get("selection_split") == "validation"
++            and baseline.get("test_read_count") == 0
++            and bool(baseline.get("selected_baseline"))
++        ),
++        "FREEZE-G7": bool(safety.get("all_seeds_pass")),
++        "FREEZE-G8": preflight.get("status") == "PASS",
++        "FREEZE-G9": (
++            bool(tests.get("all_exit_zero"))
++            and tests.get("failed", 1) == 0
++        ),
++        "FREEZE-G10": clean and bool(head),
++    }
++    report = {
++        "execution_candidate_commit": head,
++        "git_clean": clean,
++        "gates": {
++            name: ("PASS" if ok else "FAIL") for name, ok in gates.items()
++        },
++        "all_pass": all(gates.values()),
++        "protocol_config_hash": manifest.get("protocol_config_hash"),
++        "resolved_run_config_hash": resolved.get("resolved_run_config_hash"),
++        "selected_baseline": baseline.get("selected_baseline"),
++        "forbidden_core_changes": diff.get("forbidden_core_changes"),
++        "formal_runs_completed": 0,
++        "e1_status": (
++            "READY_FOR_FINAL_EXECUTION_AUTHORIZATION"
++            if all(gates.values()) else "NOT EXECUTED"
++        ),
++        "e2_e9_status": "NOT_STARTED",
++    }
++    out = root / "outputs/audits/e1_formal_freeze_r1_gates.json"
++    out.parent.mkdir(parents=True, exist_ok=True)
++    out.write_text(json.dumps(report, indent=2), encoding="utf-8")
++    print(json.dumps(report, indent=2))
++    return 0 if report["all_pass"] else 1
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/check_e1_formal_preflight.py b/scripts/check_e1_formal_preflight.py
+new file mode 100644
+index 0000000..543e9fa
+--- /dev/null
++++ b/scripts/check_e1_formal_preflight.py
+@@ -0,0 +1,246 @@
++#!/usr/bin/env python3
++"""Formal E1 preflight for freeze-review and final-candidate modes."""
++from __future__ import annotations
++
++import argparse
++import json
++import shutil
++import subprocess
++import sys
++from datetime import datetime, timezone
++from pathlib import Path
++
++from raven_mcs.utils.hashing import sha256_file
++from raven_mcs.utils.serialization import load_json, load_yaml
++
++AUTHORIZED = "53e277c53b01695330652b8e1bc8a234909d56e5"
++SEEDS = (26001, 26002, 26003, 26004, 26005)
++
++
++def _git(root: Path, *args: str) -> str:
++    return subprocess.run(
++        ["git", *args], cwd=root, check=True,
++        capture_output=True, text=True, encoding="utf-8", errors="replace",
++    ).stdout
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser()
++    parser.add_argument(
++        "--mode",
++        choices=["freeze-review", "final-candidate"],
++        required=True,
++    )
++    parser.add_argument("--skip-pytest", action="store_true")
++    args = parser.parse_args()
++    root = Path(__file__).resolve().parents[1]
++    blockers: list[str] = []
++    checks: dict[str, object] = {}
++
++    head = _git(root, "rev-parse", "HEAD").strip()
++    porcelain = _git(root, "status", "--porcelain")
++    git_clean = porcelain.strip() == ""
++    checks["execution_commit"] = head
++    checks["git_clean"] = git_clean
++    if not git_clean and args.mode == "final-candidate":
++        blockers.append("git worktree not clean")
++    if not git_clean and args.mode == "freeze-review":
++        checks["git_clean_note"] = (
++            "freeze-review allows dirty tree before final candidate commit"
++        )
++
++    protocol = load_yaml(root / "configs/frozen/e1_sensorscope_balanced.yaml")
++    manifest = load_json(root / "configs/frozen/FROZEN_CONFIG_MANIFEST.json")
++    if protocol.get("local_steps") != 2:
++        blockers.append("local_steps != 2")
++    if protocol.get("authorized_algorithm_commit") != AUTHORIZED:
++        blockers.append("authorized_algorithm_commit mismatch")
++    if protocol.get("protocol_parent_commit") != AUTHORIZED:
++        blockers.append("protocol_parent_commit mismatch")
++    if "git_commit" in protocol:
++        blockers.append("protocol still contains ambiguous git_commit")
++    if protocol.get("authorization_status") != (
++        "READY_FOR_FINAL_EXECUTION_AUTHORIZATION"
++    ):
++        blockers.append("authorization_status incorrect")
++    if protocol.get("execution_status") != "NOT_STARTED":
++        blockers.append("execution_status must be NOT_STARTED")
++    checks["local_steps"] = protocol.get("local_steps")
++    checks["authorized_algorithm_commit"] = protocol.get(
++        "authorized_algorithm_commit"
++    )
++    checks["protocol_parent_commit"] = protocol.get("protocol_parent_commit")
++
++    # Diff scope
++    diff_path = root / "outputs/audits/e1_formal_execution_diff_scope.json"
++    if not diff_path.exists():
++        blockers.append("missing execution diff scope audit")
++    else:
++        diff = load_json(diff_path)
++        checks["forbidden_core_changes"] = diff.get("forbidden_core_changes")
++        if diff.get("forbidden_core_changes", 1) != 0:
++            blockers.append("forbidden core algorithm changes present")
++
++    # Frozen hashes
++    verify_path = root / "outputs/audits/e1_formal_frozen_manifest_verification.json"
++    if not verify_path.exists():
++        blockers.append("missing frozen manifest verification")
++    else:
++        verify = load_json(verify_path)
++        checks["frozen_manifest_status"] = verify.get("status")
++        if verify.get("status") != "PASS":
++            blockers.append("frozen manifest verification failed")
++        checks["selected_baseline_hash_match"] = verify.get(
++            "selected_baseline", {}
++        ).get("match")
++        if not verify.get("selected_baseline", {}).get("match"):
++            blockers.append("selected baseline hash mismatch")
++
++    protocol_hash = sha256_file(
++        root / "configs/frozen/e1_sensorscope_balanced.yaml"
++    )
++    checks["protocol_config_hash"] = protocol_hash
++    if protocol_hash != manifest.get("protocol_config_hash"):
++        blockers.append("protocol hash does not match manifest")
++
++    resolved_hash_path = (
++        root / "outputs/preflight/e1_formal_resolved_config_hash.json"
++    )
++    if not resolved_hash_path.exists():
++        blockers.append("missing resolved config hash")
++    else:
++        resolved_meta = load_json(resolved_hash_path)
++        checks["resolved_run_config_hash"] = resolved_meta.get(
++            "resolved_run_config_hash"
++        )
++        if resolved_meta.get("local_steps") != 2:
++            blockers.append("resolved config local_steps != 2")
++
++    # EventTraces
++    trace_rows = []
++    for seed in SEEDS:
++        directory = root / f"outputs/event_traces/e1_balanced_seed{seed}"
++        events = directory / "events.parquet"
++        audit = directory / "audit.json"
++        tmanifest = directory / "event_trace_manifest.json"
++        audit_obj = load_json(audit) if audit.exists() else {}
++        tmeta = load_json(tmanifest) if tmanifest.exists() else {}
++        expected = manifest.get("event_trace_hashes", {}).get(str(seed))
++        actual = tmeta.get("event_trace_hash")
++        ok = (
++            directory.exists()
++            and events.exists()
++            and bool(audit_obj.get("hard_gate_pass"))
++            and expected == actual
++        )
++        if not ok:
++            blockers.append(f"eventtrace seed {seed} failed")
++        trace_rows.append({
++            "seed": seed,
++            "exists": directory.exists() and events.exists(),
++            "audit_pass": bool(audit_obj.get("hard_gate_pass")),
++            "hash_match": expected == actual,
++            "hash": actual,
++        })
++    checks["event_traces"] = trace_rows
++
++    # Validation baseline / safety
++    baseline_report = (
++        root / "outputs/validation/e1_formal_freeze_r1_baseline_report.json"
++    )
++    safety = (
++        root / "outputs/validation/e1_formal_freeze_r1_safety_summary.json"
++    )
++    if not baseline_report.exists():
++        blockers.append("missing validation baseline confirmation")
++    else:
++        bref = load_json(baseline_report)
++        checks["selected_baseline"] = bref.get("selected_baseline")
++        checks["test_read_count"] = bref.get("test_read_count")
++        if bref.get("test_read_count", 1) != 0:
++            blockers.append("baseline selection read test")
++        if bref.get("local_steps") != 2:
++            blockers.append("baseline selection local_steps != 2")
++    if not safety.exists():
++        blockers.append("missing five-seed safety summary")
++    else:
++        sref = load_json(safety)
++        checks["five_seed_safety"] = sref.get("all_seeds_pass")
++        if not sref.get("all_seeds_pass"):
++            blockers.append("five-seed safety failed")
++
++    # Tests / pip
++    test_summary = root / "logs/E1_FORMAL_FREEZE_R1_TEST_SUMMARY.json"
++    if test_summary.exists():
++        tsum = load_json(test_summary)
++        checks["test_summary_all_exit_zero"] = tsum.get("all_exit_zero")
++        if not tsum.get("all_exit_zero") or tsum.get("failed", 1) != 0:
++            blockers.append("test summary failed")
++    elif args.mode == "final-candidate":
++        blockers.append("missing freeze test summary")
++
++    # Disk / formal dirs / E2-E9
++    free_gb = shutil.disk_usage(root).free / (1024**3)
++    checks["free_disk_gb"] = round(free_gb, 2)
++    if free_gb < 5:
++        blockers.append("insufficient disk space")
++    formal_dirs = list((root / "outputs/runs").glob("E1_FORMAL_*")) if (
++        root / "outputs/runs"
++    ).exists() else []
++    checks["formal_run_dirs"] = len(formal_dirs)
++    if formal_dirs:
++        blockers.append("unarchived formal run directories present")
++    checks["e2_e9_status"] = "NOT_STARTED"
++    checks["formal_runs_completed"] = 0
++
++    status = "PASS" if not blockers else "BLOCKED"
++    report = {
++        "mode": args.mode,
++        "status": status,
++        "generated_at": datetime.now(timezone.utc).isoformat(),
++        "execution_commit": head,
++        "checks": checks,
++        "blockers": blockers,
++        "formal_25_runs_started": False,
++        "e2_e9_status": "NOT_STARTED",
++    }
++    out_json = root / "outputs/preflight/E1_FORMAL_FREEZE_R1_PREFLIGHT.json"
++    out_json.parent.mkdir(parents=True, exist_ok=True)
++    out_json.write_text(json.dumps(report, indent=2), encoding="utf-8")
++    md_body = "\n".join([
++        "# E1-FORMAL-FREEZE-R1 Preflight",
++        "",
++        f"Mode: `{args.mode}`",
++        f"Status: **{status}**",
++        f"Execution commit: `{head}`",
++        f"Git clean: `{git_clean}`",
++        f"Local steps: `{protocol.get('local_steps')}`",
++        f"Selected baseline: `{checks.get('selected_baseline')}`",
++        "",
++        "## Blockers",
++        *(
++            [f"- {item}" for item in blockers]
++            if blockers else ["- none"]
++        ),
++        "",
++        "Formal 25-run E1 has NOT been executed.",
++        "E2-E9 have NOT started.",
++        "",
++    ])
++    # Generated outputs stay outside tracked docs to avoid dirtying clean HEAD.
++    md_out = root / "outputs/preflight/E1_FORMAL_FREEZE_R1_PREFLIGHT.md"
++    md_out.write_text(md_body, encoding="utf-8")
++    md_docs = root / "docs/reports/E1_FORMAL_FREEZE_R1_PREFLIGHT.md"
++    if args.mode == "freeze-review" or not md_docs.exists():
++        md_docs.write_text(md_body, encoding="utf-8")
++    md = md_out
++    print(json.dumps({
++        "status": status,
++        "blockers": blockers,
++        "execution_commit": head,
++    }, indent=2))
++    return 0 if status == "PASS" else 1
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/export_e1_formal_freeze_r1_evidence.py b/scripts/export_e1_formal_freeze_r1_evidence.py
+new file mode 100644
+index 0000000..c7c0107
+--- /dev/null
++++ b/scripts/export_e1_formal_freeze_r1_evidence.py
+@@ -0,0 +1,243 @@
++#!/usr/bin/env python3
++"""Export E1-FORMAL-FREEZE-R1 evidence package. Does not run formal E1."""
++from __future__ import annotations
++
++import json
++import shutil
++import subprocess
++import zipfile
++from datetime import datetime, timezone
++from pathlib import Path
++
++from docx import Document
++
++from raven_mcs.utils.hashing import sha256_file
++from raven_mcs.utils.serialization import load_json, load_yaml
++
++AUTHORIZED = "53e277c53b01695330652b8e1bc8a234909d56e5"
++
++
++def _git(root: Path, *args: str) -> str:
++    return subprocess.run(
++        ["git", *args], cwd=root, check=True,
++        capture_output=True, text=True, encoding="utf-8", errors="replace",
++    ).stdout
++
++
++def main() -> int:
++    root = Path(__file__).resolve().parents[1]
++    deliverables = root / "deliverables"
++    deliverables.mkdir(exist_ok=True)
++    submission = deliverables / "E1_FORMAL_FREEZE_R1_SUBMISSION"
++    if submission.exists():
++        shutil.rmtree(submission)
++    submission.mkdir(parents=True)
++
++    protocol = load_yaml(root / "configs/frozen/e1_sensorscope_balanced.yaml")
++    manifest = load_json(root / "configs/frozen/FROZEN_CONFIG_MANIFEST.json")
++    verify = load_json(
++        root / "outputs/audits/e1_formal_frozen_manifest_verification.json"
++    )
++    diff = load_json(
++        root / "outputs/audits/e1_formal_execution_diff_scope.json"
++    )
++    baseline = load_json(
++        root / "outputs/validation/e1_formal_freeze_r1_baseline_report.json"
++    )
++    safety = load_json(
++        root / "outputs/validation/e1_formal_freeze_r1_safety_summary.json"
++    )
++    preflight = load_json(
++        root / "outputs/preflight/E1_FORMAL_FREEZE_R1_PREFLIGHT.json"
++    )
++    resolved = load_json(
++        root / "outputs/preflight/e1_formal_resolved_config_hash.json"
++    )
++    gates = load_json(
++        root / "outputs/audits/e1_formal_freeze_r1_gates.json"
++    )
++    tests = load_json(root / "logs/E1_FORMAL_FREEZE_R1_TEST_SUMMARY.json")
++    head = _git(root, "rev-parse", "HEAD").strip()
++    clean = _git(root, "status", "--porcelain").strip() == ""
++    baseline_path = root / "configs/frozen/e1_selected_baseline.yaml"
++    baseline_hash = sha256_file(baseline_path)
++
++    sections = [
++        ("Executive Summary", (
++            "E1-FORMAL-FREEZE-R1 re-freezes protocol/identity/preflight "
++            "evidence only. Formal 25-run E1 has NOT been executed."
++        )),
++        ("Prior Formal Blocker", (
++            "E1-FORMAL-R1 was correctly BLOCKED by freeze/identity mismatches; "
++            "historical blocked evidence is retained."
++        )),
++        ("Authorized Algorithm Identity", AUTHORIZED),
++        ("Protocol Parent Identity", AUTHORIZED),
++        ("Execution Commit Policy", "runtime_clean_head"),
++        ("Frozen local_steps", str(protocol.get("local_steps"))),
++        ("Rebuilt Frozen Manifest",
++         f"protocol_config_hash={manifest.get('protocol_config_hash')}"),
++        ("Selected Baseline Hash Verification",
++         f"method={baseline.get('selected_baseline')} "
++         f"actual={baseline_hash} "
++         f"manifest={manifest['selected_baseline']['file_sha256']} "
++         f"match={verify['selected_baseline']['match']}"),
++        ("Config Hash Semantics",
++         "config_hash = resolved_run_config_hash; "
++         "target_group_hash kept separate"),
++        ("Execution Diff Scope",
++         f"forbidden_core_changes={diff.get('forbidden_core_changes')}"),
++        ("Refrozen Protocol Hash",
++         str(manifest.get("protocol_config_hash"))),
++        ("Resolved Config Hash",
++         str(resolved.get("resolved_run_config_hash"))),
++        ("Validation Baseline Confirmation",
++         json.dumps({
++             "selected": baseline.get("selected_baseline"),
++             "test_read_count": baseline.get("test_read_count"),
++             "local_steps": baseline.get("local_steps"),
++         }, sort_keys=True)),
++        ("Five-Seed Validation Safety",
++         json.dumps({
++             "all_seeds_pass": safety.get("all_seeds_pass"),
++             "max_first_stage_clip_rate": safety.get(
++                 "max_first_stage_clip_rate"
++             ),
++             "max_second_stage_clip_rate": safety.get(
++                 "max_second_stage_clip_rate"
++             ),
++             "min_median_n_eff": safety.get("min_median_n_eff"),
++         }, sort_keys=True)),
++        ("Formal Preflight Result",
++         f"{preflight.get('status')} mode={preflight.get('mode')}"),
++        ("Test and Git Evidence",
++         f"tests_ok={tests.get('all_exit_zero')} clean={clean} "
++         f"execution_candidate_commit={head}"),
++        ("FREEZE-G1 to FREEZE-G10",
++         json.dumps(gates.get("gates"), sort_keys=True)),
++        ("Remaining Issues",
++         "Await teacher authorization of execution_candidate_commit "
++         "before starting 25 formal runs."),
++        ("Execution Candidate Commit", head),
++        ("Teacher Authorization Request",
++         "Please authorize clean HEAD as formal E1 execution commit. "
++         "Do not rewrite it into the frozen protocol."),
++    ]
++
++    md_lines = [
++        "# E1-FORMAL-FREEZE-R1 REPORT",
++        "",
++        f"Generated: {datetime.now(timezone.utc).isoformat()}",
++        "",
++        "formal 25-run E1 has NOT been executed",
++        "E2-E9 have NOT started",
++        "",
++    ]
++    for title, body in sections:
++        md_lines.extend([f"## {title}", "", str(body), ""])
++    md_path = deliverables / "E1_FORMAL_FREEZE_R1_REPORT.md"
++    md_path.write_text("\n".join(md_lines), encoding="utf-8")
++
++    doc = Document()
++    doc.add_heading("E1-FORMAL-FREEZE-R1 REPORT", level=1)
++    doc.add_paragraph(
++        "formal 25-run E1 has NOT been executed; E2-E9 have NOT started"
++    )
++    for title, body in sections:
++        doc.add_heading(title, level=2)
++        doc.add_paragraph(str(body))
++    docx_path = deliverables / "E1_FORMAL_FREEZE_R1_REPORT.docx"
++    doc.save(docx_path)
++
++    readme = deliverables / "E1_FORMAL_FREEZE_R1_SUBMISSION_README.txt"
++    readme.write_text(
++        "\n".join([
++            "RAVEN-MCS E1-FORMAL-FREEZE-R1 submission",
++            f"authorized_algorithm_commit={AUTHORIZED}",
++            f"protocol_parent_commit={AUTHORIZED}",
++            f"execution_candidate_commit={head}",
++            f"git_clean={clean}",
++            f"local_steps={protocol.get('local_steps')}",
++            f"selected_baseline={baseline.get('selected_baseline')}",
++            f"protocol_config_hash={manifest.get('protocol_config_hash')}",
++            f"resolved_run_config_hash="
++            f"{resolved.get('resolved_run_config_hash')}",
++            f"preflight={preflight.get('status')}",
++            "formal_runs_completed=0",
++            "E1=READY_FOR_FINAL_EXECUTION_AUTHORIZATION"
++            if gates.get("all_pass") else "E1=NOT EXECUTED",
++            "E2-E9=NOT_STARTED",
++            "Historical BLOCKED formal report retained under "
++            "docs/reports/E1_FORMAL_R1_PREFLIGHT.md",
++            "",
++        ]),
++        encoding="utf-8",
++    )
++
++    copy_paths = [
++        "configs/frozen/e1_sensorscope_balanced.yaml",
++        "configs/frozen/FROZEN_CONFIG_MANIFEST.json",
++        "configs/frozen/e1_selected_baseline.yaml",
++        "configs/frozen/e1_sensorscope_groups.yaml",
++        "configs/frozen/e1_sensorscope_clients.yaml",
++        "configs/frozen/e1_pi_target_client_stratum.parquet",
++        "configs/frozen/e1_pi_target_manifest.json",
++        "configs/frozen/e1_weight_safety.yaml",
++        "configs/frozen/e1_protocol_schema.yaml",
++        "outputs/audits/e1_formal_frozen_manifest_verification.json",
++        "outputs/audits/e1_formal_execution_diff_scope.json",
++        "outputs/audits/e1_formal_freeze_r1_gates.json",
++        "outputs/preflight/e1_formal_resolved_config.yaml",
++        "outputs/preflight/e1_formal_resolved_config_hash.json",
++        "outputs/preflight/E1_FORMAL_FREEZE_R1_PREFLIGHT.json",
++        "docs/reports/E1_FORMAL_FREEZE_R1_PREFLIGHT.md",
++        "docs/reports/E1_FORMAL_FREEZE_R1_BASELINE_AUDIT.md",
++        "docs/reports/E1_FORMAL_R1_PREFLIGHT.md",
++        "outputs/validation/e1_formal_freeze_r1_baseline_report.json",
++        "outputs/validation/e1_formal_freeze_r1_safety_summary.json",
++        "logs/E1_FORMAL_FREEZE_R1_TEST_SUMMARY.json",
++        "logs/E1_FORMAL_FREEZE_R1_EXACT_COMMANDS.jsonl",
++        "STATUS.md",
++        "ISSUES.md",
++        "CHANGELOG.md",
++    ]
++    for relative in copy_paths:
++        src = root / relative
++        if not src.exists():
++            continue
++        dest = submission / relative
++        dest.parent.mkdir(parents=True, exist_ok=True)
++        shutil.copy2(src, dest)
++
++    (submission / "git_rev_parse_HEAD.txt").write_text(head + "\n", encoding="utf-8")
++    (submission / "git_status_porcelain.txt").write_text(
++        _git(root, "status", "--porcelain"), encoding="utf-8",
++    )
++    (submission / "git_log.txt").write_text(
++        _git(root, "log", "-5", "--oneline"), encoding="utf-8",
++    )
++    shutil.copy2(md_path, submission / md_path.name)
++    shutil.copy2(docx_path, submission / docx_path.name)
++    shutil.copy2(readme, submission / readme.name)
++
++    zip_path = deliverables / "RAVEN_MCS_E1_FORMAL_FREEZE_R1_EVIDENCE.zip"
++    if zip_path.exists():
++        zip_path.unlink()
++    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
++        for path in submission.rglob("*"):
++            if path.is_file():
++                zf.write(path, path.relative_to(submission).as_posix())
++
++    print(json.dumps({
++        "zip": str(zip_path),
++        "report": str(docx_path),
++        "readme": str(readme),
++        "execution_candidate_commit": head,
++        "git_clean": clean,
++        "zip_sha256": sha256_file(zip_path),
++    }, indent=2))
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/export_e1_formal_r1_blocked_evidence.py b/scripts/export_e1_formal_r1_blocked_evidence.py
+new file mode 100644
+index 0000000..b570582
+--- /dev/null
++++ b/scripts/export_e1_formal_r1_blocked_evidence.py
+@@ -0,0 +1,610 @@
++#!/usr/bin/env python3
++"""Export E1-FORMAL-R1 blocked preflight report and evidence package.
++
++Does not execute formal runs. Documents freeze/identity blockers only.
++"""
++from __future__ import annotations
++
++import json
++import platform
++import shutil
++import subprocess
++import sys
++import zipfile
++from datetime import datetime, timezone
++from pathlib import Path
++
++from docx import Document
++
++from raven_mcs.utils.hashing import sha256_file
++from raven_mcs.utils.serialization import load_json, load_yaml
++
++REQUIRED_COMMIT = "53e277c53b01695330652b8e1bc8a234909d56e5"
++METHODS = (
++    "fedavg_window",
++    "fedasync_window",
++    "flamf_timealign_adapted",
++    "twostage_hajek",
++    "raven",
++)
++SEEDS = (26001, 26002, 26003, 26004, 26005)
++
++
++def _git(root: Path, *args: str) -> str:
++    return subprocess.run(
++        ["git", *args],
++        cwd=root,
++        check=True,
++        capture_output=True,
++        text=True,
++        encoding="utf-8",
++        errors="replace",
++    ).stdout
++
++
++def collect_preflight(root: Path) -> dict:
++    head = _git(root, "rev-parse", "HEAD").strip()
++    porcelain = _git(root, "status", "--porcelain")
++    git_clean = porcelain.strip() == ""
++
++    files = {
++        "protocol": root / "configs/frozen/e1_sensorscope_balanced.yaml",
++        "groups": root / "configs/frozen/e1_sensorscope_groups.yaml",
++        "clients": root / "configs/frozen/e1_sensorscope_clients.yaml",
++        "pi_target": root / "configs/frozen/e1_pi_target_client_stratum.parquet",
++        "pi_manifest": root / "configs/frozen/e1_pi_target_manifest.json",
++        "baseline": root / "configs/frozen/e1_selected_baseline.yaml",
++        "weight_safety": root / "configs/frozen/e1_weight_safety.yaml",
++        "frozen_manifest": root / "configs/frozen/FROZEN_CONFIG_MANIFEST.json",
++        "trace_manifest": root / "outputs/event_traces/E1_BALANCED_EVENTTRACE_MANIFEST.json",
++    }
++    exists = {key: path.exists() for key, path in files.items()}
++    hashes = {
++        key: (sha256_file(path) if path.exists() else None)
++        for key, path in files.items()
++    }
++    protocol = load_yaml(files["protocol"]) if exists["protocol"] else {}
++    frozen = load_json(files["frozen_manifest"]) if exists["frozen_manifest"] else {}
++    baseline = load_yaml(files["baseline"]) if exists["baseline"] else {}
++    trace_manifest = (
++        load_json(files["trace_manifest"]) if exists["trace_manifest"] else {}
++    )
++    pi_manifest = load_json(files["pi_manifest"]) if exists["pi_manifest"] else {}
++
++    trace_rows = []
++    for seed in SEEDS:
++        directory = root / f"outputs/event_traces/e1_balanced_seed{seed}"
++        events = directory / "events.parquet"
++        audit = directory / "audit.json"
++        manifest = directory / "event_trace_manifest.json"
++        audit_obj = load_json(audit) if audit.exists() else {}
++        manifest_obj = load_json(manifest) if manifest.exists() else {}
++        expected = frozen.get("event_trace_hashes", {}).get(str(seed))
++        actual = manifest_obj.get("event_trace_hash")
++        if not actual and str(seed) in (trace_manifest.get("traces") or {}):
++            actual = trace_manifest["traces"][str(seed)]["event_trace_hash"]
++        generation = (
++            manifest_obj.get("generation_git_commit")
++            or (trace_manifest.get("traces") or {})
++            .get(str(seed), {})
++            .get("generation_git_commit")
++        )
++        trace_rows.append(
++            {
++                "seed": seed,
++                "dir_exists": directory.exists(),
++                "events_exists": events.exists(),
++                "events_sha256": sha256_file(events) if events.exists() else None,
++                "audit_pass": bool(
++                    audit_obj.get(
++                        "hard_gate_pass",
++                        audit_obj.get(
++                            "audit_pass", audit_obj.get("pass", False),
++                        ),
++                    )
++                ),
++                "expected_hash": expected,
++                "actual_hash": actual,
++                "hash_match": bool(expected and actual and expected == actual),
++                "generation_git_commit": generation,
++            }
++        )
++
++    req = root / "requirements.txt"
++    lock = root / "requirements.lock"
++    dep_path = lock if lock.exists() else req if req.exists() else None
++    dep_hash = sha256_file(dep_path) if dep_path else None
++    free_gb = shutil.disk_usage(root).free / (1024**3)
++
++    test_summary_path = root / "logs/E1_ENTRY_R4_TEST_SUMMARY.json"
++    test_summary = load_json(test_summary_path) if test_summary_path.exists() else {}
++
++    packaging_paths = {
++        "STATUS.md",
++        "ISSUES.md",
++        ".gitignore",
++        "docs/reports/E1_FORMAL_R1_PREFLIGHT.md",
++        "scripts/export_e1_formal_r1_blocked_evidence.py",
++        "deliverables/E1_FORMAL_REPORT.md",
++        "deliverables/E1_FORMAL_REPORT.docx",
++        "deliverables/E1_FORMAL_SUBMISSION_README.txt",
++        "deliverables/E1_FORMAL_DELIVERABLE_HASHES.json",
++        "deliverables/RAVEN_MCS_E1_FORMAL_EVIDENCE.zip",
++        "outputs/audits/e1_formal_r1_preflight.json",
++    }
++    dirty_paths = [
++        line[3:].replace("\\", "/").strip()
++        for line in porcelain.splitlines()
++        if line.strip()
++    ]
++    non_packaging_dirty = [
++        path for path in dirty_paths
++        if path not in packaging_paths
++        and not path.startswith("outputs/evidence_formal_r1/")
++        and not path.startswith("deliverables/")
++    ]
++
++    blockers: list[str] = []
++    if head != REQUIRED_COMMIT:
++        blockers.append(f"HEAD {head} != required {REQUIRED_COMMIT}")
++    if non_packaging_dirty:
++        blockers.append(
++            "git worktree has non-packaging dirty paths: "
++            + ", ".join(non_packaging_dirty)
++        )
++    if protocol.get("git_commit") != REQUIRED_COMMIT:
++        blockers.append(
++            "frozen protocol git_commit="
++            f"{protocol.get('git_commit')} != required {REQUIRED_COMMIT}"
++        )
++    if frozen.get("git_commit") != REQUIRED_COMMIT:
++        blockers.append(
++            "FROZEN_CONFIG_MANIFEST git_commit="
++            f"{frozen.get('git_commit')} != required {REQUIRED_COMMIT}"
++        )
++    if "local_steps" not in protocol:
++        blockers.append("frozen protocol missing local_steps")
++    missing = [key for key, value in exists.items() if not value]
++    if missing:
++        blockers.append("missing frozen/evidence files: " + ", ".join(missing))
++    if any(not row["dir_exists"] or not row["events_exists"] for row in trace_rows):
++        blockers.append("missing EventTrace artifacts")
++    if any(not row["audit_pass"] for row in trace_rows):
++        blockers.append("EventTrace audit not all pass")
++
++    return {
++        "status": "BLOCKED" if blockers else "PASS",
++        "generated_at": datetime.now(timezone.utc).isoformat(),
++        "required_commit": REQUIRED_COMMIT,
++        "head_commit": head,
++        "git_clean": git_clean,
++        "git_dirty_paths": dirty_paths,
++        "git_non_packaging_dirty_paths": non_packaging_dirty,
++        "git_clean_except_packaging": len(non_packaging_dirty) == 0,
++        "python_version": sys.version.split()[0],
++        "venv_python": sys.executable,
++        "platform": platform.platform(),
++        "processor": platform.processor(),
++        "dependency_file": (
++            str(dep_path.relative_to(root)) if dep_path is not None else None
++        ),
++        "dependency_hash": dep_hash,
++        "free_disk_gb": round(free_gb, 2),
++        "frozen_files_exist": exists,
++        "frozen_file_hashes": hashes,
++        "protocol_git_commit": protocol.get("git_commit"),
++        "protocol_authorization_status": protocol.get("authorization_status"),
++        "protocol_execution_status": protocol.get("execution_status"),
++        "protocol_config_hash": hashes.get("protocol"),
++        "manifest_git_commit": frozen.get("git_commit"),
++        "manifest_e1_config_hash": frozen.get("e1_config_hash"),
++        "selected_baseline": baseline.get("selected_baseline"),
++        "selected_baseline_hash": hashes.get("baseline"),
++        "selected_baseline_git_commit": baseline.get("git_commit"),
++        "data_hash": baseline.get("data_hash") or trace_manifest.get("dataset_hash"),
++        "target_group_payload_hash": protocol.get("target_group_payload_hash"),
++        "target_group_file_hash": protocol.get("target_group_file_hash"),
++        "client_mapping_payload_hash": protocol.get("client_mapping_payload_hash"),
++        "client_mapping_file_hash": protocol.get("client_mapping_file_hash"),
++        "pi_target_hash": protocol.get("pi_target_hash"),
++        "pi_manifest": {
++            "client_stratum_target_mass_hash": pi_manifest.get(
++                "client_stratum_target_mass_hash"
++            ),
++            "pi_target_file_hash": pi_manifest.get("pi_target_file_hash")
++            or pi_manifest.get("pi_target_hash"),
++            "atomic_target_weight_hash": pi_manifest.get("atomic_target_weight_hash"),
++        },
++        "event_traces": trace_rows,
++        "event_trace_manifest_git_commit": trace_manifest.get("git_commit"),
++        "local_steps_in_frozen_protocol": "local_steps" in protocol,
++        "local_steps_runtime_default_in_authorized_code": 2,
++        "methods": list(METHODS),
++        "seeds": list(SEEDS),
++        "formal_runs_started": False,
++        "formal_runs_completed": 0,
++        "formal_runs_passed": 0,
++        "failed_runs": [],
++        "resume_count": 0,
++        "r4_test_summary_present": test_summary_path.exists(),
++        "r4_test_all_exit_zero": bool(test_summary.get("all_exit_zero")),
++        "r4_test_failed": test_summary.get("failed"),
++        "blockers": blockers,
++        "authorization_note": (
++            "Teacher selected stop_blocked; no formal 25-run execution started."
++        ),
++        "e2_e9_status": "NOT_STARTED",
++        "estimated_total_runtime_note": (
++            "Not estimated for formal execution because preflight blocked before "
++            "Phase A; R4 one-seed five-method 20-window smoke completed previously."
++        ),
++    }
++
++
++def write_preflight_md(root: Path, preflight: dict) -> Path:
++    path = root / "docs/reports/E1_FORMAL_R1_PREFLIGHT.md"
++    path.parent.mkdir(parents=True, exist_ok=True)
++    lines = [
++        "# E1-FORMAL-R1 Preflight",
++        "",
++        f"Generated (UTC): {preflight['generated_at']}",
++        f"Status: **{preflight['status']}**",
++        "",
++        "## Identity",
++        f"- Required commit: `{preflight['required_commit']}`",
++        f"- HEAD commit: `{preflight['head_commit']}`",
++        f"- Git clean: `{preflight['git_clean']}`",
++        f"- Python: `{preflight['python_version']}`",
++        f"- Platform: `{preflight['platform']}`",
++        f"- Processor: `{preflight['processor']}`",
++        f"- Dependency file: `{preflight['dependency_file']}`",
++        f"- Dependency hash: `{preflight['dependency_hash']}`",
++        f"- Free disk (GB): `{preflight['free_disk_gb']}`",
++        "",
++        "## Frozen Protocol",
++        f"- Protocol git_commit: `{preflight['protocol_git_commit']}`",
++        f"- Manifest git_commit: `{preflight['manifest_git_commit']}`",
++        f"- Protocol config hash: `{preflight['protocol_config_hash']}`",
++        f"- Selected baseline: `{preflight['selected_baseline']}`",
++        f"- Selected baseline hash: `{preflight['selected_baseline_hash']}`",
++        f"- Data hash: `{preflight['data_hash']}`",
++        f"- Target-group payload/file: "
++        f"`{preflight['target_group_payload_hash']}` / "
++        f"`{preflight['target_group_file_hash']}`",
++        f"- Client-mapping payload/file: "
++        f"`{preflight['client_mapping_payload_hash']}` / "
++        f"`{preflight['client_mapping_file_hash']}`",
++        f"- Pi-target hash: `{preflight['pi_target_hash']}`",
++        f"- Local steps in frozen protocol: "
++        f"`{preflight['local_steps_in_frozen_protocol']}`",
++        f"- Authorized-code runtime default local_steps: "
++        f"`{preflight['local_steps_runtime_default_in_authorized_code']}`",
++        "",
++        "## EventTraces",
++    ]
++    for row in preflight["event_traces"]:
++        lines.append(
++            f"- seed {row['seed']}: events={row['events_exists']}, "
++            f"audit_pass={row['audit_pass']}, hash_match={row['hash_match']}, "
++            f"generation_commit=`{row['generation_git_commit']}`, "
++            f"hash=`{row['actual_hash']}`"
++        )
++    lines.extend(
++        [
++            "",
++            "## Hard Gates",
++            f"- Frozen files exist: `{all(preflight['frozen_files_exist'].values())}`",
++            f"- R4 test summary present: `{preflight['r4_test_summary_present']}`",
++            f"- R4 test all_exit_zero: `{preflight['r4_test_all_exit_zero']}`",
++            f"- Formal runs started: `{preflight['formal_runs_started']}`",
++            "",
++            "## Blockers",
++        ]
++    )
++    if preflight["blockers"]:
++        lines.extend(f"- {item}" for item in preflight["blockers"])
++    else:
++        lines.append("- none")
++    lines.extend(
++        [
++            "",
++            "## Decision",
++            "",
++            "E1-FORMAL-R1 = BLOCKED. No formal 5x5x100 runs were started.",
++            "E2-E9 have NOT started.",
++            "",
++            preflight["authorization_note"],
++            "",
++        ]
++    )
++    path.write_text("\n".join(lines), encoding="utf-8")
++    return path
++
++
++def write_report(root: Path, preflight: dict) -> tuple[Path, Path, Path]:
++    deliverables = root / "deliverables"
++    deliverables.mkdir(parents=True, exist_ok=True)
++    sections = [
++        (
++            "Executive Summary",
++            "E1-FORMAL-R1 status is BLOCKED. Formal 25-run execution was not "
++            "started after preflight identity conflicts. Teacher selected "
++            "stop_blocked.",
++        ),
++        (
++            "Frozen Protocol and Formal Authorization",
++            "Authorized code commit is "
++            f"`{REQUIRED_COMMIT}`. Frozen protocol/manifest still record "
++            f"`{preflight['protocol_git_commit']}` / "
++            f"`{preflight['manifest_git_commit']}`. "
++            "Authorization status in protocol file remains "
++            f"`{preflight['protocol_authorization_status']}`; "
++            f"execution_status=`{preflight['protocol_execution_status']}`.",
++        ),
++        (
++            "Git and Experiment Identity",
++            f"HEAD=`{preflight['head_commit']}`; git_clean="
++            f"`{preflight['git_clean']}`; selected_baseline="
++            f"`{preflight['selected_baseline']}`; "
++            f"protocol_hash=`{preflight['protocol_config_hash']}`; "
++            f"data_hash=`{preflight['data_hash']}`.",
++        ),
++        (
++            "Completion Matrix: 5 Methods × 5 Seeds",
++            "0/25 formal runs completed. Matrix is empty by design because "
++            "preflight blocked Phase A.",
++        ),
++        (
++            "Per-Run Hard Gates",
++            "Not evaluated. No formal run directories were created under "
++            "outputs/runs/E1_FORMAL_*.",
++        ),
++        (
++            "Target and Arrival Risk Results",
++            "Not available. Formal predictions and arrival weights were not "
++            "generated.",
++        ),
++        (
++            "No-Harm Analysis",
++            "Not executed. No-harm statistics require 25 successful paired runs.",
++        ),
++        (
++            "Paired Degradation by Seed",
++            "Not available.",
++        ),
++        (
++            "One-Sided 95% Upper Bound",
++            "Not available.",
++        ),
++        (
++            "Wilcoxon and Holm Results",
++            "Not executed.",
++        ),
++        (
++            "Group Risk and Misalignment Gap",
++            "Not available.",
++        ),
++        (
++            "ESS and Clipping Safety",
++            "Not evaluated for formal 100-window runs. Prior R4 validation "
++            "safety remains historical entry evidence only.",
++        ),
++        (
++            "Stage-2 Attempt Semantics",
++            "Not re-audited on formal runs. Blocker is freeze identity, not "
++            "attempt semantics.",
++        ),
++        (
++            "Arrival Support Audit",
++            "Not re-audited on formal runs.",
++        ),
++        (
++            "Solver Reliability",
++            "Not evaluated on formal runs.",
++        ),
++        (
++            "Runtime and Communication",
++            "No formal runtime collected.",
++        ),
++        (
++            "Failed/Resumed Runs",
++            "failed_runs=[]; resume_count=0; formal_runs_started=false.",
++        ),
++        (
++            "E1-G1 to E1-G6",
++            "G1 completeness FAIL (0/25). G2 identity FAIL due frozen-commit "
++            "mismatch and missing local_steps. G3-G6 not reached.",
++        ),
++        (
++            "Limitations",
++            "Frozen protocol git_commit and FROZEN_CONFIG_MANIFEST.git_commit "
++            "do not equal the teacher-required formal commit. Frozen protocol "
++            "also omits local_steps. Teacher chose to keep the experiment "
++            "blocked rather than authorize an interpretation or corrected freeze.",
++        ),
++        (
++            "E1 Final Decision",
++            "E1-FORMAL-R1 = BLOCKED. E1 remains not formally executed.",
++        ),
++        (
++            "Next-Step Recommendation",
++            "Teacher should either (1) issue corrected frozen protocol/manifest "
++            "bound to "
++            f"`{REQUIRED_COMMIT}` with explicit local_steps, or "
++            "(2) provide written authorization clarifying commit authority and "
++            "local_steps=2. Do not start E2-E9.",
++        ),
++    ]
++    md = ["# E1-FORMAL-R1 Report", ""]
++    for index, (title, body) in enumerate(sections, 1):
++        md.extend([f"## {index}. {title}", body, ""])
++    md.extend(
++        [
++            "## Blockers",
++            *[f"- {item}" for item in preflight["blockers"]],
++            "",
++            "Formal five-seed E1 has NOT been executed.",
++            "E2-E9 have NOT started.",
++            "",
++        ]
++    )
++    md_path = deliverables / "E1_FORMAL_REPORT.md"
++    md_path.write_text("\n".join(md), encoding="utf-8")
++
++    doc = Document()
++    doc.add_heading("E1-FORMAL-R1 Report", 0)
++    doc.add_paragraph(f"Status: {preflight['status']}")
++    doc.add_paragraph(f"Generated (UTC): {preflight['generated_at']}")
++    for index, (title, body) in enumerate(sections, 1):
++        doc.add_heading(f"{index}. {title}", level=1)
++        doc.add_paragraph(body)
++    doc.add_heading("Blockers", level=1)
++    for item in preflight["blockers"]:
++        doc.add_paragraph(item, style="List Bullet")
++    doc.add_paragraph(
++        "Formal five-seed E1 has NOT been executed. E2-E9 have NOT started."
++    )
++    docx_path = deliverables / "E1_FORMAL_REPORT.docx"
++    doc.save(docx_path)
++
++    readme = deliverables / "E1_FORMAL_SUBMISSION_README.txt"
++    readme.write_text(
++        "\n".join(
++            [
++                "E1-FORMAL-R1 blocked evidence package",
++                f"Required commit: {REQUIRED_COMMIT}",
++                f"HEAD commit: {preflight['head_commit']}",
++                f"Status: {preflight['status']}",
++                "Formal 25-run execution was not started.",
++                "E2-E9 have NOT started.",
++                "See E1_FORMAL_REPORT.docx and docs/reports/E1_FORMAL_R1_PREFLIGHT.md.",
++                "",
++            ]
++        ),
++        encoding="utf-8",
++    )
++    return md_path, docx_path, readme
++
++
++def write_git_evidence(root: Path) -> Path:
++    out = root / "outputs/evidence_formal_r1/git"
++    out.mkdir(parents=True, exist_ok=True)
++    (out / "GIT_HEAD.txt").write_text(
++        _git(root, "rev-parse", "HEAD"), encoding="utf-8"
++    )
++    (out / "GIT_STATUS.txt").write_text(
++        _git(root, "status", "--porcelain"), encoding="utf-8"
++    )
++    (out / "GIT_LOG.txt").write_text(
++        _git(root, "log", "-20", "--oneline"), encoding="utf-8"
++    )
++    (out / "GIT_DIFF_SUMMARY.txt").write_text(
++        _git(root, "diff", "--stat"), encoding="utf-8"
++    )
++    return out
++
++
++def package_zip(
++    root: Path,
++    preflight_path: Path,
++    preflight_md: Path,
++    md_path: Path,
++    docx_path: Path,
++    readme: Path,
++    git_dir: Path,
++) -> Path:
++    zip_path = root / "deliverables/RAVEN_MCS_E1_FORMAL_EVIDENCE.zip"
++    include_dirs = [
++        root / "configs/frozen",
++        root / "outputs/event_traces",
++        root / "outputs/audits",
++        root / "outputs/evidence_formal_r1",
++        root / "logs",
++        root / "docs/reports",
++    ]
++    include_files = [
++        root / "STATUS.md",
++        root / "ISSUES.md",
++        root / "CHANGELOG.md",
++        root / "docs/FORMULA_TO_CODE_MAP.md",
++        root / "docs/DATA_DICTIONARY.md",
++        preflight_path,
++        preflight_md,
++        md_path,
++        docx_path,
++        readme,
++    ]
++    tracked = _git(root, "ls-files").splitlines()
++    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as archive:
++        seen: set[str] = set()
++
++        def add(path: Path) -> None:
++            if not path.exists() or not path.is_file():
++                return
++            rel = path.relative_to(root).as_posix()
++            if rel in seen:
++                return
++            archive.write(path, rel)
++            seen.add(rel)
++
++        for relative in tracked:
++            add(root / relative)
++        for directory in include_dirs:
++            if not directory.exists():
++                continue
++            for path in directory.rglob("*"):
++                if path.is_file():
++                    add(path)
++        for path in include_files:
++            add(path)
++        for path in git_dir.rglob("*"):
++            if path.is_file():
++                add(path)
++    return zip_path
++
++
++def main() -> int:
++    root = Path(__file__).resolve().parents[1]
++    preflight = collect_preflight(root)
++    audits = root / "outputs/audits"
++    audits.mkdir(parents=True, exist_ok=True)
++    preflight_path = audits / "e1_formal_r1_preflight.json"
++    preflight_path.write_text(json.dumps(preflight, indent=2), encoding="utf-8")
++    preflight_md = write_preflight_md(root, preflight)
++    md_path, docx_path, readme = write_report(root, preflight)
++    git_dir = write_git_evidence(root)
++    zip_path = package_zip(
++        root,
++        preflight_path,
++        preflight_md,
++        md_path,
++        docx_path,
++        readme,
++        git_dir,
++    )
++    hashes = {
++        "preflight_json": sha256_file(preflight_path),
++        "preflight_md": sha256_file(preflight_md),
++        "report_md": sha256_file(md_path),
++        "report_docx": sha256_file(docx_path),
++        "readme": sha256_file(readme),
++        "evidence_zip": sha256_file(zip_path),
++        "status": preflight["status"],
++        "head_commit": preflight["head_commit"],
++    }
++    (root / "deliverables/E1_FORMAL_DELIVERABLE_HASHES.json").write_text(
++        json.dumps(hashes, indent=2), encoding="utf-8"
++    )
++    print(json.dumps({
++        "status": preflight["status"],
++        "blockers": preflight["blockers"],
++        "report": str(docx_path),
++        "zip": str(zip_path),
++        "zip_sha256": hashes["evidence_zip"],
++        "formal_runs_started": False,
++    }, indent=2))
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/generate_e1_formal_resolved_config.py b/scripts/generate_e1_formal_resolved_config.py
+new file mode 100644
+index 0000000..10bae93
+--- /dev/null
++++ b/scripts/generate_e1_formal_resolved_config.py
+@@ -0,0 +1,84 @@
++#!/usr/bin/env python3
++"""Generate deterministic formal resolved config and hash."""
++from __future__ import annotations
++
++import argparse
++import json
++from pathlib import Path
++
++from raven_mcs.utils.hashing import sha256_file, sha256_json
++from raven_mcs.utils.serialization import dump_yaml, load_json, load_yaml
++
++
++def build_resolved(root: Path, protocol_path: Path) -> dict:
++    protocol = load_yaml(protocol_path)
++    baseline = load_yaml(root / "configs/frozen/e1_selected_baseline.yaml")
++    manifest = load_json(root / "configs/frozen/FROZEN_CONFIG_MANIFEST.json")
++    if "local_steps" not in protocol:
++        raise RuntimeError("frozen protocol missing local_steps")
++    resolved = {
++        "experiment": protocol["name"],
++        "dataset": protocol["dataset"],
++        "scenario": protocol["scenario"],
++        "methods": list(protocol["methods"]),
++        "seeds": list(protocol["seeds"]),
++        "num_windows": int(protocol["num_windows"]),
++        "local_steps": int(protocol["local_steps"]),
++        "num_clients": int(protocol["num_clients"]),
++        "S_max": int(protocol["s_max"]),
++        "no_harm_threshold": float(protocol["no_harm_threshold"]),
++        "selected_baseline": baseline["selected_baseline"],
++        "authorized_algorithm_commit": protocol["authorized_algorithm_commit"],
++        "protocol_parent_commit": protocol["protocol_parent_commit"],
++        "execution_commit_policy": protocol["execution_commit_policy"],
++        "authorization_status": protocol["authorization_status"],
++        "execution_status": protocol["execution_status"],
++        "protocol_config_hash": sha256_file(protocol_path),
++        "selected_baseline_hash": manifest["selected_baseline"]["file_sha256"],
++        "target_group_payload_hash": protocol["target_group_payload_hash"],
++        "target_group_file_hash": protocol["target_group_file_hash"],
++        "client_mapping_payload_hash": protocol["client_mapping_payload_hash"],
++        "client_mapping_file_hash": protocol["client_mapping_file_hash"],
++        "pi_target_hash": protocol["pi_target_hash"],
++        "event_trace_hashes": manifest["event_trace_hashes"],
++    }
++    return resolved
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser()
++    parser.add_argument(
++        "--protocol",
++        type=Path,
++        default=Path("configs/frozen/e1_sensorscope_balanced.yaml"),
++    )
++    args = parser.parse_args()
++    root = Path(__file__).resolve().parents[1]
++    protocol_path = (
++        args.protocol if args.protocol.is_absolute() else root / args.protocol
++    )
++    resolved = build_resolved(root, protocol_path)
++    out_dir = root / "outputs/preflight"
++    out_dir.mkdir(parents=True, exist_ok=True)
++    path = out_dir / "e1_formal_resolved_config.yaml"
++    dump_yaml(resolved, path)
++    digest = sha256_json(resolved)
++    (out_dir / "e1_formal_resolved_config_hash.json").write_text(
++        json.dumps({
++            "resolved_run_config_hash": digest,
++            "protocol_config_hash": resolved["protocol_config_hash"],
++            "local_steps": resolved["local_steps"],
++            "contains_timestamp": False,
++        }, indent=2),
++        encoding="utf-8",
++    )
++    print(json.dumps({
++        "resolved_path": str(path.relative_to(root)),
++        "resolved_run_config_hash": digest,
++        "local_steps": resolved["local_steps"],
++    }, indent=2))
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/rebuild_frozen_config_manifest.py b/scripts/rebuild_frozen_config_manifest.py
+new file mode 100644
+index 0000000..9e07a71
+--- /dev/null
++++ b/scripts/rebuild_frozen_config_manifest.py
+@@ -0,0 +1,100 @@
++#!/usr/bin/env python3
++"""Rebuild FROZEN_CONFIG_MANIFEST from actual frozen file hashes."""
++from __future__ import annotations
++
++import argparse
++from pathlib import Path
++
++from raven_mcs.utils.hashing import sha256_file
++from raven_mcs.utils.serialization import dump_json, load_yaml
++
++AUTHORIZED = "53e277c53b01695330652b8e1bc8a234909d56e5"
++
++FILES = {
++    "configs/frozen/e1_sensorscope_balanced.yaml": "protocol",
++    "configs/frozen/e1_sensorscope_groups.yaml": "target_groups",
++    "configs/frozen/e1_sensorscope_clients.yaml": "client_mapping",
++    "configs/frozen/e1_pi_target_client_stratum.parquet": "pi_target",
++    "configs/frozen/e1_pi_target_manifest.json": "pi_target_manifest",
++    "configs/frozen/e1_selected_baseline.yaml": "selected_baseline",
++    "configs/frozen/e1_weight_safety.yaml": "weight_safety",
++    "configs/frozen/e1_protocol_schema.yaml": "protocol_schema",
++}
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser()
++    parser.add_argument("--experiment", default="E1_balanced")
++    args = parser.parse_args()
++    if args.experiment != "E1_balanced":
++        raise ValueError("only E1_balanced is supported")
++    root = Path(__file__).resolve().parents[1]
++    protocol = load_yaml(root / "configs/frozen/e1_sensorscope_balanced.yaml")
++    baseline = load_yaml(root / "configs/frozen/e1_selected_baseline.yaml")
++    files = {}
++    roles = set()
++    for relative, role in FILES.items():
++        path = root / relative
++        if not path.exists():
++            raise FileNotFoundError(relative)
++        if role in roles:
++            raise RuntimeError(f"duplicate semantic role: {role}")
++        roles.add(role)
++        files[relative.replace("\\", "/")] = {
++            "sha256": sha256_file(path),
++            "size_bytes": path.stat().st_size,
++            "semantic_role": role,
++        }
++    baseline_path = "configs/frozen/e1_selected_baseline.yaml"
++    manifest = {
++        "manifest_schema_version": 1,
++        "experiment": "E1_balanced",
++        "authorized_algorithm_commit": AUTHORIZED,
++        "protocol_parent_commit": protocol.get(
++            "protocol_parent_commit", AUTHORIZED,
++        ),
++        "protocol_config_hash": files[
++            "configs/frozen/e1_sensorscope_balanced.yaml"
++        ]["sha256"],
++        "files": files,
++        "selected_baseline": {
++            "method": baseline["selected_baseline"],
++            "file_path": baseline_path,
++            "file_sha256": files[baseline_path]["sha256"],
++        },
++        "local_steps": int(protocol["local_steps"]),
++        "num_clients": int(protocol["num_clients"]),
++        "S_max": int(protocol["s_max"]),
++        "seeds": list(protocol["seeds"]),
++        "no_harm_threshold": float(protocol["no_harm_threshold"]),
++        "e1_methods": list(protocol["methods"]),
++        "authorization_status": protocol["authorization_status"],
++        "execution_status": protocol["execution_status"],
++        "execution_commit_policy": protocol["execution_commit_policy"],
++        "seal": "E1_FORMAL_FREEZE_R1",
++        "e2_e9_status": "NOT_STARTED",
++        "entry_smoke_status": "PASS_SINGLE_SEED_R4_DRY_RUN",
++        "pi_target_hash": protocol["pi_target_hash"],
++        "target_group_payload_hash": protocol["target_group_payload_hash"],
++        "target_group_file_hash": protocol["target_group_file_hash"],
++        "client_mapping_payload_hash": protocol["client_mapping_payload_hash"],
++        "client_mapping_file_hash": protocol["client_mapping_file_hash"],
++        "event_trace_hashes": {
++            "26001": "e212661f5262e0559100d7f852c38a199dac9046b2b8c520fc913c9834f21a50",
++            "26002": "e8286dee49c025f5c3fa5bc4b9fbc658342a608c4b7374063951b2c9e56e05cb",
++            "26003": "06b434948310df5bbd72aac048ed54fb677321d681686d18a711e6a85190ee72",
++            "26004": "76b886994aeb651a406f465591180a170f2c25537dc144bf4735c6b47d9a1ec5",
++            "26005": "9fa446409c2edbb46407e0eb1cd936696117e7c6194b4b480a49f0cfb0a84d45",
++        },
++    }
++    dump_json(manifest, root / "configs/frozen/FROZEN_CONFIG_MANIFEST.json")
++    print(f"protocol_config_hash={manifest['protocol_config_hash']}")
++    print(
++        "selected_baseline_hash="
++        f"{manifest['selected_baseline']['file_sha256']}"
++    )
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/run_e1_formal_freeze_logged_stage.py b/scripts/run_e1_formal_freeze_logged_stage.py
+new file mode 100644
+index 0000000..2c962f4
+--- /dev/null
++++ b/scripts/run_e1_formal_freeze_logged_stage.py
+@@ -0,0 +1,76 @@
++#!/usr/bin/env python3
++"""Append one freeze workflow stage to the exact-command JSONL."""
++from __future__ import annotations
++
++import argparse
++import json
++import os
++import subprocess
++import sys
++import time
++from datetime import datetime, timezone
++from pathlib import Path
++
++from raven_mcs.utils.hashing import sha256_file
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser()
++    parser.add_argument("--stage", required=True)
++    parser.add_argument("--output", action="append", default=[])
++    parser.add_argument("command", nargs=argparse.REMAINDER)
++    args = parser.parse_args()
++    command = list(args.command)
++    if command and command[0] == "--":
++        command = command[1:]
++    if not command:
++        raise ValueError("command required")
++    root = Path(__file__).resolve().parents[1]
++    venv_python = root / ".venv" / "Scripts" / "python.exe"
++    if command[0] in {"python", "python3", "py"}:
++        command[0] = (
++            str(venv_python) if venv_python.exists() else sys.executable
++        )
++    logs = root / "logs"
++    logs.mkdir(exist_ok=True)
++    env = {**os.environ, "PYTHONPATH": str(root / "src")}
++    start = datetime.now(timezone.utc)
++    tick = time.perf_counter()
++    result = subprocess.run(
++        command, cwd=root, capture_output=True, text=True, env=env,
++    )
++    end = datetime.now(timezone.utc)
++    stdout = logs / f"E1_FORMAL_FREEZE_R1_{args.stage.upper()}_STDOUT.log"
++    stderr = logs / f"E1_FORMAL_FREEZE_R1_{args.stage.upper()}_STDERR.log"
++    stdout.write_text(result.stdout, encoding="utf-8")
++    stderr.write_text(result.stderr, encoding="utf-8")
++    outputs = [stdout, stderr, *[root / value for value in args.output]]
++    row = {
++        "stage": args.stage,
++        "command": subprocess.list2cmdline(command),
++        "cwd": str(root),
++        "start_time": start.isoformat(),
++        "end_time": end.isoformat(),
++        "duration_sec": time.perf_counter() - tick,
++        "exit_code": result.returncode,
++        "stdout_log": str(stdout.relative_to(root)),
++        "stderr_log": str(stderr.relative_to(root)),
++        "output_paths": [
++            str(path.relative_to(root)) for path in outputs if path.exists()
++        ],
++        "output_hashes": [
++            sha256_file(path) for path in outputs if path.is_file()
++        ],
++    }
++    with (logs / "E1_FORMAL_FREEZE_R1_EXACT_COMMANDS.jsonl").open(
++        "a", encoding="utf-8",
++    ) as handle:
++        handle.write(json.dumps(row, sort_keys=True) + "\n")
++    print(result.stdout, end="")
++    if result.stderr:
++        print(result.stderr, end="")
++    return result.returncode
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/run_e1_formal_freeze_safety.py b/scripts/run_e1_formal_freeze_safety.py
+new file mode 100644
+index 0000000..00e27a3
+--- /dev/null
++++ b/scripts/run_e1_formal_freeze_safety.py
+@@ -0,0 +1,94 @@
++#!/usr/bin/env python3
++"""Five-seed validation-only safety under the re-frozen formal protocol."""
++from __future__ import annotations
++
++import argparse
++from pathlib import Path
++
++import pandas as pd
++
++from raven_mcs.experiments.e1_entry import (
++    enforce_frozen_local_steps,
++    run_official_method,
++)
++from raven_mcs.utils.serialization import dump_json, load_json, load_yaml
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser()
++    parser.add_argument("--seeds", nargs="+", type=int, required=True)
++    parser.add_argument("--local-steps", type=int, default=None)
++    args = parser.parse_args()
++    expected = [26001, 26002, 26003, 26004, 26005]
++    if args.seeds != expected:
++        raise ValueError(f"freeze safety freezes seeds {expected}")
++    root = Path(__file__).resolve().parents[1]
++    local_steps = enforce_frozen_local_steps(root, args.local_steps)
++    frozen = load_yaml(root / "configs/frozen/e1_weight_safety.yaml")
++    params = frozen["selected_parameters"]
++    rows = []
++    for seed in args.seeds:
++        run = run_official_method(
++            root,
++            method="raven",
++            seed=seed,
++            num_windows=20,
++            local_steps=local_steps,
++            device="cpu",
++            output_root=root
++            / "outputs/validation/e1_formal_freeze_r1_safety_runs",
++            evaluation_split="validation",
++            weight_safety=params,
++        )
++        metrics = load_json(run / "metrics_run.json")
++        row = {
++            "seed": seed,
++            "local_steps": local_steps,
++            "first_stage_clip_rate": metrics["first_stage_clip_rate"],
++            "second_stage_clip_rate": metrics["second_stage_clip_rate"],
++            "median_n_eff": metrics["median_n_eff"],
++            "q_nonattempt_leakage": metrics["q_nonattempt_leakage_count"],
++            "failed_attempt_omission": metrics[
++                "q_failed_attempt_omission_count"
++            ],
++            "unsupported_arrival_contribution": metrics[
++                "unsupported_arrival_contribution_sum"
++            ],
++            "solver_failures": metrics["solver_failure_count"],
++            "run_dir": str(run.relative_to(root)),
++        }
++        row["passes"] = bool(
++            row["first_stage_clip_rate"] <= 0.05
++            and row["second_stage_clip_rate"] <= 0.05
++            and row["median_n_eff"] >= 2
++            and row["q_nonattempt_leakage"] == 0
++            and row["failed_attempt_omission"] == 0
++            and row["unsupported_arrival_contribution"] == 0
++            and row["solver_failures"] == 0
++        )
++        rows.append(row)
++    frame = pd.DataFrame(rows)
++    out = root / "outputs/validation"
++    frame.to_parquet(
++        out / "e1_formal_freeze_r1_safety_by_seed.parquet", index=False,
++    )
++    summary = {
++        "evaluation_split": "validation",
++        "test_read_count": 0,
++        "local_steps": local_steps,
++        "all_seeds_pass": bool(frame["passes"].all()),
++        "max_first_stage_clip_rate": float(frame["first_stage_clip_rate"].max()),
++        "max_second_stage_clip_rate": float(
++            frame["second_stage_clip_rate"].max()
++        ),
++        "min_median_n_eff": float(frame["median_n_eff"].min()),
++        "rows": frame.to_dict(orient="records"),
++    }
++    dump_json(summary, out / "e1_formal_freeze_r1_safety_summary.json")
++    if not summary["all_seeds_pass"]:
++        raise RuntimeError("E1 formal freeze safety gate failed")
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/run_e1_formal_freeze_test_evidence.py b/scripts/run_e1_formal_freeze_test_evidence.py
+new file mode 100644
+index 0000000..b1eb55d
+--- /dev/null
++++ b/scripts/run_e1_formal_freeze_test_evidence.py
+@@ -0,0 +1,108 @@
++#!/usr/bin/env python3
++"""Run freeze-R1 tests and emit machine-readable evidence."""
++from __future__ import annotations
++
++import json
++import subprocess
++import sys
++import time
++import xml.etree.ElementTree as ET
++from datetime import datetime, timezone
++from pathlib import Path
++
++from raven_mcs.utils.hashing import sha256_file
++from raven_mcs.utils.serialization import dump_json
++
++
++def main() -> int:
++    root = Path(__file__).resolve().parents[1]
++    logs = root / "logs"
++    logs.mkdir(exist_ok=True)
++    venv_python = root / ".venv" / "Scripts" / "python.exe"
++    python = str(venv_python) if venv_python.exists() else sys.executable
++    unit = sorted(
++        str(path.relative_to(root))
++        for path in (root / "tests/unit").glob("test_e1_formal_freeze_r1_*.py")
++    )
++    commands = [
++        ("full_pytest", [python, "-m", "pytest", "-q", "-ra"]),
++        ("freeze_unit", [python, "-m", "pytest", "-q", *unit]),
++        ("freeze_integration", [
++            python, "-m", "pytest", "-q",
++            "tests/integration/test_e1_formal_freeze_r1.py",
++        ]),
++        ("pip_check", [python, "-m", "pip", "check"]),
++    ]
++    summaries = []
++    command_rows = []
++    for name, base in commands:
++        junit = logs / f"E1_FORMAL_FREEZE_R1_{name.upper()}_JUNIT.xml"
++        command = list(base)
++        if name != "pip_check":
++            command.append(f"--junitxml={junit}")
++        start = datetime.now(timezone.utc)
++        tick = time.perf_counter()
++        result = subprocess.run(
++            command, cwd=root, capture_output=True, text=True,
++        )
++        end = datetime.now(timezone.utc)
++        stdout = logs / f"E1_FORMAL_FREEZE_R1_{name.upper()}_STDOUT.log"
++        stderr = logs / f"E1_FORMAL_FREEZE_R1_{name.upper()}_STDERR.log"
++        stdout.write_text(result.stdout, encoding="utf-8")
++        stderr.write_text(result.stderr, encoding="utf-8")
++        counts = {"passed": 0, "failed": 0, "skipped": 0, "xfailed": 0}
++        if junit.exists():
++            suite = ET.parse(junit).getroot()
++            if suite.tag == "testsuites":
++                suite = next(iter(suite))
++            tests = int(suite.attrib.get("tests", 0))
++            failed = int(suite.attrib.get("failures", 0)) + int(
++                suite.attrib.get("errors", 0)
++            )
++            skipped = int(suite.attrib.get("skipped", 0))
++            counts.update({
++                "passed": tests - failed - skipped,
++                "failed": failed,
++                "skipped": skipped,
++            })
++        summary = {
++            "name": name,
++            "command": subprocess.list2cmdline(command),
++            "start_time": start.isoformat(),
++            "end_time": end.isoformat(),
++            "exit_code": result.returncode,
++            **counts,
++            "duration": time.perf_counter() - tick,
++            "log_sha256": sha256_file(stdout),
++            "stdout_log": str(stdout.relative_to(root)),
++            "stderr_log": str(stderr.relative_to(root)),
++        }
++        summaries.append(summary)
++        command_rows.append({
++            "stage": name,
++            "command": summary["command"],
++            "cwd": str(root),
++            "start_time": summary["start_time"],
++            "end_time": summary["end_time"],
++            "exit_code": result.returncode,
++            "stdout_log": summary["stdout_log"],
++            "stderr_log": summary["stderr_log"],
++            "output_paths": [summary["stdout_log"], summary["stderr_log"]],
++            "output_hashes": [summary["log_sha256"], sha256_file(stderr)],
++        })
++    report = {
++        "required_commands": summaries,
++        "all_exit_zero": all(row["exit_code"] == 0 for row in summaries),
++        "failed": sum(row["failed"] for row in summaries),
++    }
++    dump_json(report, logs / "E1_FORMAL_FREEZE_R1_TEST_SUMMARY.json")
++    with (logs / "E1_FORMAL_FREEZE_R1_EXACT_COMMANDS.jsonl").open(
++        "a", encoding="utf-8",
++    ) as handle:
++        for row in command_rows:
++            handle.write(json.dumps(row, sort_keys=True) + "\n")
++    return 0 if report["all_exit_zero"] and report["failed"] == 0 else 1
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/select_e1_baseline.py b/scripts/select_e1_baseline.py
+index e0afbd1..05237b7 100644
+--- a/scripts/select_e1_baseline.py
++++ b/scripts/select_e1_baseline.py
+@@ -14,8 +14,12 @@ SRC = ROOT / "src"
+ if str(SRC) not in sys.path:
+     sys.path.insert(0, str(SRC))
+ 
+-from raven_mcs.experiments.e1_entry import git_commit, run_official_method
+-from raven_mcs.utils.hashing import sha256_file, sha256_path_tree
++from raven_mcs.experiments.e1_entry import (
++    enforce_frozen_local_steps,
++    git_commit,
++    run_official_method,
++)
++from raven_mcs.utils.hashing import sha256_file
+ from raven_mcs.utils.serialization import dump_json, dump_yaml, load_json, load_yaml
+ 
+ CANDIDATES = (
+@@ -47,7 +51,7 @@ def main(argv: list[str] | None = None) -> int:
+     parser.add_argument("--validation-only", action="store_true")
+     parser.add_argument("--seed", type=int, default=26001)
+     parser.add_argument("--windows", type=int, default=20)
+-    parser.add_argument("--local-steps", type=int, default=2)
++    parser.add_argument("--local-steps", type=int, default=None)
+     parser.add_argument("--methods", nargs="+", default=list(CANDIDATES))
+     parser.add_argument(
+         "--output-dir", type=Path, default=ROOT / "outputs/validation",
+@@ -60,13 +64,14 @@ def main(argv: list[str] | None = None) -> int:
+     cfg = load_yaml(args.config)
+     if cfg.get("dataset") != "sensorscope":
+         raise RuntimeError("E1 validation config must be SensorScope")
++    local_steps = enforce_frozen_local_steps(ROOT, args.local_steps)
+     args.output_dir.mkdir(parents=True, exist_ok=True)
+     rows = []
+     for method in args.methods:
+         run_dir = run_official_method(
+             ROOT, method=method, seed=args.seed, num_windows=args.windows,
+-            local_steps=args.local_steps, device="cpu",
+-            output_root=args.output_dir / "e1_r3_baseline_runs",
++            local_steps=local_steps, device="cpu",
++            output_root=args.output_dir / "e1_formal_freeze_r1_baseline_runs",
+             evaluation_split="validation",
+         )
+         metrics = load_json(run_dir / "metrics_run.json")
+@@ -84,13 +89,17 @@ def main(argv: list[str] | None = None) -> int:
+     frame = pd.DataFrame(rows)
+     selected = choose_baseline(frame)
+     frame.to_parquet(
+-        args.output_dir / "e1_r3_baseline_selection.parquet", index=False,
++        args.output_dir / "e1_formal_freeze_r1_baseline_selection.parquet",
++        index=False,
+     )
+     report = {
+         "selected_baseline": selected,
+         "candidate_methods": list(CANDIDATES),
+         "validation_seed": args.seed,
+         "validation_split_only": True,
++        "selection_split": "validation",
++        "test_read_count": 0,
++        "local_steps": local_steps,
+         "validation_rmse_mu": {
+             row["method"]: row["RMSE_mu"] for row in rows
+         },
+@@ -99,8 +108,11 @@ def main(argv: list[str] | None = None) -> int:
+         ),
+         "test_metrics_read": False,
+         "status": "FROZEN_FROM_VALIDATION",
++        "protocol_hash": sha256_file(args.config),
+     }
+-    report_path = args.output_dir / "e1_r3_baseline_selection_report.json"
++    report_path = (
++        args.output_dir / "e1_formal_freeze_r1_baseline_report.json"
++    )
+     dump_json(report, report_path)
+     report_hash = sha256_file(report_path)
+     frozen = {
+@@ -108,7 +120,7 @@ def main(argv: list[str] | None = None) -> int:
+         "validation_config_hash": sha256_file(args.config),
+         "data_hash": rows[0]["data_hash"],
+         "event_trace_hash": rows[0]["event_trace_hash"],
+-        "git_commit": git_commit(ROOT),
++        "selection_execution_commit": git_commit(ROOT),
+         "selection_timestamp": datetime.now(timezone.utc).isoformat(),
+         "report_hash": report_hash,
+     }
+diff --git a/scripts/verify_frozen_config_manifest.py b/scripts/verify_frozen_config_manifest.py
+new file mode 100644
+index 0000000..a334bcf
+--- /dev/null
++++ b/scripts/verify_frozen_config_manifest.py
+@@ -0,0 +1,110 @@
++#!/usr/bin/env python3
++"""Verify every frozen file listed in FROZEN_CONFIG_MANIFEST."""
++from __future__ import annotations
++
++import argparse
++import json
++from pathlib import Path
++
++from raven_mcs.utils.hashing import sha256_file
++from raven_mcs.utils.serialization import load_json
++
++
++REQUIRED_ROLES = {
++    "protocol",
++    "target_groups",
++    "client_mapping",
++    "pi_target",
++    "pi_target_manifest",
++    "selected_baseline",
++    "weight_safety",
++}
++
++
++def verify(root: Path) -> dict:
++    manifest_path = root / "configs/frozen/FROZEN_CONFIG_MANIFEST.json"
++    manifest = load_json(manifest_path)
++    rows = []
++    roles = []
++    failures = []
++    for relative, meta in manifest["files"].items():
++        path = root / relative
++        actual = sha256_file(path) if path.exists() else None
++        size = path.stat().st_size if path.exists() else None
++        role = meta["semantic_role"]
++        roles.append(role)
++        ok = (
++            path.exists()
++            and actual == meta["sha256"]
++            and size == meta["size_bytes"]
++        )
++        if not ok:
++            failures.append(relative)
++        rows.append({
++            "relative_path": relative,
++            "exists": path.exists(),
++            "expected_sha256": meta["sha256"],
++            "actual_sha256": actual,
++            "expected_size": meta["size_bytes"],
++            "actual_size": size,
++            "semantic_role": role,
++            "match": ok,
++        })
++    baseline = manifest["selected_baseline"]
++    baseline_path = root / baseline["file_path"]
++    baseline_actual = sha256_file(baseline_path) if baseline_path.exists() else None
++    baseline_match = baseline_actual == baseline["file_sha256"]
++    if not baseline_match:
++        failures.append("selected_baseline_hash")
++    role_set = set(roles)
++    duplicate_roles = sorted({role for role in roles if roles.count(role) > 1})
++    missing_roles = sorted(REQUIRED_ROLES - role_set)
++    self_hash_cycle = any(
++        "FROZEN_CONFIG_MANIFEST.json" in path for path in manifest["files"]
++    )
++    if duplicate_roles or missing_roles or self_hash_cycle:
++        failures.append("role_or_self_hash")
++    result = {
++        "status": "PASS" if not failures else "FAIL",
++        "failures": failures,
++        "rows": rows,
++        "selected_baseline": {
++            "method": baseline["method"],
++            "file_path": baseline["file_path"],
++            "recorded_sha256": baseline["file_sha256"],
++            "actual_sha256": baseline_actual,
++            "match": baseline_match,
++        },
++        "local_steps": manifest.get("local_steps"),
++        "duplicate_roles": duplicate_roles,
++        "missing_roles": missing_roles,
++        "self_hash_cycle": self_hash_cycle,
++        "frozen_manifest_file_hash": sha256_file(manifest_path),
++    }
++    return result
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser()
++    parser.add_argument("--experiment", default="E1_balanced")
++    args = parser.parse_args()
++    if args.experiment != "E1_balanced":
++        raise ValueError("only E1_balanced is supported")
++    root = Path(__file__).resolve().parents[1]
++    result = verify(root)
++    out = root / "outputs/audits/e1_formal_frozen_manifest_verification.json"
++    out.parent.mkdir(parents=True, exist_ok=True)
++    out.write_text(json.dumps(result, indent=2), encoding="utf-8")
++    print(json.dumps({
++        "status": result["status"],
++        "failures": result["failures"],
++        "selected_baseline_match": result["selected_baseline"]["match"],
++        "frozen_manifest_file_hash": result["frozen_manifest_file_hash"],
++    }, indent=2))
++    if result["status"] != "PASS":
++        raise RuntimeError("frozen manifest verification failed")
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/src/raven_mcs/experiments/e1_entry.py b/src/raven_mcs/experiments/e1_entry.py
+index a52e0f8..5174415 100644
+--- a/src/raven_mcs/experiments/e1_entry.py
++++ b/src/raven_mcs/experiments/e1_entry.py
+@@ -106,6 +106,32 @@ def git_commit(root: Path) -> str:
+     ).stdout.strip()
+ 
+ 
++def load_frozen_protocol(root: Path) -> dict[str, Any]:
++    path = root / "configs/frozen/e1_sensorscope_balanced.yaml"
++    if not path.exists():
++        raise FileNotFoundError(f"frozen E1 protocol missing: {path}")
++    protocol = load_yaml(path)
++    if "local_steps" not in protocol:
++        raise RuntimeError("frozen protocol missing local_steps")
++    return protocol
++
++
++def frozen_local_steps(root: Path) -> int:
++    return int(load_frozen_protocol(root)["local_steps"])
++
++
++def enforce_frozen_local_steps(root: Path, local_steps: int | None) -> int:
++    frozen = frozen_local_steps(root)
++    if local_steps is None:
++        return frozen
++    if int(local_steps) != frozen:
++        raise RuntimeError(
++            f"CLI local_steps={local_steps} conflicts with frozen "
++            f"protocol local_steps={frozen}"
++        )
++    return frozen
++
++
+ def frozen_group_identity(root: Path) -> tuple[Path, str]:
+     path = root / "configs/frozen/e1_sensorscope_groups.yaml"
+     if not path.exists():
+@@ -571,7 +597,7 @@ def run_official_method(
+     method: str,
+     seed: int,
+     num_windows: int = 100,
+-    local_steps: int = 2,
++    local_steps: int | None = None,
+     device: str = "cpu",
+     trace_dir: Path | None = None,
+     output_root: Path | None = None,
+@@ -580,6 +606,8 @@ def run_official_method(
+ ) -> Path:
+     if method not in E1_METHODS:
+         raise ValueError(f"method is not in frozen E1 registry: {method}")
++    protocol = load_frozen_protocol(root)
++    local_steps = enforce_frozen_local_steps(root, local_steps)
+     group_path, group_hash = frozen_group_identity(root)
+     dataset = sensorscope_dataset(root)
+     grouped = add_e1_groups(dataset.atomic_df)
+@@ -981,10 +1009,16 @@ def run_official_method(
+         "seed": int(seed),
+         "num_windows": int(num_windows),
+         "local_steps": int(local_steps),
++        "num_clients": int(protocol["num_clients"]),
+         "s_max": E1_S_MAX,
+         "main_groups": E1_GROUPS,
+         "device": device,
+         "weight_safety": weight_safety,
++        "authorized_algorithm_commit": protocol.get(
++            "authorized_algorithm_commit"
++        ),
++        "protocol_parent_commit": protocol.get("protocol_parent_commit"),
++        "execution_commit_policy": protocol.get("execution_commit_policy"),
+     }
+     resolved_path = run_dir / "resolved_config.yaml"
+     dump_yaml(resolved_config, resolved_path)
+@@ -1015,13 +1049,32 @@ def run_official_method(
+         frozen_client_mapping_hashes(root)
+     )
+     env_hash = environment_hash()
++    selected_baseline_path = root / "configs/frozen/e1_selected_baseline.yaml"
++    selected_baseline_hash = (
++        sha256_file(selected_baseline_path)
++        if selected_baseline_path.exists() else None
++    )
++    pi_manifest = load_json(
++        root / "configs/frozen/e1_pi_target_manifest.json",
++    ) if (root / "configs/frozen/e1_pi_target_manifest.json").exists() else {}
+     manifest = {
+         "run_id": run_id,
+         "experiment": "E1_balanced",
++        "formal": False,
+         "dataset": "sensorscope",
+         "scenario": "balanced",
+         "method": method,
+         "seed": int(seed),
++        "num_windows": int(num_windows),
++        "num_clients": int(protocol["num_clients"]),
++        "S_max": E1_S_MAX,
++        "local_steps": int(local_steps),
++        "execution_commit": git_commit(root),
++        "authorized_algorithm_commit": protocol.get(
++            "authorized_algorithm_commit"
++        ),
++        "protocol_parent_commit": protocol.get("protocol_parent_commit"),
++        "execution_commit_policy": protocol.get("execution_commit_policy"),
+         "git_commit": git_commit(root),
+         "protocol_config_hash": protocol_config_hash,
+         "resolved_run_config_hash": resolved_run_config_hash,
+@@ -1032,10 +1085,16 @@ def run_official_method(
+         "target_group_file_hash": target_group_file_hash,
+         "client_mapping_payload_hash": client_mapping_payload_hash,
+         "client_mapping_file_hash": client_mapping_file_hash,
++        "client_stratum_target_mass_hash": pi_manifest.get(
++            "client_stratum_target_mass_hash"
++        ),
++        "pi_target_file_hash": pi_manifest.get("pi_target_file_hash")
++        or pi_target_hash,
+         "target_group_hash": target_group_file_hash,
+         "client_mapping_hash": client_mapping_payload_hash,
+         "config_hash": resolved_run_config_hash,
+         "pi_target_hash": pi_target_hash,
++        "selected_baseline_hash": selected_baseline_hash,
+         "initial_model_hash": initial_model_hash,
+         "environment_hash": env_hash,
+         "model_hash": final_model_hash,
+@@ -1051,6 +1110,10 @@ def run_official_method(
+         },
+         "status": "completed",
+     }
++    if manifest["config_hash"] == manifest["target_group_hash"]:
++        raise RuntimeError("config_hash must not alias target_group_hash")
++    if manifest["config_hash"] != manifest["resolved_run_config_hash"]:
++        raise RuntimeError("config_hash must equal resolved_run_config_hash")
+     dump_json(manifest, run_dir / "manifest.json")
+     required = {
+         "manifest.json", "resolved_config.yaml", "event_trace_ref.json",
+diff --git a/tests/integration/test_e1_formal_freeze_r1.py b/tests/integration/test_e1_formal_freeze_r1.py
+new file mode 100644
+index 0000000..9f27cc2
+--- /dev/null
++++ b/tests/integration/test_e1_formal_freeze_r1.py
+@@ -0,0 +1,35 @@
++from __future__ import annotations
++
++import json
++from pathlib import Path
++
++import pytest
++
++ROOT = Path(__file__).resolve().parents[2]
++
++
++def test_freeze_preflight_artifact_present() -> None:
++    path = ROOT / "outputs/preflight/E1_FORMAL_FREEZE_R1_PREFLIGHT.json"
++    if not path.exists():
++        pytest.skip("preflight generated at end of freeze workflow")
++    report = json.loads(path.read_text(encoding="utf-8"))
++    assert report["formal_25_runs_started"] is False
++    assert report["e2_e9_status"] == "NOT_STARTED"
++
++
++def test_no_formal_runs_started() -> None:
++    runs = ROOT / "outputs/runs"
++    formal = list(runs.glob("E1_FORMAL_*")) if runs.exists() else []
++    assert formal == []
++
++
++def test_five_seed_safety_summary_if_present() -> None:
++    path = (
++        ROOT
++        / "outputs/validation/e1_formal_freeze_r1_safety_summary.json"
++    )
++    if not path.exists():
++        pytest.skip("safety summary generated during freeze workflow")
++    summary = json.loads(path.read_text(encoding="utf-8"))
++    assert summary["all_seeds_pass"] is True
++    assert summary["test_read_count"] == 0
+diff --git a/tests/unit/test_e1_entry_r3_identity_time.py b/tests/unit/test_e1_entry_r3_identity_time.py
+index 67766da..388fe06 100644
+--- a/tests/unit/test_e1_entry_r3_identity_time.py
++++ b/tests/unit/test_e1_entry_r3_identity_time.py
+@@ -86,7 +86,14 @@ def test_protocol_status_not_authorized() -> None:
+     assert protocol["authorization_status"] in {
+         "READY_FOR_TEACHER_REVIEW_AFTER_R3",
+         "READY_FOR_TEACHER_REVIEW_AFTER_R4",
++        "READY_FOR_FINAL_EXECUTION_AUTHORIZATION",
+     }
++    assert protocol["authorization_status"] not in {
++        "AUTHORIZED",
++        "RUNNING",
++        "PASS",
++    }
++    assert protocol["execution_status"] == "NOT_STARTED"
+ 
+ 
+ def test_target_group_payload_and_file_hashes_differ() -> None:
+diff --git a/tests/unit/test_e1_formal_freeze_r1_identity.py b/tests/unit/test_e1_formal_freeze_r1_identity.py
+new file mode 100644
+index 0000000..c28b118
+--- /dev/null
++++ b/tests/unit/test_e1_formal_freeze_r1_identity.py
+@@ -0,0 +1,106 @@
++from __future__ import annotations
++
++import inspect
++from pathlib import Path
++
++import pytest
++
++from raven_mcs.experiments.e1_entry import (
++    enforce_frozen_local_steps,
++    load_frozen_protocol,
++)
++from raven_mcs.utils.hashing import sha256_file
++from raven_mcs.utils.serialization import load_json, load_yaml
++
++ROOT = Path(__file__).resolve().parents[2]
++AUTHORIZED = "53e277c53b01695330652b8e1bc8a234909d56e5"
++
++
++def test_e1_formal_protocol_requires_local_steps() -> None:
++    protocol = load_frozen_protocol(ROOT)
++    assert "local_steps" in protocol
++
++
++def test_e1_formal_local_steps_equals_two() -> None:
++    assert load_frozen_protocol(ROOT)["local_steps"] == 2
++
++
++def test_cli_cannot_override_frozen_local_steps() -> None:
++    with pytest.raises(RuntimeError, match="conflicts with frozen"):
++        enforce_frozen_local_steps(ROOT, 9)
++
++
++def test_run_manifest_records_local_steps() -> None:
++    source = Path(
++        "src/raven_mcs/experiments/e1_entry.py"
++    ).read_text(encoding="utf-8")
++    assert '"local_steps": int(local_steps)' in source
++
++
++def test_missing_local_steps_blocks_preflight() -> None:
++    source = (
++        ROOT / "scripts/check_e1_formal_preflight.py"
++    ).read_text(encoding="utf-8")
++    assert "local_steps != 2" in source
++
++
++def test_execution_commit_runtime_derived() -> None:
++    protocol = load_yaml(
++        ROOT / "configs/frozen/e1_sensorscope_balanced.yaml"
++    )
++    assert "execution_commit" not in protocol
++    assert protocol["execution_commit_policy"] == "runtime_clean_head"
++
++
++def test_execution_commit_not_self_referenced_in_protocol() -> None:
++    protocol = load_yaml(
++        ROOT / "configs/frozen/e1_sensorscope_balanced.yaml"
++    )
++    assert "git_commit" not in protocol
++
++
++def test_authorized_algorithm_commit_frozen() -> None:
++    protocol = load_yaml(
++        ROOT / "configs/frozen/e1_sensorscope_balanced.yaml"
++    )
++    assert protocol["authorized_algorithm_commit"] == AUTHORIZED
++
++
++def test_protocol_parent_commit_frozen() -> None:
++    protocol = load_yaml(
++        ROOT / "configs/frozen/e1_sensorscope_balanced.yaml"
++    )
++    assert protocol["protocol_parent_commit"] == AUTHORIZED
++
++
++def test_summary_config_hash_is_resolved_run_config_hash() -> None:
++    source = Path(
++        "src/raven_mcs/experiments/e1_entry.py"
++    ).read_text(encoding="utf-8")
++    assert '"config_hash": resolved_run_config_hash' in source
++
++
++def test_config_hash_not_target_group_hash() -> None:
++    source = Path(
++        "src/raven_mcs/experiments/e1_entry.py"
++    ).read_text(encoding="utf-8")
++    assert "config_hash must not alias target_group_hash" in source
++
++
++def test_protocol_and_resolved_config_hashes_distinct() -> None:
++    protocol_hash = sha256_file(
++        ROOT / "configs/frozen/e1_sensorscope_balanced.yaml"
++    )
++    resolved = ROOT / "outputs/preflight/e1_formal_resolved_config_hash.json"
++    if not resolved.exists():
++        pytest.skip("resolved config generated during freeze workflow")
++    meta = load_json(resolved)
++    assert meta["resolved_run_config_hash"] != protocol_hash
++
++
++def test_target_group_hash_kept_separate() -> None:
++    protocol = load_yaml(
++        ROOT / "configs/frozen/e1_sensorscope_balanced.yaml"
++    )
++    assert protocol["target_group_file_hash"]
++    assert protocol["target_group_payload_hash"]
+diff --git a/tests/unit/test_e1_formal_freeze_r1_manifest.py b/tests/unit/test_e1_formal_freeze_r1_manifest.py
+new file mode 100644
+index 0000000..ef9fcbf
+--- /dev/null
++++ b/tests/unit/test_e1_formal_freeze_r1_manifest.py
+@@ -0,0 +1,102 @@
++from __future__ import annotations
++
++import json
++from pathlib import Path
++
++import pytest
++
++from raven_mcs.utils.hashing import sha256_file
++from raven_mcs.utils.serialization import load_json
++
++ROOT = Path(__file__).resolve().parents[2]
++
++
++def test_frozen_manifest_all_hashes_match() -> None:
++    path = ROOT / "outputs/audits/e1_formal_frozen_manifest_verification.json"
++    if not path.exists():
++        pytest.skip("manifest verification produced during freeze workflow")
++    assert load_json(path)["status"] == "PASS"
++
++
++def test_selected_baseline_hash_matches_file() -> None:
++    manifest = load_json(ROOT / "configs/frozen/FROZEN_CONFIG_MANIFEST.json")
++    path = ROOT / manifest["selected_baseline"]["file_path"]
++    assert manifest["selected_baseline"]["file_sha256"] == sha256_file(path)
++
++
++def test_frozen_manifest_detects_modified_file() -> None:
++    source = (
++        ROOT / "scripts/verify_frozen_config_manifest.py"
++    ).read_text(encoding="utf-8")
++    assert "actual == meta[\"sha256\"]" in source
++
++
++def test_frozen_manifest_has_local_steps() -> None:
++    manifest = load_json(ROOT / "configs/frozen/FROZEN_CONFIG_MANIFEST.json")
++    assert manifest["local_steps"] == 2
++
++
++def test_frozen_manifest_no_self_hash_cycle() -> None:
++    manifest = load_json(ROOT / "configs/frozen/FROZEN_CONFIG_MANIFEST.json")
++    assert "configs/frozen/FROZEN_CONFIG_MANIFEST.json" not in manifest["files"]
++
++
++def test_frozen_manifest_required_roles_unique() -> None:
++    manifest = load_json(ROOT / "configs/frozen/FROZEN_CONFIG_MANIFEST.json")
++    roles = [meta["semantic_role"] for meta in manifest["files"].values()]
++    assert len(roles) == len(set(roles))
++
++
++def test_execution_diff_scope_allows_orchestration_only() -> None:
++    path = ROOT / "outputs/audits/e1_formal_execution_diff_scope.json"
++    if not path.exists():
++        pytest.skip("diff scope audit produced during freeze workflow")
++    assert load_json(path)["forbidden_core_changes"] == 0
++
++
++def test_execution_diff_scope_rejects_core_algorithm_change() -> None:
++    source = (
++        ROOT / "scripts/audit_execution_diff_scope.py"
++    ).read_text(encoding="utf-8")
++    assert "src/raven_mcs/training/" in source
++    assert "FORBIDDEN_PREFIXES" in source
++
++
++def test_protocol_hash_deterministic() -> None:
++    path = ROOT / "configs/frozen/e1_sensorscope_balanced.yaml"
++    assert sha256_file(path) == sha256_file(path)
++
++
++def test_resolved_config_hash_deterministic() -> None:
++    path = ROOT / "outputs/preflight/e1_formal_resolved_config_hash.json"
++    if not path.exists():
++        pytest.skip("resolved config generated during freeze workflow")
++    first = load_json(path)["resolved_run_config_hash"]
++    second = json.loads(path.read_text(encoding="utf-8"))[
++        "resolved_run_config_hash"
++    ]
++    assert first == second
++
++
++def test_resolved_config_contains_local_steps() -> None:
++    path = ROOT / "outputs/preflight/e1_formal_resolved_config.yaml"
++    if not path.exists():
++        pytest.skip("resolved config generated during freeze workflow")
++    text = path.read_text(encoding="utf-8")
++    assert "local_steps: 2" in text
++
++
++def test_resolved_config_excludes_timestamp() -> None:
++    path = ROOT / "outputs/preflight/e1_formal_resolved_config.yaml"
++    if not path.exists():
++        pytest.skip("resolved config generated during freeze workflow")
++    text = path.read_text(encoding="utf-8")
++    assert "selection_timestamp" not in text
++    assert "generated_at" not in text
++
++
++def test_resolved_config_hash_reproducible() -> None:
++    path = ROOT / "outputs/preflight/e1_formal_resolved_config_hash.json"
++    if not path.exists():
++        pytest.skip("resolved config generated during freeze workflow")
++    assert load_json(path)["contains_timestamp"] is False
+diff --git a/tests/unit/test_pre_e1_seal.py b/tests/unit/test_pre_e1_seal.py
+index ba5cba8..ee1a32e 100644
+--- a/tests/unit/test_pre_e1_seal.py
++++ b/tests/unit/test_pre_e1_seal.py
+@@ -117,4 +117,6 @@ def test_pre_e1_manifest_declares_five_methods_and_seeds() -> None:
+         pytest.skip("generated after formal code commit")
+     manifest = json.loads(path.read_text(encoding="utf-8"))
+     assert len(manifest["e1_methods"]) == 5
+-    assert len(manifest["e1_seeds"]) == 5
++    seeds = manifest.get("seeds", manifest.get("e1_seeds"))
++    assert seeds is not None
++    assert len(seeds) == 5

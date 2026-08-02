@@ -1,5 +1,16 @@
 # Changelog
 
+## E1-FORMAL-FREEZE-R1.1
+
+- Packaged authorized→candidate binary Git patch, source archive, and
+  verifiable Git bundle without changing the execution candidate commit.
+- Added hunk-level `e1_entry.py` audit and core-path blob equivalence
+  evidence (`CORE_ALGORITHM_CHANGE = 0`).
+- Clarified selected-baseline commit semantics and separated protocol file
+  vs payload hashes in R1.1 evidence.
+- Copied raw EventTrace, five-seed validation, pytest/JUnit, and exact
+  command evidence; disclosed unavailable original candidate commit command.
+
 ## E1-FORMAL-FREEZE-R1
 
 - Froze `local_steps: 2` in the formal protocol and schema; runner fails on

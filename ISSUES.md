@@ -62,23 +62,34 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
   structured workflow command log.
 - **ISSUE-055 — Target-weight hash names are ambiguous.** Closed with
   atomic, client-stratum and parquet-file hash names.
-- **ISSUE-056 — Formal freeze commit mismatch.** Closed in
-  E1-FORMAL-FREEZE-R1. Protocol/manifest now record
-  `authorized_algorithm_commit` /
-  `protocol_parent_commit = 53e277c...` instead of a single ambiguous
-  `git_commit`. Historical E1-FORMAL-R1 remains BLOCKED_BY_FREEZE_IDENTITY.
-- **ISSUE-057 — Frozen protocol omits local_steps.** Closed in
-  E1-FORMAL-FREEZE-R1. Protocol freezes `local_steps: 2`; runner/preflight
-  FAIL if missing or CLI-overridden.
-- **ISSUE-058 — Stale selected-baseline hash in FROZEN_CONFIG_MANIFEST.**
-  Closed in E1-FORMAL-FREEZE-R1 by rebuild+verify against actual file
-  bytes after validation-only reconfirmation.
-- **ISSUE-059 — config_hash aliased target_group_hash.** Closed in
-  E1-FORMAL-FREEZE-R1: outer `config_hash` must equal
-  `resolved_run_config_hash`; target-group hashes stay separate.
-- **ISSUE-060 — Protocol self-referenced final Git commit.** Closed in
-  E1-FORMAL-FREEZE-R1: `execution_commit` is runtime-derived from clean
-  HEAD; not written back into the frozen protocol.
+- **ISSUE-056 — Candidate commit code diff not independently reviewable.**
+  Closed in R1.1 with binary patch/name-status/stat/numstat identity.
+- **ISSUE-057 — e1_entry.py changes not explained.** Closed in R1.1;
+  hunk audit reports `CORE_ALGORITHM_CHANGE = 0`.
+- **ISSUE-058 — Execution candidate source snapshot / Git bundle missing.**
+  Closed in R1.1; archive + bundle verify PASS.
+- **ISSUE-059 — Exact command audit incomplete.** Closed in R1.1;
+  JSONL includes disclosed unavailable original candidate commit command.
+- **ISSUE-060 — Raw pytest/JUnit logs missing from evidence package.**
+  Closed in R1.1; first-failure history retained; final PASS logs packaged.
+- **ISSUE-061 — Five-seed validation raw artifacts missing.** Closed in R1.1.
+- **ISSUE-062 — EventTrace manifest/audit evidence missing.** Closed in R1.1.
+- **ISSUE-063 — Selected baseline commit semantics ambiguous.** Closed in R1.1
+  with explicit authorized/runtime/protocol fields.
+- **ISSUE-064 — Protocol file hash and payload hash not separated.**
+  Closed in R1.1 evidence identity.
+- **ISSUE-065 — EventTrace hash evolution not explained.** Closed in R1.1 CSV
+  + recompute summary.
+- **ISSUE-056b — Formal freeze commit mismatch (R1).** Closed in
+  E1-FORMAL-FREEZE-R1 via split identity fields.
+- **ISSUE-057b — Frozen protocol omits local_steps (R1).** Closed in
+  E1-FORMAL-FREEZE-R1 with `local_steps: 2`.
+- **ISSUE-058b — Stale selected-baseline hash (R1).** Closed in
+  E1-FORMAL-FREEZE-R1 by rebuild+verify.
+- **ISSUE-059b — config_hash aliased target_group_hash (R1).** Closed in
+  E1-FORMAL-FREEZE-R1.
+- **ISSUE-060b — Protocol self-referenced final Git commit (R1).** Closed in
+  E1-FORMAL-FREEZE-R1.
 
 ### ISSUE-020 — Official E1 runner ignores frozen G=4 mapping
 - **Severity:** Blocking

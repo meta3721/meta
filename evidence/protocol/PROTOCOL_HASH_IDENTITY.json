@@ -1,0 +1,8 @@
+{
+  "both_hashes_recorded": true,
+  "legacy_manifest_alias": "R1 manifest protocol_config_hash equals protocol_file_hash",
+  "protocol_config_hash_semantic_definition": "protocol_payload_hash",
+  "protocol_file_hash": "4dda5b646e66886dd507af4918c0f53c742db6b56c49006917d1e6c4531e4787",
+  "protocol_path": "configs\\frozen\\e1_sensorscope_balanced.yaml",
+  "protocol_payload_hash": "bbb26fad86bf700452e912aaba52756700e051dc862a0272423cda0d03bc0b12"
+}

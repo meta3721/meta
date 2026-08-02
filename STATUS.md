@@ -3,7 +3,7 @@
 **Updated:** 2026-08-02
 **Workspace root:** `D:\Cursor\raven.mcs`  
 **Source docs:** paper PDF + Cursor instruction TXT + design DOCX (`docs/SOURCES.md`)  
-**Current phase:** E1-FORMAL-FREEZE-R1 PASS; awaiting teacher final execution authorization
+**Current phase:** E1-FORMAL-FREEZE-R1.1 PASS; awaiting teacher code-level authorization of bb597a1
 **Main experiments:** Not started
 
 ---
@@ -33,6 +33,12 @@
 - `E1-ENTRY-R4 = PASS`
 - `E1-FORMAL-R1 = BLOCKED_BY_FREEZE_IDENTITY`
 - `E1-FORMAL-FREEZE-R1 = PASS`
+- `E1-FORMAL-FREEZE-R1-CONFIG = PASS`
+- `E1-FORMAL-FREEZE-R1-MANIFEST = PASS`
+- `E1-FORMAL-FREEZE-R1-VALIDATION = PASS`
+- `E1-FORMAL-FREEZE-R1-PREFLIGHT = CONDITIONAL PASS`
+- `EXECUTION-CANDIDATE-CODE-AUDIT = PASS`
+- `E1-FORMAL-FREEZE-R1.1 = PASS`
 - `E1 = READY_FOR_FINAL_EXECUTION_AUTHORIZATION`
 - `E2-E9 = NOT STARTED`
 
@@ -40,8 +46,9 @@ FLAMF-TimeAlign-Adapted now uses the teacher-frozen temporal-coverage formula
 and differs from FedAsync in controlled and official-entry diagnostics.
 Arrival-risk, record-level p history, eight-client identity and post-commit
 EventTrace regeneration are sealed. Historical BLOCKED formal preflight
-evidence is retained. Formal 25-run E1 has not started. Teacher must still
-authorize the clean execution-candidate commit before any formal runs.
+evidence is retained. Formal 25-run E1 has not started.
+`execution_candidate_commit` remains `bb597a10...`; R1.1 evidence seal is a
+separate commit that packages diffs/raw evidence only.
 
 ## P10-E Smoke Results (2026-08-01)
 
