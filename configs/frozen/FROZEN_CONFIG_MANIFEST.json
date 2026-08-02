@@ -1,0 +1,90 @@
+{
+  "S_max": 5,
+  "authorization_status": "READY_FOR_FINAL_EXECUTION_AUTHORIZATION",
+  "authorized_algorithm_commit": "53e277c53b01695330652b8e1bc8a234909d56e5",
+  "client_mapping_file_hash": "804dd0fdb9f9f8865f70e42e4fba57926314d85205642e86972b98d560b3a64c",
+  "client_mapping_payload_hash": "e0adcf5f40cba6093cf9764b8badd297bd0f25b3b64104cc8b2470c6699ad7ff",
+  "e1_methods": [
+    "fedavg_window",
+    "fedasync_window",
+    "flamf_timealign_adapted",
+    "twostage_hajek",
+    "raven"
+  ],
+  "e2_e9_status": "NOT_STARTED",
+  "entry_smoke_status": "PASS_SINGLE_SEED_R4_DRY_RUN",
+  "event_trace_hashes": {
+    "26001": "e212661f5262e0559100d7f852c38a199dac9046b2b8c520fc913c9834f21a50",
+    "26002": "e8286dee49c025f5c3fa5bc4b9fbc658342a608c4b7374063951b2c9e56e05cb",
+    "26003": "06b434948310df5bbd72aac048ed54fb677321d681686d18a711e6a85190ee72",
+    "26004": "76b886994aeb651a406f465591180a170f2c25537dc144bf4735c6b47d9a1ec5",
+    "26005": "9fa446409c2edbb46407e0eb1cd936696117e7c6194b4b480a49f0cfb0a84d45"
+  },
+  "execution_commit_policy": "runtime_clean_head",
+  "execution_status": "NOT_STARTED",
+  "experiment": "E1_balanced",
+  "files": {
+    "configs/frozen/e1_pi_target_client_stratum.parquet": {
+      "semantic_role": "pi_target",
+      "sha256": "04f6aa0b485b3ea431f304368eb4cb6f72b412b274c5e0ca5cfec69eeee8d254",
+      "size_bytes": 7148
+    },
+    "configs/frozen/e1_pi_target_manifest.json": {
+      "semantic_role": "pi_target_manifest",
+      "sha256": "b3cbf319aeb8991dd2edb5466e55e7b1a633b077afe60345ca7ac97f9a479fe7",
+      "size_bytes": 1426
+    },
+    "configs/frozen/e1_protocol_schema.yaml": {
+      "semantic_role": "protocol_schema",
+      "sha256": "5d42bc9f9214acd511d701e05beb8606209ff94cd58ee6630e1438c2965896b3",
+      "size_bytes": 778
+    },
+    "configs/frozen/e1_selected_baseline.yaml": {
+      "semantic_role": "selected_baseline",
+      "sha256": "08886385bea51bf30740f10d7700adf1f3540febf19f440d35c5440b13a6b074",
+      "size_bytes": 1034
+    },
+    "configs/frozen/e1_sensorscope_balanced.yaml": {
+      "semantic_role": "protocol",
+      "sha256": "4dda5b646e66886dd507af4918c0f53c742db6b56c49006917d1e6c4531e4787",
+      "size_bytes": 1274
+    },
+    "configs/frozen/e1_sensorscope_clients.yaml": {
+      "semantic_role": "client_mapping",
+      "sha256": "804dd0fdb9f9f8865f70e42e4fba57926314d85205642e86972b98d560b3a64c",
+      "size_bytes": 1145
+    },
+    "configs/frozen/e1_sensorscope_groups.yaml": {
+      "semantic_role": "target_groups",
+      "sha256": "11f5974839e18716fa53f69c44b570106a944dcd50ccfebc3ff1b4f25399c579",
+      "size_bytes": 785
+    },
+    "configs/frozen/e1_weight_safety.yaml": {
+      "semantic_role": "weight_safety",
+      "sha256": "2e2e4309bb69370166cba39ecb6c93b88082c04a7ec62349822b2c7be516fc4f",
+      "size_bytes": 316
+    }
+  },
+  "local_steps": 2,
+  "manifest_schema_version": 1,
+  "no_harm_threshold": 0.03,
+  "num_clients": 8,
+  "pi_target_hash": "04f6aa0b485b3ea431f304368eb4cb6f72b412b274c5e0ca5cfec69eeee8d254",
+  "protocol_config_hash": "4dda5b646e66886dd507af4918c0f53c742db6b56c49006917d1e6c4531e4787",
+  "protocol_parent_commit": "53e277c53b01695330652b8e1bc8a234909d56e5",
+  "seal": "E1_FORMAL_FREEZE_R1",
+  "seeds": [
+    26001,
+    26002,
+    26003,
+    26004,
+    26005
+  ],
+  "selected_baseline": {
+    "file_path": "configs/frozen/e1_selected_baseline.yaml",
+    "file_sha256": "08886385bea51bf30740f10d7700adf1f3540febf19f440d35c5440b13a6b074",
+    "method": "flamf_timealign_adapted"
+  },
+  "target_group_file_hash": "11f5974839e18716fa53f69c44b570106a944dcd50ccfebc3ff1b4f25399c579",
+  "target_group_payload_hash": "abf2b601b42c27be4f5636e2816430659ad0fff0128c72e9cd28dd0be2381b26"
+}

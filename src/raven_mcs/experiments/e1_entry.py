@@ -106,6 +106,32 @@ def git_commit(root: Path) -> str:
     ).stdout.strip()
 
 
+def load_frozen_protocol(root: Path) -> dict[str, Any]:
+    path = root / "configs/frozen/e1_sensorscope_balanced.yaml"
+    if not path.exists():
+        raise FileNotFoundError(f"frozen E1 protocol missing: {path}")
+    protocol = load_yaml(path)
+    if "local_steps" not in protocol:
+        raise RuntimeError("frozen protocol missing local_steps")
+    return protocol
+
+
+def frozen_local_steps(root: Path) -> int:
+    return int(load_frozen_protocol(root)["local_steps"])
+
+
+def enforce_frozen_local_steps(root: Path, local_steps: int | None) -> int:
+    frozen = frozen_local_steps(root)
+    if local_steps is None:
+        return frozen
+    if int(local_steps) != frozen:
+        raise RuntimeError(
+            f"CLI local_steps={local_steps} conflicts with frozen "
+            f"protocol local_steps={frozen}"
+        )
+    return frozen
+
+
 def frozen_group_identity(root: Path) -> tuple[Path, str]:
     path = root / "configs/frozen/e1_sensorscope_groups.yaml"
     if not path.exists():
@@ -571,7 +597,7 @@ def run_official_method(
     method: str,
     seed: int,
     num_windows: int = 100,
-    local_steps: int = 2,
+    local_steps: int | None = None,
     device: str = "cpu",
     trace_dir: Path | None = None,
     output_root: Path | None = None,
@@ -580,6 +606,8 @@ def run_official_method(
 ) -> Path:
     if method not in E1_METHODS:
         raise ValueError(f"method is not in frozen E1 registry: {method}")
+    protocol = load_frozen_protocol(root)
+    local_steps = enforce_frozen_local_steps(root, local_steps)
     group_path, group_hash = frozen_group_identity(root)
     dataset = sensorscope_dataset(root)
     grouped = add_e1_groups(dataset.atomic_df)
@@ -981,10 +1009,16 @@ def run_official_method(
         "seed": int(seed),
         "num_windows": int(num_windows),
         "local_steps": int(local_steps),
+        "num_clients": int(protocol["num_clients"]),
         "s_max": E1_S_MAX,
         "main_groups": E1_GROUPS,
         "device": device,
         "weight_safety": weight_safety,
+        "authorized_algorithm_commit": protocol.get(
+            "authorized_algorithm_commit"
+        ),
+        "protocol_parent_commit": protocol.get("protocol_parent_commit"),
+        "execution_commit_policy": protocol.get("execution_commit_policy"),
     }
     resolved_path = run_dir / "resolved_config.yaml"
     dump_yaml(resolved_config, resolved_path)
@@ -1015,13 +1049,32 @@ def run_official_method(
         frozen_client_mapping_hashes(root)
     )
     env_hash = environment_hash()
+    selected_baseline_path = root / "configs/frozen/e1_selected_baseline.yaml"
+    selected_baseline_hash = (
+        sha256_file(selected_baseline_path)
+        if selected_baseline_path.exists() else None
+    )
+    pi_manifest = load_json(
+        root / "configs/frozen/e1_pi_target_manifest.json",
+    ) if (root / "configs/frozen/e1_pi_target_manifest.json").exists() else {}
     manifest = {
         "run_id": run_id,
         "experiment": "E1_balanced",
+        "formal": False,
         "dataset": "sensorscope",
         "scenario": "balanced",
         "method": method,
         "seed": int(seed),
+        "num_windows": int(num_windows),
+        "num_clients": int(protocol["num_clients"]),
+        "S_max": E1_S_MAX,
+        "local_steps": int(local_steps),
+        "execution_commit": git_commit(root),
+        "authorized_algorithm_commit": protocol.get(
+            "authorized_algorithm_commit"
+        ),
+        "protocol_parent_commit": protocol.get("protocol_parent_commit"),
+        "execution_commit_policy": protocol.get("execution_commit_policy"),
         "git_commit": git_commit(root),
         "protocol_config_hash": protocol_config_hash,
         "resolved_run_config_hash": resolved_run_config_hash,
@@ -1032,10 +1085,16 @@ def run_official_method(
         "target_group_file_hash": target_group_file_hash,
         "client_mapping_payload_hash": client_mapping_payload_hash,
         "client_mapping_file_hash": client_mapping_file_hash,
+        "client_stratum_target_mass_hash": pi_manifest.get(
+            "client_stratum_target_mass_hash"
+        ),
+        "pi_target_file_hash": pi_manifest.get("pi_target_file_hash")
+        or pi_target_hash,
         "target_group_hash": target_group_file_hash,
         "client_mapping_hash": client_mapping_payload_hash,
         "config_hash": resolved_run_config_hash,
         "pi_target_hash": pi_target_hash,
+        "selected_baseline_hash": selected_baseline_hash,
         "initial_model_hash": initial_model_hash,
         "environment_hash": env_hash,
         "model_hash": final_model_hash,
@@ -1051,6 +1110,10 @@ def run_official_method(
         },
         "status": "completed",
     }
+    if manifest["config_hash"] == manifest["target_group_hash"]:
+        raise RuntimeError("config_hash must not alias target_group_hash")
+    if manifest["config_hash"] != manifest["resolved_run_config_hash"]:
+        raise RuntimeError("config_hash must equal resolved_run_config_hash")
     dump_json(manifest, run_dir / "manifest.json")
     required = {
         "manifest.json", "resolved_config.yaml", "event_trace_ref.json",

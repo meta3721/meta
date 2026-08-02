@@ -24,6 +24,15 @@
 | Validation-only baseline | `scripts/select_e1_baseline.py::choose_baseline` | `e1_selected_baseline.yaml` |
 | No-harm degradation dry-run | `scripts/statistical_tests.py` | `no_harm_summary.json` |
 
+## E1-FORMAL-FREEZE-R1 identity
+
+| Requirement | Implementation | Evidence |
+|---|---|---|
+| Frozen `local_steps=2` | `experiments/e1_entry.py::enforce_frozen_local_steps` | `e1_sensorscope_balanced.yaml` |
+| Split algorithm/protocol/execution identity | protocol fields + runtime HEAD | `FROZEN_CONFIG_MANIFEST.json`, preflight |
+| `config_hash = resolved_run_config_hash` | `experiments/e1_entry.py` manifest write | run manifests / resolved config hash |
+| Frozen file SHA-256 verification | `scripts/verify_frozen_config_manifest.py` | `e1_formal_frozen_manifest_verification.json` |
+
 ---
 
 ## 1. Atomic units, strata, targets

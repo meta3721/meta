@@ -117,4 +117,6 @@ def test_pre_e1_manifest_declares_five_methods_and_seeds() -> None:
         pytest.skip("generated after formal code commit")
     manifest = json.loads(path.read_text(encoding="utf-8"))
     assert len(manifest["e1_methods"]) == 5
-    assert len(manifest["e1_seeds"]) == 5
+    seeds = manifest.get("seeds", manifest.get("e1_seeds"))
+    assert seeds is not None
+    assert len(seeds) == 5

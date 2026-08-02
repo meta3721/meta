@@ -14,8 +14,12 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from raven_mcs.experiments.e1_entry import git_commit, run_official_method
-from raven_mcs.utils.hashing import sha256_file, sha256_path_tree
+from raven_mcs.experiments.e1_entry import (
+    enforce_frozen_local_steps,
+    git_commit,
+    run_official_method,
+)
+from raven_mcs.utils.hashing import sha256_file
 from raven_mcs.utils.serialization import dump_json, dump_yaml, load_json, load_yaml
 
 CANDIDATES = (
@@ -47,7 +51,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--validation-only", action="store_true")
     parser.add_argument("--seed", type=int, default=26001)
     parser.add_argument("--windows", type=int, default=20)
-    parser.add_argument("--local-steps", type=int, default=2)
+    parser.add_argument("--local-steps", type=int, default=None)
     parser.add_argument("--methods", nargs="+", default=list(CANDIDATES))
     parser.add_argument(
         "--output-dir", type=Path, default=ROOT / "outputs/validation",
@@ -60,13 +64,14 @@ def main(argv: list[str] | None = None) -> int:
     cfg = load_yaml(args.config)
     if cfg.get("dataset") != "sensorscope":
         raise RuntimeError("E1 validation config must be SensorScope")
+    local_steps = enforce_frozen_local_steps(ROOT, args.local_steps)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     rows = []
     for method in args.methods:
         run_dir = run_official_method(
             ROOT, method=method, seed=args.seed, num_windows=args.windows,
-            local_steps=args.local_steps, device="cpu",
-            output_root=args.output_dir / "e1_r3_baseline_runs",
+            local_steps=local_steps, device="cpu",
+            output_root=args.output_dir / "e1_formal_freeze_r1_baseline_runs",
             evaluation_split="validation",
         )
         metrics = load_json(run_dir / "metrics_run.json")
@@ -84,13 +89,17 @@ def main(argv: list[str] | None = None) -> int:
     frame = pd.DataFrame(rows)
     selected = choose_baseline(frame)
     frame.to_parquet(
-        args.output_dir / "e1_r3_baseline_selection.parquet", index=False,
+        args.output_dir / "e1_formal_freeze_r1_baseline_selection.parquet",
+        index=False,
     )
     report = {
         "selected_baseline": selected,
         "candidate_methods": list(CANDIDATES),
         "validation_seed": args.seed,
         "validation_split_only": True,
+        "selection_split": "validation",
+        "test_read_count": 0,
+        "local_steps": local_steps,
         "validation_rmse_mu": {
             row["method"]: row["RMSE_mu"] for row in rows
         },
@@ -99,8 +108,11 @@ def main(argv: list[str] | None = None) -> int:
         ),
         "test_metrics_read": False,
         "status": "FROZEN_FROM_VALIDATION",
+        "protocol_hash": sha256_file(args.config),
     }
-    report_path = args.output_dir / "e1_r3_baseline_selection_report.json"
+    report_path = (
+        args.output_dir / "e1_formal_freeze_r1_baseline_report.json"
+    )
     dump_json(report, report_path)
     report_hash = sha256_file(report_path)
     frozen = {
@@ -108,7 +120,7 @@ def main(argv: list[str] | None = None) -> int:
         "validation_config_hash": sha256_file(args.config),
         "data_hash": rows[0]["data_hash"],
         "event_trace_hash": rows[0]["event_trace_hash"],
-        "git_commit": git_commit(ROOT),
+        "selection_execution_commit": git_commit(ROOT),
         "selection_timestamp": datetime.now(timezone.utc).isoformat(),
         "report_hash": report_hash,
     }

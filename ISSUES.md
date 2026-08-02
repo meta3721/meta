@@ -62,6 +62,23 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
   structured workflow command log.
 - **ISSUE-055 — Target-weight hash names are ambiguous.** Closed with
   atomic, client-stratum and parquet-file hash names.
+- **ISSUE-056 — Formal freeze commit mismatch.** Closed in
+  E1-FORMAL-FREEZE-R1. Protocol/manifest now record
+  `authorized_algorithm_commit` /
+  `protocol_parent_commit = 53e277c...` instead of a single ambiguous
+  `git_commit`. Historical E1-FORMAL-R1 remains BLOCKED_BY_FREEZE_IDENTITY.
+- **ISSUE-057 — Frozen protocol omits local_steps.** Closed in
+  E1-FORMAL-FREEZE-R1. Protocol freezes `local_steps: 2`; runner/preflight
+  FAIL if missing or CLI-overridden.
+- **ISSUE-058 — Stale selected-baseline hash in FROZEN_CONFIG_MANIFEST.**
+  Closed in E1-FORMAL-FREEZE-R1 by rebuild+verify against actual file
+  bytes after validation-only reconfirmation.
+- **ISSUE-059 — config_hash aliased target_group_hash.** Closed in
+  E1-FORMAL-FREEZE-R1: outer `config_hash` must equal
+  `resolved_run_config_hash`; target-group hashes stay separate.
+- **ISSUE-060 — Protocol self-referenced final Git commit.** Closed in
+  E1-FORMAL-FREEZE-R1: `execution_commit` is runtime-derived from clean
+  HEAD; not written back into the frozen protocol.
 
 ### ISSUE-020 — Official E1 runner ignores frozen G=4 mapping
 - **Severity:** Blocking

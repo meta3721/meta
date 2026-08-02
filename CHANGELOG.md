@@ -1,5 +1,17 @@
 # Changelog
 
+## E1-FORMAL-FREEZE-R1
+
+- Froze `local_steps: 2` in the formal protocol and schema; runner fails on
+  missing/overridden values.
+- Split identity into `authorized_algorithm_commit`,
+  `protocol_parent_commit`, and runtime `execution_commit_policy`.
+- Rebuilt `FROZEN_CONFIG_MANIFEST` from actual SHA-256 bytes, with
+  selected-baseline hash verification and no self-hash cycle.
+- Made outer `config_hash` equal `resolved_run_config_hash` only.
+- Reconfirmed validation-only baseline and five-seed validation safety
+  under the re-frozen protocol; did not start formal 25 runs.
+
 ## E1-ENTRY-R4
 
 - Froze `attempted = 1{observed_count > 0}` before U and restricted q-use

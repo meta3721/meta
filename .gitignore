@@ -22,6 +22,7 @@ outputs/entry_smoke/
 outputs/entry_r2_smoke/
 outputs/entry_r3_smoke/
 outputs/entry_r4_smoke/
+outputs/evidence_formal_r1/
 outputs/statistics/
 outputs/validation/
 outputs/aggregate/
@@ -33,10 +34,8 @@ configs/frozen/*.sha256
 configs/frozen/P10_R1_SMOKE_*.yaml
 configs/frozen/PRE_E1_SMOKE_*.yaml
 configs/frozen/pre_e1_smoke.yaml
-configs/frozen/e1_sensorscope_balanced.yaml
-configs/frozen/FROZEN_CONFIG_MANIFEST.json
-configs/frozen/e1_selected_baseline.yaml
-configs/frozen/e1_sensorscope_clients.yaml
+# Formal freeze identity files are tracked (force-add if previously ignored).
+# Keep smoke-only ephemeral frozen YAMLs ignored above.
 参考文件/
 *.npz
 .DS_Store

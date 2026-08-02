@@ -86,7 +86,14 @@ def test_protocol_status_not_authorized() -> None:
     assert protocol["authorization_status"] in {
         "READY_FOR_TEACHER_REVIEW_AFTER_R3",
         "READY_FOR_TEACHER_REVIEW_AFTER_R4",
+        "READY_FOR_FINAL_EXECUTION_AUTHORIZATION",
     }
+    assert protocol["authorization_status"] not in {
+        "AUTHORIZED",
+        "RUNNING",
+        "PASS",
+    }
+    assert protocol["execution_status"] == "NOT_STARTED"
 
 
 def test_target_group_payload_and_file_hashes_differ() -> None:

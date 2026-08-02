@@ -1,9 +1,9 @@
 # STATUS — RAVEN-MCS V2.3
 
-**Updated:** 2026-08-01
+**Updated:** 2026-08-02
 **Workspace root:** `D:\Cursor\raven.mcs`  
 **Source docs:** paper PDF + Cursor instruction TXT + design DOCX (`docs/SOURCES.md`)  
-**Current phase:** E1-ENTRY-R4 complete; teacher authorization pending
+**Current phase:** E1-FORMAL-FREEZE-R1 PASS; awaiting teacher final execution authorization
 **Main experiments:** Not started
 
 ---
@@ -16,7 +16,7 @@
 | P10-C | PASS | FedAvg/TwoStage local and server paths produce distinct audited updates |
 | P10-D | PASS | RMSE_mu/RMSE_rho are recomputed from atomic rows and Gap_mis identity is exact |
 | P10-E | PASS | Two same-seed SensorScope runs pass R1-G1 through R1-G8 |
-| E1 | READY_FOR_TEACHER_AUTHORIZATION | R4 gates passed; formal E1 not executed |
+| E1 | NOT EXECUTED | Freeze identity sealed; awaiting teacher final execution authorization |
 
 ## Pre-E1 Seal
 
@@ -31,16 +31,17 @@
 - `E1-STAGE2-ATTEMPT-SEMANTICS = PASS`
 - `E1-ARRIVAL-SUPPORT-METRIC = PASS`
 - `E1-ENTRY-R4 = PASS`
-- `E1 = READY_FOR_TEACHER_AUTHORIZATION`
+- `E1-FORMAL-R1 = BLOCKED_BY_FREEZE_IDENTITY`
+- `E1-FORMAL-FREEZE-R1 = PASS`
+- `E1 = READY_FOR_FINAL_EXECUTION_AUTHORIZATION`
+- `E2-E9 = NOT STARTED`
 
 FLAMF-TimeAlign-Adapted now uses the teacher-frozen temporal-coverage formula
 and differs from FedAsync in controlled and official-entry diagnostics.
 Arrival-risk, record-level p history, eight-client identity and post-commit
-EventTrace regeneration are sealed.
-- `E2-E9 = NOT STARTED`
-
-This status is readiness for teacher authorization only; it is not permission
-to execute E1.
+EventTrace regeneration are sealed. Historical BLOCKED formal preflight
+evidence is retained. Formal 25-run E1 has not started. Teacher must still
+authorize the clean execution-candidate commit before any formal runs.
 
 ## P10-E Smoke Results (2026-08-01)
 
@@ -85,7 +86,7 @@ All P10 smoke checks and R1-G1 through R1-G8: **PASS**.
 | 9 P2 / debt + G3–G5 | **DONE** | G3–G5 PASS via `check_hard_gates.py` |
 | 10 Metrics / artifacts | **DONE FOR E1 ENTRY** | Full predictions, risks, RMSE/Gap/ESS/clip/solver artifacts |
 | E0 unit suite | **DONE** | E0.1–E0.6 green via `scripts/check_e0.py` |
-| E1 Balanced / G6 | READY_FOR_TEACHER_AUTHORIZATION | Formal five-seed E1 not executed |
+| E1 Balanced / G6 | READY_FOR_FINAL_EXECUTION_AUTHORIZATION | Freeze-R1 PASS; formal 25-run E1 not started |
 | E2–E9 / 20-seed | BLOCKED | |
 
 ---

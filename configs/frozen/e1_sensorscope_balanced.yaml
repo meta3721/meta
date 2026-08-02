@@ -1,0 +1,36 @@
+name: E1_balanced
+dataset: sensorscope
+methods:
+- fedavg_window
+- fedasync_window
+- flamf_timealign_adapted
+- twostage_hajek
+- raven
+scenario: balanced
+seeds:
+- 26001
+- 26002
+- 26003
+- 26004
+- 26005
+num_windows: 100
+s_max: 5
+local_steps: 2
+num_clients: 8
+no_harm_threshold: 0.03
+target_group_scope: sensorscope_e1_only
+target_group_mapping: repeatable_time_of_day_4
+target_group_timezone: UTC
+timealign_baseline_name: FLAMF-TimeAlign-Adapted
+authorized_algorithm_commit: 53e277c53b01695330652b8e1bc8a234909d56e5
+protocol_parent_commit: 53e277c53b01695330652b8e1bc8a234909d56e5
+execution_commit_policy: runtime_clean_head
+authorization_status: READY_FOR_FINAL_EXECUTION_AUTHORIZATION
+execution_status: NOT_STARTED
+semantic_seal_status: R4_PASS
+target_group_payload_hash: abf2b601b42c27be4f5636e2816430659ad0fff0128c72e9cd28dd0be2381b26
+target_group_file_hash: 11f5974839e18716fa53f69c44b570106a944dcd50ccfebc3ff1b4f25399c579
+target_group_hash: 11f5974839e18716fa53f69c44b570106a944dcd50ccfebc3ff1b4f25399c579
+client_mapping_payload_hash: e0adcf5f40cba6093cf9764b8badd297bd0f25b3b64104cc8b2470c6699ad7ff
+client_mapping_file_hash: 804dd0fdb9f9f8865f70e42e4fba57926314d85205642e86972b98d560b3a64c
+pi_target_hash: 04f6aa0b485b3ea431f304368eb4cb6f72b412b274c5e0ca5cfec69eeee8d254

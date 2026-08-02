@@ -1,0 +1,41 @@
+schema_version: 1
+required_fields:
+  name:
+    type: string
+  dataset:
+    type: string
+  methods:
+    type: list
+  seeds:
+    type: list
+  num_windows:
+    type: integer
+    minimum: 1
+  s_max:
+    type: integer
+    minimum: 1
+  local_steps:
+    type: integer
+    minimum: 1
+    required: true
+  num_clients:
+    type: integer
+    minimum: 1
+  no_harm_threshold:
+    type: number
+  authorized_algorithm_commit:
+    type: string
+  protocol_parent_commit:
+    type: string
+  execution_commit_policy:
+    type: string
+  authorization_status:
+    type: string
+  execution_status:
+    type: string
+forbidden_fields:
+- git_commit
+allowed_authorization_status:
+- READY_FOR_FINAL_EXECUTION_AUTHORIZATION
+allowed_execution_status:
+- NOT_STARTED

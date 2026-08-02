@@ -1,0 +1,24 @@
+selected_baseline: flamf_timealign_adapted
+candidate_methods:
+- fedavg_window
+- fedasync_window
+- flamf_timealign_adapted
+validation_seed: 26001
+validation_split_only: true
+selection_split: validation
+test_read_count: 0
+local_steps: 2
+validation_rmse_mu:
+  fedavg_window: 3.3295208557058795
+  fedasync_window: 3.329068628788647
+  flamf_timealign_adapted: 3.3247128159136015
+tie_break_rule: 'within 1e-6: FedAvg, FedAsync, FLAMF-TimeAlign-Adapted'
+test_metrics_read: false
+status: FROZEN_FROM_VALIDATION
+protocol_hash: 4dda5b646e66886dd507af4918c0f53c742db6b56c49006917d1e6c4531e4787
+validation_config_hash: 4dda5b646e66886dd507af4918c0f53c742db6b56c49006917d1e6c4531e4787
+data_hash: 44081beb40e019ad999dc997162e7c7be9c0eb4cf562cddfb4f570ec1f7cca03
+event_trace_hash: e212661f5262e0559100d7f852c38a199dac9046b2b8c520fc913c9834f21a50
+selection_execution_commit: 53e277c53b01695330652b8e1bc8a234909d56e5
+selection_timestamp: '2026-08-02T12:06:51.074305+00:00'
+report_hash: 3a769730f7ffe885b845d89ede918bb8278a434a8b2af1e99eb3d186efe7c567
