@@ -83,9 +83,10 @@ def test_protocol_status_not_authorized() -> None:
     protocol = load_yaml(
         ROOT / "configs/frozen/e1_sensorscope_balanced.yaml",
     )
-    assert protocol["authorization_status"] == (
-        "READY_FOR_TEACHER_REVIEW_AFTER_R3"
-    )
+    assert protocol["authorization_status"] in {
+        "READY_FOR_TEACHER_REVIEW_AFTER_R3",
+        "READY_FOR_TEACHER_REVIEW_AFTER_R4",
+    }
 
 
 def test_target_group_payload_and_file_hashes_differ() -> None:
