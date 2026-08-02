@@ -1,5 +1,13 @@
 # Changelog
 
+## E1-FORMAL-EXECUTION-R1
+
+- Sealed a single formal execution harness: `run_e1_formal.py`, per-run
+  gates, formal aggregate/statistics/export, and HARNESS-G1..G10.
+- Formal manifests require `formal=true`, 100 windows, `local_steps=2`,
+  and separated protocol file/payload hashes.
+- Wilcoxon and Holm outputs are written as nonempty pairwise tables.
+
 ## E1-FORMAL-FREEZE-R1.1
 
 - Packaged authorized→candidate binary Git patch, source archive, and

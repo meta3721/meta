@@ -87,6 +87,7 @@ def test_protocol_status_not_authorized() -> None:
         "READY_FOR_TEACHER_REVIEW_AFTER_R3",
         "READY_FOR_TEACHER_REVIEW_AFTER_R4",
         "READY_FOR_FINAL_EXECUTION_AUTHORIZATION",
+        "AUTHORIZED_FOR_FROZEN_EXECUTION",
     }
     assert protocol["authorization_status"] not in {
         "AUTHORIZED",

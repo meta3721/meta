@@ -3,8 +3,8 @@
 **Updated:** 2026-08-02
 **Workspace root:** `D:\Cursor\raven.mcs`  
 **Source docs:** paper PDF + Cursor instruction TXT + design DOCX (`docs/SOURCES.md`)  
-**Current phase:** E1-FORMAL-FREEZE-R1.1 PASS; awaiting teacher code-level authorization of bb597a1
-**Main experiments:** Not started
+**Current phase:** E1-FORMAL-EXECUTION-R1 Phase A harness seal / Phase B pending
+**Main experiments:** Formal E1 authorized; execution harness in progress
 
 ---
 ## P10 Status (2026-08-01)
@@ -39,7 +39,12 @@
 - `E1-FORMAL-FREEZE-R1-PREFLIGHT = CONDITIONAL PASS`
 - `EXECUTION-CANDIDATE-CODE-AUDIT = PASS`
 - `E1-FORMAL-FREEZE-R1.1 = PASS`
-- `E1 = READY_FOR_FINAL_EXECUTION_AUTHORIZATION`
+- `E1-FORMAL-FREEZE-R1.1-DIFF-AUDIT = PASS`
+- `E1-FORMAL-FREEZE-R1.1-CORE-EQUIVALENCE = PASS`
+- `E1-FORMAL-RUNNER = IN PROGRESS`
+- `E1-FORMAL-STATISTICS = IN PROGRESS`
+- `E1-FORMAL-EXECUTION-R1 = IN PROGRESS`
+- `E1 = AUTHORIZED_FOR_FROZEN_EXECUTION / NOT EXECUTED`
 - `E2-E9 = NOT STARTED`
 
 FLAMF-TimeAlign-Adapted now uses the teacher-frozen temporal-coverage formula

@@ -262,6 +262,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--metric", default="RMSE_mu",
                         help="Metric to compare")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--formal", action="store_true",
+                        help="Require the complete formal E1 matrix.")
     args = parser.parse_args(argv)
     if args.input_dir is None:
         args.input_dir = (
@@ -302,6 +304,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.input_dir:
         try:
             df = load_per_seed_metrics(args.input_dir)
+            if args.formal:
+                if len(df) != 25 or not df.get("formal", pd.Series(False, index=df.index)).eq(True).all():
+                    raise RuntimeError("--formal requires 25 formal per-seed rows")
             expected = set(df.loc[df["method"] == baseline_method, "seed"])
             raven_seeds = set(df.loc[df["method"] == "raven", "seed"])
             if expected != raven_seeds:
@@ -330,18 +335,41 @@ def main(argv: list[str] | None = None) -> int:
                 paired["raven"] - paired[baseline_method]
             ) / paired[baseline_method]
             paired.to_parquet(output_dir / "no_harm_per_seed.parquet", index=False)
-            pd.DataFrame(columns=[
-                "comparison", "statistic", "p_value",
-            ]).to_csv(output_dir / "wilcoxon_results.csv", index=False)
-            pd.DataFrame(columns=[
-                "comparison", "raw_p", "holm_significant",
-            ]).to_csv(output_dir / "holm_results.csv", index=False)
+            comparisons = []
+            metrics_for_pairs = ("RMSE_mu", "RMSE_rho", "Gap_mis", "Tail_RMSE", "runtime")
+            for baseline in (
+                "fedavg_window", "fedasync_window", "flamf_timealign_adapted", "twostage_hajek"
+            ):
+                left = df[df["method"] == "raven"].set_index("seed")
+                right = df[df["method"] == baseline].set_index("seed")
+                for metric in metrics_for_pairs:
+                    paired_index = left.index.intersection(right.index)
+                    raven_values = left.loc[paired_index, metric].to_numpy()
+                    baseline_values = right.loc[paired_index, metric].to_numpy()
+                    stat, p_value = sp_stats.wilcoxon(
+                        raven_values, baseline_values, zero_method="zsplit"
+                    )
+                    comparisons.append({
+                        "comparison": f"raven_vs_{baseline}", "metric": metric,
+                        "statistic": float(stat), "p_value": float(p_value), "n": len(paired_index),
+                    })
+            wilcoxon = pd.DataFrame(comparisons)
+            wilcoxon.to_csv(output_dir / "wilcoxon_results.csv", index=False)
+            adjusted = wilcoxon.copy()
+            ordered_index = adjusted["p_value"].sort_values().index.tolist()
+            holm_values: dict[int, float] = {}
+            running = 0.0
+            for rank, index in enumerate(ordered_index):
+                running = max(running, float(adjusted.at[index, "p_value"]) * (len(adjusted) - rank))
+                holm_values[index] = min(1.0, running)
+            adjusted["holm_adjusted_p"] = adjusted.index.map(holm_values)
+            adjusted["holm_significant"] = adjusted["holm_adjusted_p"] < args.alpha
+            adjusted.to_csv(output_dir / "holm_results.csv", index=False)
             report = (
                 "# E1 no-harm statistics\n\n"
                 f"Status: {tests['status']}\n\n"
                 f"Frozen baseline: {baseline_method}\n\n"
-                "Single-seed entry smoke is schema validation only; no formal "
-                "no-harm PASS/FAIL is reported.\n"
+                "RAVEN is compared pairwise against each frozen baseline.\n"
             )
             (output_dir / "statistics_report.md").write_text(report, encoding="utf-8")
             print(f"Statistical dry-run → {output_dir}")

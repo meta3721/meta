@@ -603,11 +603,23 @@ def run_official_method(
     output_root: Path | None = None,
     evaluation_split: str = "test",
     weight_safety: dict[str, float] | None = None,
+    formal: bool = False,
 ) -> Path:
     if method not in E1_METHODS:
         raise ValueError(f"method is not in frozen E1 registry: {method}")
     protocol = load_frozen_protocol(root)
     local_steps = enforce_frozen_local_steps(root, local_steps)
+    if formal:
+        if int(num_windows) != 100:
+            raise RuntimeError("formal E1 execution requires num_windows=100")
+        if int(local_steps) != 2:
+            raise RuntimeError("formal E1 execution requires local_steps=2")
+        if method not in E1_METHODS or int(seed) not in E1_SEEDS:
+            raise RuntimeError("formal E1 execution requires frozen method and seed")
+        if evaluation_split != "test":
+            raise RuntimeError("formal E1 execution requires evaluation_split='test'")
+        if protocol.get("authorization_status") != "AUTHORIZED_FOR_FROZEN_EXECUTION":
+            raise RuntimeError("formal E1 protocol is not authorized for execution")
     group_path, group_hash = frozen_group_identity(root)
     dataset = sensorscope_dataset(root)
     grouped = add_e1_groups(dataset.atomic_df)
@@ -716,7 +728,7 @@ def run_official_method(
     method_rows = pd.DataFrame(runner.diagnostics)
     final_model_hash = runner._theta_hash()
     run_id = (
-        f"E1_BALANCED_{method}_{seed}_"
+        f"{'E1_FORMAL' if formal else 'E1_BALANCED'}_{method}_{seed}_"
         f"{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')}"
     )
     output_root = output_root or root / "outputs/runs"
@@ -1040,7 +1052,10 @@ def run_official_method(
         grouped[["unit_id", "split"]].astype(str).to_dict(orient="records"),
     )
     protocol_path = root / "configs/frozen/e1_sensorscope_balanced.yaml"
-    protocol_config_hash = sha256_file(protocol_path)
+    protocol_file_hash = sha256_file(protocol_path)
+    protocol_payload_hash = sha256_json(protocol)
+    # The semantic alias is deliberately stable across YAML formatting changes.
+    protocol_config_hash = protocol_payload_hash
     resolved_run_config_hash = sha256_file(resolved_path)
     target_group_payload_hash, target_group_file_hash = (
         frozen_group_hashes(root)
@@ -1054,13 +1069,18 @@ def run_official_method(
         sha256_file(selected_baseline_path)
         if selected_baseline_path.exists() else None
     )
+    selected_baseline = (
+        load_yaml(selected_baseline_path).get("selected_baseline")
+        if selected_baseline_path.exists() else None
+    )
     pi_manifest = load_json(
         root / "configs/frozen/e1_pi_target_manifest.json",
     ) if (root / "configs/frozen/e1_pi_target_manifest.json").exists() else {}
     manifest = {
         "run_id": run_id,
         "experiment": "E1_balanced",
-        "formal": False,
+        "formal": bool(formal),
+        "phase": "formal" if formal else "nonformal",
         "dataset": "sensorscope",
         "scenario": "balanced",
         "method": method,
@@ -1077,6 +1097,8 @@ def run_official_method(
         "execution_commit_policy": protocol.get("execution_commit_policy"),
         "git_commit": git_commit(root),
         "protocol_config_hash": protocol_config_hash,
+        "protocol_file_hash": protocol_file_hash,
+        "protocol_payload_hash": protocol_payload_hash,
         "resolved_run_config_hash": resolved_run_config_hash,
         "data_hash": data_hash,
         "split_hash": split_hash,
@@ -1095,13 +1117,14 @@ def run_official_method(
         "config_hash": resolved_run_config_hash,
         "pi_target_hash": pi_target_hash,
         "selected_baseline_hash": selected_baseline_hash,
+        "selected_baseline": selected_baseline,
         "initial_model_hash": initial_model_hash,
         "environment_hash": env_hash,
         "model_hash": final_model_hash,
         "initial_model_seed": int(seed),
         "start_time": started.isoformat(),
         "end_time": datetime.now(timezone.utc).isoformat(),
-        "hard_gate_status": {
+        "hard_gate_status": "PENDING" if formal else {
             "entry_smoke": "PASS",
             "metric_gate": "PASS",
             "solver_gate": "PASS" if solver_failures == 0 else "FAIL",

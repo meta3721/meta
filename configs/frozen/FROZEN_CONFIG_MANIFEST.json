@@ -1,6 +1,6 @@
 {
   "S_max": 5,
-  "authorization_status": "READY_FOR_FINAL_EXECUTION_AUTHORIZATION",
+  "authorization_status": "AUTHORIZED_FOR_FROZEN_EXECUTION",
   "authorized_algorithm_commit": "53e277c53b01695330652b8e1bc8a234909d56e5",
   "client_mapping_file_hash": "804dd0fdb9f9f8865f70e42e4fba57926314d85205642e86972b98d560b3a64c",
   "client_mapping_payload_hash": "e0adcf5f40cba6093cf9764b8badd297bd0f25b3b64104cc8b2470c6699ad7ff",
@@ -36,8 +36,8 @@
     },
     "configs/frozen/e1_protocol_schema.yaml": {
       "semantic_role": "protocol_schema",
-      "sha256": "5d42bc9f9214acd511d701e05beb8606209ff94cd58ee6630e1438c2965896b3",
-      "size_bytes": 778
+      "sha256": "c978c3928a432741b2f9fba87f208eb30dc15616aea613ec243ca6a21b668eb7",
+      "size_bytes": 813
     },
     "configs/frozen/e1_selected_baseline.yaml": {
       "semantic_role": "selected_baseline",
@@ -46,8 +46,8 @@
     },
     "configs/frozen/e1_sensorscope_balanced.yaml": {
       "semantic_role": "protocol",
-      "sha256": "4dda5b646e66886dd507af4918c0f53c742db6b56c49006917d1e6c4531e4787",
-      "size_bytes": 1274
+      "sha256": "590b344ab53ee79b8bc282f8664cb20e8524b148fae793ca634aab21df57f64c",
+      "size_bytes": 1266
     },
     "configs/frozen/e1_sensorscope_clients.yaml": {
       "semantic_role": "client_mapping",
@@ -70,7 +70,7 @@
   "no_harm_threshold": 0.03,
   "num_clients": 8,
   "pi_target_hash": "04f6aa0b485b3ea431f304368eb4cb6f72b412b274c5e0ca5cfec69eeee8d254",
-  "protocol_config_hash": "4dda5b646e66886dd507af4918c0f53c742db6b56c49006917d1e6c4531e4787",
+  "protocol_config_hash": "590b344ab53ee79b8bc282f8664cb20e8524b148fae793ca634aab21df57f64c",
   "protocol_parent_commit": "53e277c53b01695330652b8e1bc8a234909d56e5",
   "seal": "E1_FORMAL_FREEZE_R1",
   "seeds": [

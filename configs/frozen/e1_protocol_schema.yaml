@@ -37,5 +37,6 @@ forbidden_fields:
 - git_commit
 allowed_authorization_status:
 - READY_FOR_FINAL_EXECUTION_AUTHORIZATION
+- AUTHORIZED_FOR_FROZEN_EXECUTION
 allowed_execution_status:
 - NOT_STARTED

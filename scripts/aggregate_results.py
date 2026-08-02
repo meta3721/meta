@@ -30,7 +30,9 @@ PER_SEED_COLUMNS = (
     "target_group_file_hash", "client_mapping_payload_hash",
     "client_mapping_file_hash", "target_group_hash", "client_mapping_hash",
     "pi_target_hash", "event_trace_hash", "initial_model_hash",
-    "environment_hash", "git_commit", "status",
+    "environment_hash", "git_commit", "formal", "hard_gate_status",
+    "execution_commit", "num_windows", "local_steps", "selected_baseline_hash",
+    "status",
 )
 
 
@@ -75,6 +77,12 @@ def collect_run(run_dir: Path) -> dict[str, Any]:
         "environment_hash": manifest["environment_hash"],
         "event_trace_hash": manifest["event_trace_hash"],
         "git_commit": manifest["git_commit"],
+        "formal": manifest.get("formal", False),
+        "hard_gate_status": manifest.get("hard_gate_status"),
+        "execution_commit": manifest.get("execution_commit"),
+        "num_windows": manifest.get("num_windows"),
+        "local_steps": manifest.get("local_steps"),
+        "selected_baseline_hash": manifest.get("selected_baseline_hash"),
         "status": metrics["status"],
         "target_group_hash": manifest["target_group_hash"],
         "run_dir": str(run_dir),
@@ -82,6 +90,17 @@ def collect_run(run_dir: Path) -> dict[str, Any]:
 
 
 def validate_rows(frame: pd.DataFrame, *, mode: str) -> None:
+    if mode == "formal":
+        if len(frame) != 25:
+            raise RuntimeError("formal aggregation requires exactly 25 rows")
+        if not frame["formal"].eq(True).all():
+            raise RuntimeError("formal aggregation rejects non-formal run")
+        if not frame["hard_gate_status"].eq("PASS").all():
+            raise RuntimeError("formal aggregation requires PASS hard gates")
+        if not frame["num_windows"].eq(100).all() or not frame["local_steps"].eq(2).all():
+            raise RuntimeError("formal aggregation requires 100 windows and two local steps")
+        if frame["selected_baseline_hash"].isna().any():
+            raise RuntimeError("formal aggregation requires selected baseline identity")
     required_seeds = (
         {26001}
         if mode in {
@@ -136,6 +155,8 @@ def aggregate(input_root: Path, output_dir: Path, *, mode: str) -> pd.DataFrame:
     failures = []
     for manifest_path in sorted(input_root.rglob("manifest.json")):
         run_dir = manifest_path.parent
+        if mode == "formal" and any(token in str(run_dir).lower() for token in ("entry_smoke", "validation", "dry")):
+            raise RuntimeError(f"formal aggregation rejects smoke/validation path: {run_dir}")
         try:
             successes.append(collect_run(run_dir))
         except Exception as exc:  # noqa: BLE001
@@ -159,11 +180,24 @@ def aggregate(input_root: Path, output_dir: Path, *, mode: str) -> pd.DataFrame:
         "split_hash", "target_group_payload_hash", "target_group_file_hash",
         "client_mapping_payload_hash", "client_mapping_file_hash",
         "event_trace_hash", "target_group_hash", "client_mapping_hash",
-        "pi_target_hash", "initial_model_hash", "environment_hash",
+        "pi_target_hash", "initial_model_hash", "environment_hash", "formal",
+        "hard_gate_status", "execution_commit", "num_windows", "local_steps",
+        "selected_baseline_hash",
     ]].to_parquet(output_dir / "run_index.parquet", index=False)
     pd.DataFrame(failures, columns=["run_dir", "error"]).to_csv(
         output_dir / "failed_runs.csv", index=False,
     )
+    identity_audit = {
+        "formal": mode == "formal",
+        "row_count": len(frame),
+        "execution_commits": sorted(frame["execution_commit"].astype(str).unique().tolist()),
+        "selected_baseline_hashes": sorted(frame["selected_baseline_hash"].astype(str).unique().tolist()),
+        "all_hard_gates_pass": bool(frame["hard_gate_status"].eq("PASS").all()),
+    }
+    dump_json(identity_audit, output_dir / "identity_audit.json")
+    frame.pivot(index="seed", columns="method", values="run_id").reindex(
+        index=sorted(E1_SEEDS), columns=list(E1_METHODS)
+    ).to_csv(output_dir / "completeness_matrix.csv")
     dump_json({
         "experiment": "E1_balanced",
         "mode": mode,
@@ -179,6 +213,7 @@ def aggregate(input_root: Path, output_dir: Path, *, mode: str) -> pd.DataFrame:
             for method, values in frame.groupby("method")
         },
         "hard_gate_pass": True,
+        "aggregate_status": "PASS",
     }, output_dir / "aggregate_summary.json")
     return ordered
 
