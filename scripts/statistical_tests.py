@@ -265,7 +265,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.input_dir is None:
         args.input_dir = (
-            _ROOT / "outputs/aggregate/E1_balanced_entry_r2"
+            _ROOT / "outputs/aggregate/E1_balanced_entry_r3"
             if args.dry_run
             else _ROOT / "outputs/aggregate" / args.experiment
         )

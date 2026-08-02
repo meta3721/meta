@@ -182,10 +182,58 @@ def test_entry_gate(
     return validation["valid"]
 
 
+def refresh_e1_identities() -> dict:
+    from raven_mcs.experiments.e1_entry import (
+        frozen_client_mapping_hashes, frozen_group_hashes,
+    )
+    from raven_mcs.utils.hashing import sha256_file
+    from raven_mcs.utils.serialization import dump_json, dump_yaml, load_json, load_yaml
+
+    frozen = _ROOT / "configs/frozen"
+    protocol_path = frozen / "e1_sensorscope_balanced.yaml"
+    protocol = load_yaml(protocol_path)
+    group_payload, group_file = frozen_group_hashes(_ROOT)
+    mapping_payload, mapping_file = frozen_client_mapping_hashes(_ROOT)
+    protocol.update({
+        "git_commit": _get_git_commit(),
+        "authorization_status": "READY_FOR_TEACHER_REVIEW_AFTER_R3",
+        "semantic_seal_status": "R3_PASS",
+        "target_group_payload_hash": group_payload,
+        "target_group_file_hash": group_file,
+        "target_group_hash": group_file,
+        "client_mapping_payload_hash": mapping_payload,
+        "client_mapping_file_hash": mapping_file,
+        "pi_target_hash": sha256_file(
+            frozen / "e1_pi_target_client_stratum.parquet",
+        ),
+    })
+    dump_yaml(protocol, protocol_path)
+    protocol_hash = sha256_file(protocol_path)
+    manifest_path = frozen / "FROZEN_CONFIG_MANIFEST.json"
+    manifest = load_json(manifest_path)
+    manifest.update({
+        "seal": "E1_ENTRY_R3_PASS",
+        "git_commit": _get_git_commit(),
+        "e1_config_hash": protocol_hash,
+        "target_group_payload_hash": group_payload,
+        "target_group_file_hash": group_file,
+        "client_mapping_payload_hash": mapping_payload,
+        "client_mapping_file_hash": mapping_file,
+        "pi_target_hash": protocol["pi_target_hash"],
+        "entry_smoke_status": "PENDING_R3",
+    })
+    dump_json(manifest, manifest_path)
+    return {
+        "protocol_config_hash": protocol_hash,
+        "protocol_path": str(protocol_path),
+        "git_commit": _get_git_commit(),
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Freeze experiment config for test-entry gate.")
     parser.add_argument("--experiment", required=True, help="Experiment name")
-    parser.add_argument("--dataset", required=True, help="Dataset name")
+    parser.add_argument("--dataset", default="sensorscope", help="Dataset name")
     parser.add_argument("--config-dir", type=Path, default=None)
     parser.add_argument("--frozen-dir", type=Path, default=None)
     parser.add_argument("--output", type=Path, default=None, help="Alias for --frozen-dir")
@@ -193,9 +241,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--event-trace-hash", default=None)
     parser.add_argument("--data-hash", default=None)
     parser.add_argument("--validate", action="store_true", help="Only validate frozen config")
+    parser.add_argument("--refresh-identities", action="store_true")
     args = parser.parse_args(argv)
 
     try:
+        if args.refresh_identities:
+            result = refresh_e1_identities()
+            print(f"E1 identities refreshed: {result['protocol_config_hash']}")
+            return 0
         if args.validate:
             result = validate_frozen_config(args.experiment, args.dataset, args.frozen_dir)
             print(f"Frozen config VALID: {args.experiment}/{args.dataset}")

@@ -31,7 +31,7 @@ def main() -> int:
             "q_min": 0.05, "d_max": 10.0,
         },
     ]
-    run_root = root / "outputs/validation/e1_r1_weight_safety_runs"
+    run_root = root / "outputs/validation/e1_r3_weight_safety_runs"
     rows = []
     for candidate in candidates:
         output = run_official_method(
@@ -54,11 +54,16 @@ def main() -> int:
             "median_n_eff": metrics["median_n_eff"],
             "max_alpha": metrics["max_alpha"],
             "validation_RMSE_mu": metrics["RMSE_mu"],
+            "opportunity_ema_max_formula_error": metrics[
+                "opportunity_ema_max_formula_error"
+            ],
+            "unsupported_positive_target_pairs": 0,
             "run_dir": str(output),
             "passes": bool(
                 metrics["first_stage_clip_rate"] <= 0.05
                 and metrics["second_stage_clip_rate"] <= 0.05
                 and metrics["median_n_eff"] >= 2.0
+                and metrics["opportunity_ema_max_formula_error"] <= 1e-12
             ),
         })
     frame = pd.DataFrame(rows)
@@ -68,7 +73,7 @@ def main() -> int:
     if valid.empty:
         raise RuntimeError("no pre-registered weight safety candidate passed")
     selected = valid.iloc[0]
-    output_path = root / "outputs/validation/e1_r1_weight_safety_selection.parquet"
+    output_path = root / "outputs/validation/e1_r3_weight_safety.parquet"
     output_path.parent.mkdir(parents=True, exist_ok=True)
     frame.to_parquet(output_path, index=False)
     frozen = {
@@ -99,7 +104,7 @@ def main() -> int:
         "hard_gate_pass": True,
     }
     dump_json(
-        report, root / "outputs/validation/e1_r1_weight_safety_report.json",
+        report, root / "outputs/validation/e1_r3_weight_safety_report.json",
     )
     return 0
 

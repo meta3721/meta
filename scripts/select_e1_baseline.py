@@ -66,7 +66,7 @@ def main(argv: list[str] | None = None) -> int:
         run_dir = run_official_method(
             ROOT, method=method, seed=args.seed, num_windows=args.windows,
             local_steps=args.local_steps, device="cpu",
-            output_root=args.output_dir / "e1_r2_baseline_runs",
+            output_root=args.output_dir / "e1_r3_baseline_runs",
             evaluation_split="validation",
         )
         metrics = load_json(run_dir / "metrics_run.json")
@@ -84,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
     frame = pd.DataFrame(rows)
     selected = choose_baseline(frame)
     frame.to_parquet(
-        args.output_dir / "e1_r2_baseline_selection.parquet", index=False,
+        args.output_dir / "e1_r3_baseline_selection.parquet", index=False,
     )
     report = {
         "selected_baseline": selected,
@@ -100,7 +100,7 @@ def main(argv: list[str] | None = None) -> int:
         "test_metrics_read": False,
         "status": "FROZEN_FROM_VALIDATION",
     }
-    report_path = args.output_dir / "e1_r2_baseline_selection_report.json"
+    report_path = args.output_dir / "e1_r3_baseline_selection_report.json"
     dump_json(report, report_path)
     report_hash = sha256_file(report_path)
     frozen = {

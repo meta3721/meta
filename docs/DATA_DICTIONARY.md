@@ -35,6 +35,13 @@ history is persisted one row per risk record after window close, with
 `prediction_time`, `update_time`, p-model version and source split. Current O
 is never used for its own prediction.
 
+For E1, an opportunity stratum is
+`station × repeatable UTC time block × weekday/weekend`. Its supported client
+is determined only by the frozen station-to-client mapping. Potential
+measurement availability is not an opportunity-support indicator. Opportunity
+EMA state is updated once after each window from complete risk-record counts;
+historical pairs absent in that window are still decayed.
+
 ## Shared processed schema
 
 ### `atomic_units.parquet`

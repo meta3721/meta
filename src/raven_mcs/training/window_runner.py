@@ -18,6 +18,7 @@ Each window:
 from __future__ import annotations
 
 import copy
+from collections import Counter
 import hashlib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -141,6 +142,10 @@ class FullWindowRunner:
         self.model.to(self.device)
         if self.opportunity_estimator is None:
             self.opportunity_estimator = OpportunityEstimator()
+        if self.pi_target:
+            self.opportunity_estimator.initialize_support(
+                key for key, mass in self.pi_target.items() if mass > 0.0
+            )
         if self.obs_propensity is None:
             self.obs_propensity = ObservationPropensity()
         if self.usable_propensity is None:
@@ -584,15 +589,15 @@ class FullWindowRunner:
         client_data: dict[str, dict],
     ) -> None:
         """Update opportunity/propensity estimators using window-completed data."""
+        opportunity_counts: Counter[tuple[str, str]] = Counter()
         for rec in window_slice.records:
             cid = rec.client_id
+            opportunity_counts.update(
+                (str(cid), str(stratum))
+                for stratum in rec.opportunity_strata
+            )
             if cid not in client_data:
                 continue
-            # Update opportunity estimator
-            if self.opportunity_estimator is not None:
-                for s in rec.opportunity_strata:
-                    self.opportunity_estimator.observe_lagged(cid, s, 1.0)
-
             # Update observation propensity
             if self.obs_propensity is not None and len(rec.risk_set_unit_ids) > 0:
                 features = np.asarray([
@@ -636,6 +641,10 @@ class FullWindowRunner:
                     ]),
                     float(rec.U),
                 )
+        if self.opportunity_estimator is not None:
+            self.opportunity_estimator.update_window(
+                window_slice.window_id, opportunity_counts,
+            )
 
     def _update_variance_state(
         self,
@@ -711,7 +720,27 @@ def build_full_runner(
     if len(mu) != n_groups or abs(float(mu.sum()) - 1.0) > 1e-12:
         raise ValueError("target_mu must be normalized with n_groups entries")
     if pi_target is None:
-        pi_frame = build_pi_target(atomic, dataset.client_df, split="test")
+        atomic_for_pi = dataset.atomic_df.copy()
+        if n_groups == 4:
+            atomic_for_pi["target_group_main"] = (
+                RepeatableTimeOfDayMapper().map(atomic_for_pi)
+            )
+        unit_station = atomic_for_pi.set_index("unit_id")[
+            "spatial_id"
+        ].astype(str).to_dict()
+        station_to_client: dict[str, str] = {}
+        for event in trace.events.itertuples():
+            client = str(event.client_id)
+            for unit_id in event.risk_set_unit_ids:
+                station = unit_station[str(unit_id)]
+                previous = station_to_client.setdefault(station, client)
+                if previous != client:
+                    raise ValueError(
+                        "trace station maps to multiple clients",
+                    )
+        pi_frame = build_pi_target(
+            atomic_for_pi, station_to_client, split="test",
+        )
         pi_target = {
             (str(row.client_id), str(row.opportunity_stratum)): float(
                 row.pi_k_s_tar,

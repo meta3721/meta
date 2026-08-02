@@ -35,6 +35,21 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
 - **ISSUE-039 — Official client count is not consistently frozen as 8.** Closed.
 - **ISSUE-040 — EventTrace generation commit differs from final R2 commit.**
   Closed by clean post-commit regeneration and manifest verification.
+- **ISSUE-041 — Opportunity EMA decays once per record.** Closed; one
+  aggregated transition now occurs per pair and window.
+- **ISSUE-042 — Zero-count historical strata are not decayed.** Closed.
+- **ISSUE-043 — pi target support uses the measurement Cartesian product.**
+  Closed by unique frozen station-client support.
+- **ISSUE-044 — Positive target support is not cross-checked against traces.**
+  Closed by five risk-set support crosschecks.
+- **ISSUE-045 — Delta_cal is invalid after support correction.** Closed by
+  mapped-client target-weight recomputation.
+- **ISSUE-046 — Weekday feature is offset by three days.** Closed.
+- **ISSUE-047 — Client-mapping payload/file hashes are conflated.** Closed.
+- **ISSUE-048 — Frozen protocol authorization status is stale.** Closed;
+  teacher-review-only R3 status is frozen.
+- **ISSUE-049 — Test and Git evidence are not machine-verifiable.** Closed by
+  structured summaries, hashed logs and clean Git evidence.
 
 ### ISSUE-020 — Official E1 runner ignores frozen G=4 mapping
 - **Severity:** Blocking

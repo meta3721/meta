@@ -223,3 +223,7 @@ After each implementing phase: mark IDs IMPLEMENTED, link unit tests, record tea
 | FLAMF-TimeAlign-Adapted \(s_k=\sum_{t\in T_k}1/c_t\) | `FLAMFTimeAlignAdaptedAggregator` | teacher-frozen common-backbone adaptation |
 | Record-level p history | `ObservationPropensity.update_records_after_completion` | one row per `(client, window, unit)` after close |
 | Arrival-risk planned workload | `e1_entry._arrival_weights` | frozen train history; no raw observed count |
+| Window opportunity EMA \(C_{k,s,r+1}=\rho C_{k,s,r}+N_{k,s,r}\) | `OpportunityEstimator.update_window` | one transition per pair/window; zero-count decay |
+| Unique station-client target share \(\lambda^\mathrm{tar}_{k|s}\) | `correction.pi_target.build_pi_target` | one mapped client per station stratum |
+| Calibration residual \(\Delta_\mathrm{cal}\) | `scripts/recompute_e1_delta_cal.py` | target-weighted mapped-client absolute bias |
+| Monday-zero UTC weekday | `models.features.utc_weekday_from_unix_hours` | `(unix_day + 3) mod 7` |

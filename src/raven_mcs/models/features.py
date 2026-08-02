@@ -10,6 +10,14 @@ import numpy as np
 import torch
 
 
+def utc_weekday_from_unix_hours(hours: np.ndarray) -> np.ndarray:
+    """Return Monday=0 UTC weekdays for Unix-hour timestamps."""
+    values = np.asarray(hours, dtype=np.float64)
+    return (
+        np.floor(values / 24.0).astype(np.int64) + 3
+    ) % 7
+
+
 def extract_features(
     spatial_ids: list[str],
     absolute_times: list[float],
@@ -40,7 +48,7 @@ def extract_features(
 
     # weekday: 0=Monday, ..., 6=Sunday
     weekday_tensor = torch.tensor(
-        (np.floor(hours / 24.0).astype(np.int64) % 7),
+        utc_weekday_from_unix_hours(hours),
         dtype=torch.float32,
     )
 

@@ -18,7 +18,8 @@ from raven_mcs.experiments.e1_entry import (
     E1_SEEDS,
     add_e1_groups,
     audit_e1_trace,
-    frozen_group_identity,
+    frozen_client_mapping_hashes,
+    frozen_group_hashes,
     generate_balanced_trace,
     git_commit,
     sensorscope_dataset,
@@ -69,10 +70,17 @@ def main(argv: list[str] | None = None) -> int:
         "num_clients": len(set(station_map.values())),
         "station_to_client": station_map,
     }
-    mapping_hash = sha256_json(mapping_payload)
+    mapping_hash = sha256_json({
+        str(key): str(value)
+        for key, value in sorted(station_map.items())
+    })
     mapping_payload["mapping_hash"] = mapping_hash
     dump_yaml(mapping_payload, ROOT / "configs/frozen/e1_sensorscope_clients.yaml")
-    _, group_hash = frozen_group_identity(ROOT)
+    mapping_payload_hash, mapping_file_hash = frozen_client_mapping_hashes(ROOT)
+    group_payload_hash, group_file_hash = frozen_group_hashes(ROOT)
+    protocol_hash = sha256_file(
+        ROOT / "configs/frozen/e1_sensorscope_balanced.yaml",
+    )
     data_hash = sha256_path_tree(ROOT / "data/processed/sensorscope")
     commit = git_commit(ROOT)
     pi_target_hash = sha256_file(
@@ -102,9 +110,14 @@ def main(argv: list[str] | None = None) -> int:
             "clients": trace.metadata.num_clients,
             "observation_rate": "0.20 +/- deterministic 0.015",
             "usable_rate": "0.60 +/- deterministic 0.02",
-            "client_mapping_hash": mapping_hash,
-            "target_group_hash": group_hash,
+            "client_mapping_payload_hash": mapping_payload_hash,
+            "client_mapping_file_hash": mapping_file_hash,
+            "target_group_payload_hash": group_payload_hash,
+            "target_group_file_hash": group_file_hash,
+            "client_mapping_hash": mapping_payload_hash,
+            "target_group_hash": group_file_hash,
             "pi_target_hash": pi_target_hash,
+            "protocol_config_hash": protocol_hash,
         }
         dump_yaml(config, output / "generation_config.yaml")
         manifest = {
@@ -128,8 +141,13 @@ def main(argv: list[str] | None = None) -> int:
     dump_json({
         "experiment": "E1_balanced",
         "dataset_hash": data_hash,
-        "client_mapping_hash": mapping_hash,
-        "target_group_hash": group_hash,
+        "client_mapping_payload_hash": mapping_payload_hash,
+        "client_mapping_file_hash": mapping_file_hash,
+        "target_group_payload_hash": group_payload_hash,
+        "target_group_file_hash": group_file_hash,
+        "client_mapping_hash": mapping_payload_hash,
+        "target_group_hash": group_file_hash,
+        "protocol_config_hash": protocol_hash,
         "git_commit": commit,
         "git_clean": clean,
         "pi_target_hash": pi_target_hash,

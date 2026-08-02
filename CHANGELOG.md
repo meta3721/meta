@@ -1,5 +1,18 @@
 # Changelog
 
+## E1-ENTRY-R3 opportunity-support and identity seal
+
+- Changed opportunity estimation to one EMA transition per client-stratum and
+  window, including decay for historical zero-count strata.
+- Rebuilt pi target from the unique frozen station-client mapping, reducing
+  positive support from the measurement Cartesian product to 440 real pairs.
+- Added five-trace risk-support crosschecks and recomputed the nonzero
+  calibration residual on real target support.
+- Corrected Monday-zero UTC weekday encoding with the Unix epoch offset.
+- Separated target-group and client-mapping payload/file hashes and made
+  summary `config_hash` mean `resolved_run_config_hash`.
+- Added machine-readable test, Git and exact-command evidence.
+
 ## E1-ENTRY-R2 final entry semantics
 
 - Added the teacher-frozen FLAMF-TimeAlign-Adapted temporal-coverage baseline,

@@ -99,6 +99,31 @@ def frozen_group_identity(root: Path) -> tuple[Path, str]:
     return path, digest
 
 
+def frozen_group_hashes(root: Path) -> tuple[str, str]:
+    path = root / "configs/frozen/e1_sensorscope_groups.yaml"
+    cfg = load_yaml(path)
+    payload = {
+        key: cfg[key] for key in (
+            "group_count", "mapping", "timezone", "spatial_partition",
+            "boundaries", "group_names", "version",
+        )
+    }
+    payload_hash = sha256_json(payload)
+    if cfg.get("mapping_hash") != payload_hash:
+        raise RuntimeError("target-group canonical payload hash mismatch")
+    return payload_hash, sha256_file(path)
+
+
+def frozen_client_mapping_hashes(root: Path) -> tuple[str, str]:
+    path = root / "configs/frozen/e1_sensorscope_clients.yaml"
+    cfg = load_yaml(path)
+    mapping = {
+        str(key): str(value)
+        for key, value in sorted(cfg["station_to_client"].items())
+    }
+    return sha256_json(mapping), sha256_file(path)
+
+
 def add_e1_groups(frame: pd.DataFrame) -> pd.DataFrame:
     out = frame.copy()
     out["target_group_main"] = RepeatableTimeOfDayMapper().map(out)
@@ -704,6 +729,48 @@ def run_official_method(
     if p_history.empty:
         raise RuntimeError("record-level p propensity history is empty")
     p_history.to_parquet(run_dir / "p_propensity_history.parquet", index=False)
+    opportunity_diagnostics = pd.DataFrame(
+        runner.opportunity_estimator.diagnostics,
+    )
+    if opportunity_diagnostics.empty:
+        raise RuntimeError("opportunity EMA diagnostics are empty")
+    opportunity_diagnostics.to_parquet(
+        run_dir / "opportunity_ema_diagnostics.parquet", index=False,
+    )
+    support_summary_path = (
+        root / "outputs/audits/e1_r3_support_crosscheck_summary.json"
+    )
+    calibration_path = (
+        root / "outputs/audits/e1_r3_calibration_summary.json"
+    )
+    if not support_summary_path.exists() or not calibration_path.exists():
+        raise RuntimeError("R3 support/calibration audits must precede smoke")
+    support_summary = load_json(support_summary_path)
+    dump_json({
+        "seed": seed,
+        "audit_path": str(support_summary_path.relative_to(root)),
+        "audit_hash": sha256_file(support_summary_path),
+        "summary": support_summary["seeds"][str(seed)],
+    }, run_dir / "support_crosscheck_ref.json")
+    dump_json(load_json(calibration_path), run_dir / "calibration_summary.json")
+    feature_path = root / "src/raven_mcs/models/features.py"
+    dump_json({
+        "timezone": "UTC",
+        "weekday_convention": "Monday=0",
+        "unix_epoch_weekday_offset": 3,
+        "target_group_timezone": "UTC",
+        "feature_code_hash": sha256_file(feature_path),
+    }, run_dir / "feature_encoding_manifest.json")
+    if method in {"twostage_hajek", "raven"}:
+        dump_json({
+            "pi_target_hash": pi_target_hash,
+            "pi_target_path": str(pi_path.relative_to(root)),
+        }, run_dir / "pi_target_reference.json")
+        opportunity_diagnostics[[
+            "window_id", "client_id", "stratum_id", "pi_hat_opp",
+        ]].to_parquet(
+            run_dir / "pi_opp_hat_trajectory.parquet", index=False,
+        )
     if solver_df.empty:
         solver_df = pd.DataFrame(columns=[
             "window_id", "primary_status", "accepted_status", "fallback_used",
@@ -747,6 +814,16 @@ def run_official_method(
         "p_warmup_fallback_count": int(min(
             runner.obs_propensity.min_samples, len(p_history),
         )),
+        "opportunity_ema_max_formula_error": float(
+            opportunity_diagnostics["formula_error"].max(),
+        ),
+        "opportunity_zero_count_decay_violations": int(((
+            opportunity_diagnostics["N_current"] == 0
+        ) & (
+            opportunity_diagnostics["C_old"] > 0
+        ) & ~opportunity_diagnostics[
+            "zero_count_decay_applied"
+        ].astype(bool)).sum()),
     }
     if not all(np.isfinite(value) for key, value in metrics_run.items()
                if isinstance(value, (float, int)) and key not in {"seed"}):
@@ -785,10 +862,14 @@ def run_official_method(
         grouped[["unit_id", "split"]].astype(str).to_dict(orient="records"),
     )
     protocol_path = root / "configs/frozen/e1_sensorscope_balanced.yaml"
-    client_mapping_path = root / "configs/frozen/e1_sensorscope_clients.yaml"
     protocol_config_hash = sha256_file(protocol_path)
     resolved_run_config_hash = sha256_file(resolved_path)
-    client_mapping_hash = sha256_file(client_mapping_path)
+    target_group_payload_hash, target_group_file_hash = (
+        frozen_group_hashes(root)
+    )
+    client_mapping_payload_hash, client_mapping_file_hash = (
+        frozen_client_mapping_hashes(root)
+    )
     env_hash = environment_hash()
     manifest = {
         "run_id": run_id,
@@ -803,8 +884,13 @@ def run_official_method(
         "data_hash": data_hash,
         "split_hash": split_hash,
         "event_trace_hash": identity["trace_hash"],
-        "target_group_hash": group_hash,
-        "client_mapping_hash": client_mapping_hash,
+        "target_group_payload_hash": target_group_payload_hash,
+        "target_group_file_hash": target_group_file_hash,
+        "client_mapping_payload_hash": client_mapping_payload_hash,
+        "client_mapping_file_hash": client_mapping_file_hash,
+        "target_group_hash": target_group_file_hash,
+        "client_mapping_hash": client_mapping_payload_hash,
+        "config_hash": resolved_run_config_hash,
         "pi_target_hash": pi_target_hash,
         "initial_model_hash": initial_model_hash,
         "environment_hash": env_hash,
@@ -828,11 +914,18 @@ def run_official_method(
         "predictions_test.parquet", "arrival_weights_test.parquet",
         "propensity_diagnostics.parquet", "solver_diagnostics.parquet",
         "p_propensity_history.parquet",
+        "opportunity_ema_diagnostics.parquet",
+        "support_crosscheck_ref.json", "calibration_summary.json",
+        "feature_encoding_manifest.json",
         "system_metrics.json", "method_diagnostics.parquet",
         "stdout.log", "stderr.log", "checkpoints",
     }
     if method == "flamf_timealign_adapted":
         required.add("method_diagnostics_timealign.parquet")
+    if method in {"twostage_hajek", "raven"}:
+        required.update({
+            "pi_target_reference.json", "pi_opp_hat_trajectory.parquet",
+        })
     if not all((run_dir / name).exists() for name in required):
         raise RuntimeError("official E1 artifact completeness gate failed")
     return run_dir

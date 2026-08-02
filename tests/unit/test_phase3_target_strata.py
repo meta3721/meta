@@ -72,11 +72,12 @@ def test_client_stratum_and_atom_masses() -> None:
 
 def test_opportunity_estimator_is_lagged_ema() -> None:
     est = OpportunityEstimator(forgetting=0.5, smoothing=0.0)
-    est.observe_lagged("c0", "s0", 2.0)
-    first = est.pi_hat().iloc[0]
-    est.observe_lagged("c0", "s0", 0.0)
-    second = est.pi_hat().iloc[0]
-    # After decay with zero arrival, mass concentration changes via EMA.
-    assert second != first or True
+    est.initialize_support([("c0", "s0"), ("c1", "s1")])
+    est.update_window(0, {("c0", "s0"): 2.0})
+    first = est.counts.copy()
+    est.update_window(1, {("c1", "s1"): 3.0})
+    assert first[("c0", "s0")] == 2.5
+    assert est.counts[("c0", "s0")] == 1.25
+    assert est.counts[("c1", "s1")] == 3.25
     tar = est.pi_hat()
     assert est.zeta_error(tar) == 0.0
