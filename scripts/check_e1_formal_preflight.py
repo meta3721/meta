@@ -207,30 +207,33 @@ def main() -> int:
     out_json = root / "outputs/preflight/E1_FORMAL_FREEZE_R1_PREFLIGHT.json"
     out_json.parent.mkdir(parents=True, exist_ok=True)
     out_json.write_text(json.dumps(report, indent=2), encoding="utf-8")
-    md = root / "docs/reports/E1_FORMAL_FREEZE_R1_PREFLIGHT.md"
-    md.write_text(
-        "\n".join([
-            "# E1-FORMAL-FREEZE-R1 Preflight",
-            "",
-            f"Mode: `{args.mode}`",
-            f"Status: **{status}**",
-            f"Execution commit: `{head}`",
-            f"Git clean: `{git_clean}`",
-            f"Local steps: `{protocol.get('local_steps')}`",
-            f"Selected baseline: `{checks.get('selected_baseline')}`",
-            "",
-            "## Blockers",
-            *(
-                [f"- {item}" for item in blockers]
-                if blockers else ["- none"]
-            ),
-            "",
-            "Formal 25-run E1 has NOT been executed.",
-            "E2-E9 have NOT started.",
-            "",
-        ]),
-        encoding="utf-8",
-    )
+    md_body = "\n".join([
+        "# E1-FORMAL-FREEZE-R1 Preflight",
+        "",
+        f"Mode: `{args.mode}`",
+        f"Status: **{status}**",
+        f"Execution commit: `{head}`",
+        f"Git clean: `{git_clean}`",
+        f"Local steps: `{protocol.get('local_steps')}`",
+        f"Selected baseline: `{checks.get('selected_baseline')}`",
+        "",
+        "## Blockers",
+        *(
+            [f"- {item}" for item in blockers]
+            if blockers else ["- none"]
+        ),
+        "",
+        "Formal 25-run E1 has NOT been executed.",
+        "E2-E9 have NOT started.",
+        "",
+    ])
+    # Generated outputs stay outside tracked docs to avoid dirtying clean HEAD.
+    md_out = root / "outputs/preflight/E1_FORMAL_FREEZE_R1_PREFLIGHT.md"
+    md_out.write_text(md_body, encoding="utf-8")
+    md_docs = root / "docs/reports/E1_FORMAL_FREEZE_R1_PREFLIGHT.md"
+    if args.mode == "freeze-review" or not md_docs.exists():
+        md_docs.write_text(md_body, encoding="utf-8")
+    md = md_out
     print(json.dumps({
         "status": status,
         "blockers": blockers,
