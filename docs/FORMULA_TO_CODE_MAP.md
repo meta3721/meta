@@ -227,3 +227,6 @@ After each implementing phase: mark IDs IMPLEMENTED, link unit tests, record tea
 | Unique station-client target share \(\lambda^\mathrm{tar}_{k|s}\) | `correction.pi_target.build_pi_target` | one mapped client per station stratum |
 | Calibration residual \(\Delta_\mathrm{cal}\) | `scripts/recompute_e1_delta_cal.py` | target-weighted mapped-client absolute bias |
 | Monday-zero UTC weekday | `models.features.utc_weekday_from_unix_hours` | `(unix_day + 3) mod 7` |
+| Attempt set \(E_r=\{k:|B_{k,r}|>0\}\) | `e1_entry.attempt_semantics`, `FullWindowRunner._process_window` | frozen before U |
+| Lagged q-use training population | `FullWindowRunner._update_lagged_estimators` | attempted rows only; U=0 retained |
+| Support-masked atomic arrival intensity | `e1_entry.masked_arrival_contributions` | exact zero outside positive pi-target support |

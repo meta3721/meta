@@ -42,6 +42,15 @@ measurement availability is not an opportunity-support indicator. Opportunity
 EMA state is updated once after each window from complete risk-record counts;
 historical pairs absent in that window are still decayed.
 
+For stage two, `attempted` is frozen as
+`1{observed_count > 0}` before U is interpreted. `attempt_failure` denotes an
+attempted row with `U=0`; `non_attempt` denotes an empty observation buffer.
+Only attempted rows enter q-use training, including every failed attempt.
+
+Arrival `support_mask(client, stratum)` is positive only for the client
+selected by the frozen station-client mapping. Unsupported pairs have
+exact-zero opportunity mass and arrival contribution.
+
 ## Shared processed schema
 
 ### `atomic_units.parquet`

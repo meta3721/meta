@@ -143,6 +143,11 @@ def aggregate(input_root: Path, output_dir: Path, *, mode: str) -> pd.DataFrame:
     frame = pd.DataFrame(successes)
     if frame.empty:
         raise RuntimeError(f"no successful E1 runs under {input_root}")
+    if mode != "formal":
+        frame = (
+            frame.sort_values("run_id")
+            .drop_duplicates(["seed", "method"], keep="last")
+        )
     validate_rows(frame, mode=mode)
     output_dir.mkdir(parents=True, exist_ok=True)
     ordered = frame[list(PER_SEED_COLUMNS)].sort_values(["seed", "method"])

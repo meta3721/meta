@@ -1,5 +1,15 @@
 # Changelog
 
+## E1-ENTRY-R4
+
+- Froze `attempted = 1{observed_count > 0}` before U and restricted q-use
+  updates to that attempt set while retaining all failed attempts.
+- Added persisted attempt/q diagnostics and exact leakage/omission gates.
+- Masked arrival opportunity mass to zero outside frozen client-stratum
+  support and regenerated deployment-risk metrics.
+- Added final-commit pi-target reconstruction, distinct hash semantics,
+  five-seed validation safety, R4 smoke, command evidence and packaging.
+
 ## E1-ENTRY-R3 opportunity-support and identity seal
 
 - Changed opportunity estimation to one EMA transition per client-stratum and

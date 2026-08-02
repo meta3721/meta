@@ -94,7 +94,8 @@ def main() -> int:
         capture_output=True, text=True,
     ).stdout.splitlines()
     evidence = [
-        path for base in ["outputs/audits", "outputs/validation",
+        path for base in ["configs/frozen", "outputs/event_traces",
+                          "outputs/audits", "outputs/validation",
                           "outputs/aggregate/E1_balanced_entry_r4",
                           "outputs/statistics/E1_balanced",
                           "outputs/entry_r4_smoke", "logs"]

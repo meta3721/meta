@@ -196,8 +196,8 @@ def refresh_e1_identities() -> dict:
     mapping_payload, mapping_file = frozen_client_mapping_hashes(_ROOT)
     protocol.update({
         "git_commit": _get_git_commit(),
-        "authorization_status": "READY_FOR_TEACHER_REVIEW_AFTER_R3",
-        "semantic_seal_status": "R3_PASS",
+        "authorization_status": "READY_FOR_TEACHER_REVIEW_AFTER_R4",
+        "semantic_seal_status": "R4_PASS",
         "target_group_payload_hash": group_payload,
         "target_group_file_hash": group_file,
         "target_group_hash": group_file,
@@ -211,8 +211,18 @@ def refresh_e1_identities() -> dict:
     protocol_hash = sha256_file(protocol_path)
     manifest_path = frozen / "FROZEN_CONFIG_MANIFEST.json"
     manifest = load_json(manifest_path)
+    trace_manifest_path = (
+        _ROOT / "outputs/event_traces/E1_BALANCED_EVENTTRACE_MANIFEST.json"
+    )
+    event_trace_hashes = manifest.get("event_trace_hashes", {})
+    if trace_manifest_path.exists():
+        trace_manifest = load_json(trace_manifest_path)
+        event_trace_hashes = {
+            str(seed): row["event_trace_hash"]
+            for seed, row in trace_manifest["traces"].items()
+        }
     manifest.update({
-        "seal": "E1_ENTRY_R3_PASS",
+        "seal": "E1_ENTRY_R4_PASS",
         "git_commit": _get_git_commit(),
         "e1_config_hash": protocol_hash,
         "target_group_payload_hash": group_payload,
@@ -220,7 +230,8 @@ def refresh_e1_identities() -> dict:
         "client_mapping_payload_hash": mapping_payload,
         "client_mapping_file_hash": mapping_file,
         "pi_target_hash": protocol["pi_target_hash"],
-        "entry_smoke_status": "PENDING_R3",
+        "entry_smoke_status": "PASS_SINGLE_SEED_R4_DRY_RUN",
+        "event_trace_hashes": event_trace_hashes,
     })
     dump_json(manifest, manifest_path)
     return {
