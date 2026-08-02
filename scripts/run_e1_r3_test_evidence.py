@@ -7,6 +7,7 @@ import re
 import subprocess
 import sys
 import time
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -42,10 +43,14 @@ def main() -> int:
     summaries = []
     command_rows = []
     for name, command in commands:
+        junit_path = logs / f"E1_ENTRY_R3_{name.upper()}_JUNIT.xml"
+        executed_command = list(command)
+        if name != "pip_check":
+            executed_command.append(f"--junitxml={junit_path}")
         start = datetime.now(timezone.utc)
         tick = time.perf_counter()
         result = subprocess.run(
-            command, cwd=root, capture_output=True, text=True,
+            executed_command, cwd=root, capture_output=True, text=True,
         )
         end = datetime.now(timezone.utc)
         stdout_path = logs / f"E1_ENTRY_R3_{name.upper()}_STDOUT.log"
@@ -53,16 +58,30 @@ def main() -> int:
         stdout_path.write_text(result.stdout, encoding="utf-8")
         stderr_path.write_text(result.stderr, encoding="utf-8")
         combined = result.stdout + "\n" + result.stderr
+        counts = {
+            "passed": 0, "failed": 0, "skipped": 0,
+            "xfailed": 0,
+        }
+        if junit_path.exists():
+            suite = ET.parse(junit_path).getroot()
+            if suite.tag == "testsuites":
+                suite = next(iter(suite))
+            tests = int(suite.attrib.get("tests", 0))
+            failures = int(suite.attrib.get("failures", 0))
+            errors = int(suite.attrib.get("errors", 0))
+            skipped = int(suite.attrib.get("skipped", 0))
+            counts.update({
+                "passed": tests - failures - errors - skipped,
+                "failed": failures + errors,
+                "skipped": skipped,
+            })
         summary = {
             "name": name,
-            "command": subprocess.list2cmdline(command),
+            "command": subprocess.list2cmdline(executed_command),
             "start_time": start.isoformat(),
             "end_time": end.isoformat(),
             "exit_code": result.returncode,
-            "passed": _count(combined, "passed"),
-            "failed": _count(combined, "failed"),
-            "skipped": _count(combined, "skipped"),
-            "xfailed": _count(combined, "xfailed"),
+            **counts,
             "duration_sec": time.perf_counter() - tick,
             "log_path": str(stdout_path.relative_to(root)),
             "log_sha256": sha256_file(stdout_path),

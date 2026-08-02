@@ -23,6 +23,8 @@ def validate_test_and_git_evidence(
     for row in rows:
         if row.get("exit_code") != 0 or row.get("failed") != 0:
             return False
+        if row.get("name") != "pip_check" and row.get("passed", 0) <= 0:
+            return False
         log = root / str(row.get("log_path"))
         if not log.exists() or sha256_file(log) != row.get("log_sha256"):
             return False

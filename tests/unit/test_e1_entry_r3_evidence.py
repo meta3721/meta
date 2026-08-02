@@ -26,6 +26,7 @@ def _summary(tmp_path: Path) -> dict:
             "name": name,
             "exit_code": 0,
             "failed": 0,
+            "passed": 1,
             "log_path": path.name,
             "log_sha256": sha256_file(path),
         })
