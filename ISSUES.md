@@ -19,9 +19,8 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
   and identity hash.
 - **ISSUE-030 — First-stage clip rate exceeds 5%.** Closed by validation-only
   safety selection without changing `a_max`.
-- **ISSUE-031 — TimeAlign duplicates FedAsync.** **Blocked / unresolved.** No
-  primary TimeAlign definition was found; teacher must provide it or approve
-  method-registry re-freeze.
+- **ISSUE-031 — TimeAlign duplicates FedAsync.** Closed by the teacher-frozen
+  FLAMF-TimeAlign-Adapted temporal-coverage formula.
 - **ISSUE-032 — Lagged empirical variance is not implemented.** Closed.
 - **ISSUE-033 — P2 staleness is not normalized.** Closed.
 - **ISSUE-034 — Config hash is mixed with target-group hash.** Closed in the
@@ -30,11 +29,12 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
   the R1 exporter.
 - **ISSUE-036 — Empty Tail/Head group returns zero.** Closed; now NaN and a
   run-stopping hard gate.
-- **ISSUE-037 — Arrival-risk uses post-outcome raw_workload.** Open for R2.
-- **ISSUE-038 — p propensity history should be record-level.** Open for R2.
-- **ISSUE-039 — Official client count is not consistently frozen as 8.** Open.
+- **ISSUE-037 — Arrival-risk uses post-outcome raw_workload.** Closed; formal
+  arrival risk uses planned pre-outcome workload and frozen train history.
+- **ISSUE-038 — p propensity history should be record-level.** Closed.
+- **ISSUE-039 — Official client count is not consistently frozen as 8.** Closed.
 - **ISSUE-040 — EventTrace generation commit differs from final R2 commit.**
-  Open until post-commit trace regeneration.
+  Closed by clean post-commit regeneration and manifest verification.
 
 ### ISSUE-020 — Official E1 runner ignores frozen G=4 mapping
 - **Severity:** Blocking

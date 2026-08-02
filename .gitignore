@@ -19,6 +19,7 @@ outputs/event_traces/
 outputs/gate_work/
 outputs/*.json
 outputs/entry_smoke/
+outputs/entry_r2_smoke/
 outputs/statistics/
 outputs/validation/
 outputs/aggregate/

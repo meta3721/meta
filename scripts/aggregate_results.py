@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -178,7 +179,14 @@ def main(argv: list[str] | None = None) -> int:
         input_dir = args.input_dir or ROOT / "outputs/entry_r1_smoke/runs"
         output_dir = args.output_dir or ROOT / "outputs/entry_r1_smoke/aggregate"
     elif args.mode == "entry-r2-smoke":
-        input_dir = args.input_dir or ROOT / "outputs/entry_r2_smoke/runs"
+        commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True,
+            capture_output=True, text=True,
+        ).stdout.strip()
+        input_dir = (
+            args.input_dir
+            or ROOT / f"outputs/entry_r2_smoke/runs_{commit[:12]}"
+        )
         output_dir = (
             args.output_dir or ROOT / "outputs/aggregate/E1_balanced_entry_r2"
         )

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 import pandas as pd
@@ -19,8 +20,14 @@ def _r2_artifacts_frozen() -> bool:
 
 
 def _runs() -> dict[str, Path]:
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True,
+        capture_output=True, text=True,
+    ).stdout.strip()
     result = {}
-    for manifest_path in (ENTRY / "runs").rglob("manifest.json"):
+    for manifest_path in (
+        ENTRY / f"runs_{commit[:12]}"
+    ).rglob("manifest.json"):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         result[manifest["method"]] = manifest_path.parent
     return result
@@ -84,8 +91,6 @@ def test_r2_aggregate_exactly_five_rows() -> None:
 def test_trace_generation_commit_matches_final_commit() -> None:
     if not _r2_artifacts_frozen():
         pytest.skip("R2 traces generated only after formal clean commit")
-    import subprocess
-
     commit = subprocess.run(
         ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True,
         capture_output=True, text=True,

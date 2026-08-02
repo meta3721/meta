@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -28,7 +29,11 @@ def main() -> int:
     if args.seed != 26001 or args.num_clients != 8:
         raise ValueError("R2 smoke freezes seed=26001 and num_clients=8")
     root = ROOT / "outputs/entry_r2_smoke"
-    run_root = root / "runs"
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True,
+        capture_output=True, text=True,
+    ).stdout.strip()
+    run_root = root / f"runs_{commit[:12]}"
     root.mkdir(parents=True, exist_ok=True)
     code = run_experiment.main([
         "--experiment", "E1_balanced",

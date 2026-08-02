@@ -3,7 +3,7 @@
 **Updated:** 2026-08-01
 **Workspace root:** `D:\Cursor\raven.mcs`  
 **Source docs:** paper PDF + Cursor instruction TXT + design DOCX (`docs/SOURCES.md`)  
-**Current phase:** E1-ENTRY-R2 final entry seal in progress
+**Current phase:** E1-ENTRY-R2 complete; teacher authorization pending
 **Main experiments:** Not started
 
 ---
@@ -16,7 +16,7 @@
 | P10-C | PASS | FedAvg/TwoStage local and server paths produce distinct audited updates |
 | P10-D | PASS | RMSE_mu/RMSE_rho are recomputed from atomic rows and Gap_mis identity is exact |
 | P10-E | PASS | Two same-seed SensorScope runs pass R1-G1 through R1-G8 |
-| E1 | BLOCKED | Entry infrastructure passed; semantic audit remediation in progress |
+| E1 | READY_FOR_TEACHER_AUTHORIZATION | R2 final-entry gates passed; formal E1 not executed |
 
 ## Pre-E1 Seal
 
@@ -25,14 +25,13 @@
 - `E1-ENTRY-INFRASTRUCTURE = PASS`
 - `E1-ENTRY-SEMANTIC-AUDIT = FAIL`
 - `E1-ENTRY-R1 = PARTIAL`
-- `E1-ENTRY-R2 = IN PROGRESS`
-- `E1 = BLOCKED`
+- `E1-ENTRY-R2 = PASS`
+- `E1 = READY_FOR_TEACHER_AUTHORIZATION`
 
-R1 gates G1–G5 and G7–G8 pass. G6 fails because no primary source or
-frozen formula exists for TimeAlign-Agg and its current implementation is
-identical to FedAsync-Window. Consequently G9 is intentionally not run.
-Teacher action: provide the original TimeAlign mechanism or authorize removing
-it and re-freezing the E1 method registry.
+FLAMF-TimeAlign-Adapted now uses the teacher-frozen temporal-coverage formula
+and differs from FedAsync in controlled and official-entry diagnostics.
+Arrival-risk, record-level p history, eight-client identity and post-commit
+EventTrace regeneration are sealed.
 - `E2-E9 = NOT STARTED`
 
 This status is readiness for teacher authorization only; it is not permission

@@ -45,7 +45,9 @@ def main() -> int:
         for seed in E1_SEEDS
     ]
     runs = {}
-    for path in (repo / args.root / "runs").rglob("manifest.json"):
+    for path in (
+        repo / args.root / f"runs_{commit[:12]}"
+    ).rglob("manifest.json"):
         manifest = load_json(path)
         runs[manifest["method"]] = path.parent
     expected = {
