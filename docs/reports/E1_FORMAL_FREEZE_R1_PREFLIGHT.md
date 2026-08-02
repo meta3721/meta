@@ -1,9 +1,9 @@
 # E1-FORMAL-FREEZE-R1 Preflight
 
-Mode: `freeze-review`
+Mode: `final-candidate`
 Status: **PASS**
-Execution commit: `53e277c53b01695330652b8e1bc8a234909d56e5`
-Git clean: `False`
+Execution commit: `314c85a3b33b3a7ca81a3c831ace73194a42d532`
+Git clean: `True`
 Local steps: `2`
 Selected baseline: `flamf_timealign_adapted`
 
