@@ -27,8 +27,10 @@ outputs/statistics/
 outputs/validation/
 outputs/aggregate/
 outputs/preflight/
+outputs/regression/
 logs/
 deliverables/
+evidence/**/*.tmp
 *.zip
 docs/audits/
 configs/frozen/*.sha256
