@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -44,6 +45,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-dir", type=Path, default=ROOT / "outputs/event_traces")
     parser.add_argument("--include-events", action="store_true")
     parser.add_argument("--require-clean-git", action="store_true")
+    parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args(argv)
     if args.dataset != "sensorscope" or args.scenario != "balanced":
         raise ValueError("official E1 traces are SensorScope balanced only")
@@ -90,7 +92,11 @@ def main(argv: list[str] | None = None) -> int:
     for seed in args.seeds:
         output = args.output_dir / f"e1_balanced_seed{seed}"
         if output.exists() and any(output.iterdir()):
-            raise FileExistsError(f"refusing to overwrite frozen E1 trace: {output}")
+            if not args.overwrite:
+                raise FileExistsError(
+                    f"refusing to overwrite frozen E1 trace: {output}"
+                )
+            shutil.rmtree(output)
         trace, generated_map = generate_balanced_trace(
             dataset, seed=seed, num_windows=args.windows,
             num_clients=args.clients, s_max=args.s_max,
