@@ -24,7 +24,10 @@ PER_SEED_COLUMNS = (
     "avg_delta_ref", "normalized_debt", "median_n_eff",
     "first_stage_clip_rate", "second_stage_clip_rate", "fallback_count",
     "solver_failure_count", "runtime", "communication", "run_id",
-    "config_hash", "event_trace_hash", "git_commit", "status",
+    "config_hash", "protocol_config_hash", "resolved_run_config_hash",
+    "data_hash", "target_group_hash", "client_mapping_hash",
+    "pi_target_hash", "event_trace_hash", "initial_model_hash",
+    "environment_hash", "git_commit", "status",
 )
 
 
@@ -52,7 +55,14 @@ def collect_run(run_dir: Path) -> dict[str, Any]:
         "runtime": metrics["total_runtime"],
         "communication": metrics["total_communication"],
         "run_id": manifest["run_id"],
-        "config_hash": manifest["target_group_hash"],
+        "config_hash": manifest["protocol_config_hash"],
+        "protocol_config_hash": manifest["protocol_config_hash"],
+        "resolved_run_config_hash": manifest["resolved_run_config_hash"],
+        "data_hash": manifest["data_hash"],
+        "client_mapping_hash": manifest["client_mapping_hash"],
+        "pi_target_hash": manifest["pi_target_hash"],
+        "initial_model_hash": manifest["initial_model_hash"],
+        "environment_hash": manifest["environment_hash"],
         "event_trace_hash": manifest["event_trace_hash"],
         "git_commit": manifest["git_commit"],
         "status": metrics["status"],
@@ -62,7 +72,9 @@ def collect_run(run_dir: Path) -> dict[str, Any]:
 
 
 def validate_rows(frame: pd.DataFrame, *, mode: str) -> None:
-    required_seeds = {26001} if mode == "entry-smoke" else set(E1_SEEDS)
+    required_seeds = (
+        {26001} if mode in {"entry-smoke", "entry-r1-smoke"} else set(E1_SEEDS)
+    )
     if set(frame["seed"]) != required_seeds:
         raise RuntimeError(
             f"{mode} seed set mismatch: {sorted(set(frame['seed']))}",
@@ -78,15 +90,23 @@ def validate_rows(frame: pd.DataFrame, *, mode: str) -> None:
         raise RuntimeError("unexpected successful run count")
     if set(frame["status"]) != {"completed"}:
         raise RuntimeError("failed/non-completed run in aggregation")
+    if "config_hash" in frame and frame["config_hash"].nunique() != 1:
+        raise RuntimeError("config_hash mismatch")
     if frame[list(PER_SEED_COLUMNS)].isna().any().any():
         raise RuntimeError("missing metric in per-seed aggregation")
     if frame.duplicated(["run_id"]).any():
         raise RuntimeError("duplicate run_id")
-    for column in ("git_commit", "config_hash", "target_group_hash"):
+    for column in (
+        "git_commit", "protocol_config_hash", "data_hash",
+        "target_group_hash", "client_mapping_hash", "pi_target_hash",
+        "environment_hash",
+    ):
         if frame[column].nunique() != 1:
             raise RuntimeError(f"{column} mismatch")
     if frame.groupby("seed")["event_trace_hash"].nunique().max() != 1:
         raise RuntimeError("methods do not share EventTrace within seed")
+    if frame.groupby("seed")["initial_model_hash"].nunique().max() != 1:
+        raise RuntimeError("methods do not share initial model within seed")
 
 
 def aggregate(input_root: Path, output_dir: Path, *, mode: str) -> pd.DataFrame:
@@ -108,7 +128,9 @@ def aggregate(input_root: Path, output_dir: Path, *, mode: str) -> pd.DataFrame:
     ordered.to_csv(output_dir / "per_seed_metrics.csv", index=False)
     frame[[
         "run_id", "run_dir", "seed", "method", "status", "git_commit",
-        "config_hash", "event_trace_hash", "target_group_hash",
+        "protocol_config_hash", "resolved_run_config_hash", "data_hash",
+        "event_trace_hash", "target_group_hash", "client_mapping_hash",
+        "pi_target_hash", "initial_model_hash", "environment_hash",
     ]].to_parquet(output_dir / "run_index.parquet", index=False)
     pd.DataFrame(failures, columns=["run_dir", "error"]).to_csv(
         output_dir / "failed_runs.csv", index=False,
@@ -135,7 +157,10 @@ def aggregate(input_root: Path, output_dir: Path, *, mode: str) -> pd.DataFrame:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--experiment", default="E1_balanced")
-    parser.add_argument("--mode", choices=["formal", "entry-smoke"], default="formal")
+    parser.add_argument(
+        "--mode", choices=["formal", "entry-smoke", "entry-r1-smoke"],
+        default="formal",
+    )
     parser.add_argument("--input-dir", type=Path)
     parser.add_argument("--output-dir", type=Path)
     args = parser.parse_args(argv)
@@ -144,6 +169,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.mode == "entry-smoke":
         input_dir = args.input_dir or ROOT / "outputs/entry_smoke/E1_ENTRY_SMOKE_seed26001/runs"
         output_dir = args.output_dir or ROOT / "outputs/entry_smoke/E1_ENTRY_SMOKE_seed26001/aggregate"
+    elif args.mode == "entry-r1-smoke":
+        input_dir = args.input_dir or ROOT / "outputs/entry_r1_smoke/runs"
+        output_dir = args.output_dir or ROOT / "outputs/entry_r1_smoke/aggregate"
     else:
         input_dir = args.input_dir or ROOT / "outputs/runs"
         output_dir = args.output_dir or ROOT / "outputs/aggregate/E1_balanced"

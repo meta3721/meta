@@ -28,7 +28,7 @@ class WindowRecords:
     tau: int
     registration_time: float
     window_close_time: float
-    raw_workload: float
+    planned_workload_pre: float
 
 
 @dataclass
@@ -94,6 +94,9 @@ def extract_window_slice(
                 risk_strata.append(unit.opportunity_stratum)
                 if coarse_time_groups is None:
                     risk_groups.append(unit.target_group)
+                elif coarse_time_groups == 4:
+                    utc_hour = int(np.floor(unit.absolute_time)) % 24
+                    risk_groups.append(utc_hour // 6)
                 else:
                     total_slots = int(processed_dataset.atomic_df["time_index"].max()) + 1
                     risk_groups.append(
@@ -110,7 +113,12 @@ def extract_window_slice(
                 # Look up observed value from measurements
                 if unit is None:
                     raise ValueError(f"Observed unit is absent from processed data: {rid}")
-                obs_value = unit.target_value
+                try:
+                    obs_value = processed_dataset.get_potential_measurement(
+                        client_id, rid,
+                    )
+                except KeyError as exc:
+                    raise ValueError(str(exc)) from exc
                 obs_values.append(obs_value)
                 ordered_obs_ids.append(rid)
 
@@ -133,7 +141,9 @@ def extract_window_slice(
             tau=int(row.get("tau", row["model_age"])),
             registration_time=float(row["registration_time"]),
             window_close_time=float(window_id + 1),
-            raw_workload=float(row.get("raw_workload", 0)),
+            planned_workload_pre=float(row.get(
+                "planned_workload_pre", len(risk_ids),
+            )),
         ))
 
     return WindowDataSlice(

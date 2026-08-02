@@ -124,7 +124,7 @@ def tail_head_rmse(
 
     n_groups = len(rg)
     if n_groups == 0:
-        return {"tail_rmse": 0.0, "head_rmse": 0.0, "mid_rmse": 0.0}
+        return {"tail_rmse": np.nan, "head_rmse": np.nan, "mid_rmse": np.nan}
 
     sorted_indices = np.argsort(rg)
     n_tail = max(1, int(n_groups * tail_quantile))
@@ -136,7 +136,7 @@ def tail_head_rmse(
     def _group_rmse(groups_set: set[int]) -> float:
         mask = np.array([g in groups_set for g in gids])
         if not np.any(mask):
-            return 0.0
+            return np.nan
         w_sub = w[mask]
         w_sub = w_sub / w_sub.sum()
         return float(np.sqrt(np.sum(w_sub * (yp[mask] - yt[mask]) ** 2)))

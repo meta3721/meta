@@ -209,3 +209,15 @@ After each implementing phase: mark IDs IMPLEMENTED, link unit tests, record tea
 | P10.13 | Statistical tests from real results | `scripts/statistical_tests.py` | No random example data |
 | P10.14 | Observation diagnostics | `propensity/observation.py::ObservationPropensityDiagnostics` | Brier, log loss, ECE |
 | P10.15 | Zeta diagnostics | `correction/design_ratio.py::compute_zeta_with_diagnostics` | Support flag, drift L1 |
+
+## 15. E1-ENTRY-R1 semantic closure
+
+| Definition | Code | Audit identity |
+|---|---|---|
+| Repeatable UTC G=4 | `RepeatableTimeOfDayMapper` | `e1_sensorscope_groups.yaml` |
+| Client measurement \(Z^*_{k,i}\) | `ProcessedDataset.get_potential_measurement` | `(client_id, unit_id)`; no Y fallback |
+| Pre-outcome \(\hat p\) | `ObservationPropensity.feature_names` | `p_feature_whitelist.yaml` |
+| \(\pi^{tar}_{k,s}=\Lambda_s^{tar}\lambda_{k\mid s}^{tar}\) | `correction/pi_target.py` | frozen parquet + SHA-256 |
+| \(v_{k,r}=S^2_{k,r^-}/\max(n_{eff},1)+v_{floor}\) | `FullWindowRunner` | state updated after close |
+| \(\bar\tau=\tau/S_{max}\) | `FullWindowRunner._process_window` | raw and normalized τ diagnostics |
+| TimeAlign-Agg | unresolved | no primary formula; E1 remains blocked |

@@ -1,0 +1,12 @@
+{
+  "construction": "Lambda_s_tar from frozen atomic target weights; uniform supported client share within stratum",
+  "dataset": "sensorscope",
+  "evaluation_target_split": "test",
+  "hard_gate_pass": true,
+  "pi_sum": 0.9999999999999997,
+  "pi_target_hash": "1ae8d4d590210ad90bff898c8b8d44bf6ca99e5578fdcd797e9dd6ffafb36a50",
+  "positive_rows": 3520,
+  "row_count": 3520,
+  "scenario": "balanced",
+  "support_violations": 0
+}

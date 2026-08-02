@@ -3,7 +3,7 @@
 **Updated:** 2026-08-01
 **Workspace root:** `D:\Cursor\raven.mcs`  
 **Source docs:** paper PDF + Cursor instruction TXT + design DOCX (`docs/SOURCES.md`)  
-**Current phase:** E1-ENTRY-SEAL complete; teacher authorization pending
+**Current phase:** E1-ENTRY-R1 partial; teacher decision required
 **Main experiments:** Not started
 
 ---
@@ -16,14 +16,22 @@
 | P10-C | PASS | FedAvg/TwoStage local and server paths produce distinct audited updates |
 | P10-D | PASS | RMSE_mu/RMSE_rho are recomputed from atomic rows and Gap_mis identity is exact |
 | P10-E | PASS | Two same-seed SensorScope runs pass R1-G1 through R1-G8 |
-| E1 | READY_FOR_TEACHER_AUTHORIZATION | E1-ENTRY-SEAL official-entry smoke passed; formal E1 not executed |
+| E1 | BLOCKED | Entry infrastructure passed; semantic audit remediation in progress |
 
 ## Pre-E1 Seal
 
 - `P10-R1 = PASS`
 - `PRE-E1-SMOKE = PASS`
-- `E1-ENTRY-SEAL = PASS`
-- `E1 = READY_FOR_TEACHER_AUTHORIZATION`
+- `E1-ENTRY-INFRASTRUCTURE = PASS`
+- `E1-ENTRY-SEMANTIC-AUDIT = FAIL`
+- `E1-ENTRY-R1 = PARTIAL`
+- `E1 = BLOCKED`
+
+R1 gates G1–G5 and G7–G8 pass. G6 fails because no primary source or
+frozen formula exists for TimeAlign-Agg and its current implementation is
+identical to FedAsync-Window. Consequently G9 is intentionally not run.
+Teacher action: provide the original TimeAlign mechanism or authorize removing
+it and re-freezing the E1 method registry.
 - `E2-E9 = NOT STARTED`
 
 This status is readiness for teacher authorization only; it is not permission

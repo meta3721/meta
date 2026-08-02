@@ -20,6 +20,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--experiment", default="E1_balanced")
     parser.add_argument("--trace-root", type=Path, default=ROOT / "outputs/event_traces")
+    parser.add_argument("--recompute-all", action="store_true")
     args = parser.parse_args(argv)
     dataset = sensorscope_dataset(ROOT)
     all_pass = True

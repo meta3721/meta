@@ -51,6 +51,26 @@ class FrozenTimeBlockMapper:
 
 
 @dataclass(frozen=True)
+class RepeatableTimeOfDayMapper:
+    """Map each timestamp to a repeatable UTC six-hour block."""
+
+    timezone: str = "UTC"
+    time_column: str = "absolute_time"
+
+    def map(self, atomic_units: pd.DataFrame) -> pd.Series:
+        if self.timezone != "UTC":
+            raise TargetError("SensorScope E1 currently freezes UTC time-of-day")
+        if self.time_column not in atomic_units:
+            raise TargetError(f"Missing time column: {self.time_column}")
+        timestamps = pd.to_datetime(
+            atomic_units[self.time_column], utc=True, errors="coerce",
+        )
+        if timestamps.isna().any():
+            raise TargetError("invalid absolute_time for repeatable UTC mapping")
+        return (timestamps.dt.hour // 6).astype("int64")
+
+
+@dataclass(frozen=True)
 class TargetMasses:
     atom_mass: pd.Series  # index=unit_id
     group_mass: pd.Series  # index=group

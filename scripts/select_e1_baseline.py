@@ -38,7 +38,10 @@ def choose_baseline(frame: pd.DataFrame, tolerance: float = 1e-6) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=Path, required=True)
+    parser.add_argument(
+        "--config", type=Path,
+        default=ROOT / "configs/frozen/e1_sensorscope_balanced.yaml",
+    )
     parser.add_argument("--validation-only", action="store_true")
     parser.add_argument("--seed", type=int, default=26001)
     parser.add_argument("--windows", type=int, default=20)
@@ -47,6 +50,13 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if not args.validation_only:
         raise ValueError("--validation-only is mandatory")
+    timealign_spec = (
+        ROOT / "docs/baselines/TIMEALIGN_BASELINE_SPEC.md"
+    ).read_text(encoding="utf-8")
+    if "BASELINE_UNRESOLVED" in timealign_spec:
+        raise RuntimeError(
+            "TimeAlign baseline is unresolved; baseline selection is blocked",
+        )
     cfg = load_yaml(args.config)
     if cfg.get("dataset") != "sensorscope":
         raise RuntimeError("E1 validation config must be SensorScope")

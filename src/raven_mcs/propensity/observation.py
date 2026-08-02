@@ -36,7 +36,11 @@ class ObservationPropensity:
     l2: float = 1e-2
     prior_rate: float = 0.2
     min_samples: int = 5
-    feature_names: tuple[str, ...] = ("bias", "hour_block", "workload")
+    feature_names: tuple[str, ...] = (
+        "bias",
+        "hour_block",
+        "planned_workload_pre",
+    )
     weights: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float64))
     history_x: list[np.ndarray] = field(default_factory=list)
     history_y: list[float] = field(default_factory=list)

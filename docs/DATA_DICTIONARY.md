@@ -15,6 +15,20 @@ It is available before local compute and network transfer. It does not use
 actual completion time, actual network duration, actual arrival time, current
 update/vector/norm, current loss improvement, or post-window information.
 
+## E1-R1 p-model information boundary
+
+The frozen observation-propensity vector is
+`(bias, hour_block, planned_workload_pre)`. The intercept and repeatable
+time-of-day block are available when the risk set forms.
+`planned_workload_pre` is the number of scheduled risk-set units before O is
+realized. No feature uses the current O outcome. `raw_workload`,
+`observed_count`, `len(observed)`, and current successful-measurement counts
+are forbidden.
+
+Local training labels are looked up exclusively as
+`client_measurements[(client_id, unit_id)].potential_measurement`.
+`atomic_units.target_value` is reserved for evaluation.
+
 ## Shared processed schema
 
 ### `atomic_units.parquet`

@@ -43,8 +43,10 @@ from raven_mcs.correction.hajek import (
     raw_weights,
     total_mass,
 )
+from raven_mcs.correction.pi_target import build_pi_target
 from raven_mcs.correction.second_stage import beta_hat, d_weight, two_stage_mass
 from raven_mcs.data.processed_dataset import ProcessedDataset
+from raven_mcs.data.target import GroupMapper, RepeatableTimeOfDayMapper, TargetBuilder
 from raven_mcs.data.window_dataset import WindowDataSlice, extract_window_slice
 from raven_mcs.models.common_ndmf import CommonNDMF, deterministic_common_ndmf
 from raven_mcs.models.features import extract_features
@@ -103,6 +105,10 @@ class FullWindowRunner:
     q_min: float = 0.05
     v_floor: float = 1e-4
     a_bar_floor: float = 1e-8
+    pi_min: float = 1e-6
+    pi_target: dict[tuple[str, str], float] = field(default_factory=dict)
+    s_max: int = 5
+    variance_decay: float = 0.9
     seed: int = 26001
     device: str = "cpu"
 
@@ -116,6 +122,8 @@ class FullWindowRunner:
     obs_propensity: Optional[ObservationPropensity] = None
     usable_propensity: Optional[UsablePropensity] = None
     variance_state: dict[str, float] = field(default_factory=dict)
+    variance_mean: dict[str, np.ndarray] = field(default_factory=dict)
+    variance_count: dict[str, int] = field(default_factory=dict)
     model_versions: dict[int, dict[str, torch.Tensor]] = field(default_factory=dict)
     diagnostics: list[dict[str, Any]] = field(default_factory=list)
 
@@ -157,7 +165,6 @@ class FullWindowRunner:
         self,
         client_id: str,
         stratum_ids: list[str],
-        pi_tar_map: dict[str, float] | None = None,
     ) -> np.ndarray:
         """Compute zeta_hat for a client's risk set records."""
         if self.opportunity_estimator is None:
@@ -168,15 +175,19 @@ class FullWindowRunner:
             for s in stratum_ids
         ], dtype=np.float64)
 
-        if pi_tar_map is not None:
-            pi_tar = np.array([
-                pi_tar_map.get(s, 1.0 / max(len(pi_tar_map), 1))
-                for s in stratum_ids
-            ], dtype=np.float64)
-        else:
-            pi_tar = np.ones(len(stratum_ids), dtype=np.float64) / max(len(stratum_ids), 1)
+        if not self.pi_target:
+            raise RuntimeError("frozen pi target is required for official correction")
+        missing = [
+            (client_id, str(s)) for s in stratum_ids
+            if (client_id, str(s)) not in self.pi_target
+        ]
+        if missing:
+            raise RuntimeError(f"pi target lacks opportunity support: {missing[:3]}")
+        pi_tar = np.array([
+            self.pi_target[(client_id, str(s))] for s in stratum_ids
+        ], dtype=np.float64)
 
-        return zeta_hat_stratum(pi_tar, pi_hat_opp, pi_min=self.p_min)
+        return zeta_hat_stratum(pi_tar, pi_hat_opp, pi_min=self.pi_min)
 
     def _compute_p_hat(self, features_list: list[dict[str, float]]) -> np.ndarray:
         """Compute observation propensity estimates."""
@@ -184,7 +195,11 @@ class FullWindowRunner:
             return np.full(len(features_list), 0.5, dtype=np.float64)
         return np.array([
             self.obs_propensity.predict(
-                np.array([f.get("bias", 1.0), f.get("hour_block", 0.0), f.get("workload", 1.0)])
+                np.array([
+                    f.get("bias", 1.0),
+                    f.get("hour_block", 0.0),
+                    f.get("planned_workload_pre", 1.0),
+                ])
             )
             for f in features_list
         ], dtype=np.float64)
@@ -251,7 +266,9 @@ class FullWindowRunner:
                 {
                     "bias": 1.0,
                     "hour_block": self._hour_block(stratum),
-                    "workload": float(np.log1p(rec.raw_workload)),
+                    "planned_workload_pre": float(
+                        np.log1p(rec.planned_workload_pre),
+                    ),
                 }
                 for stratum in rec.opportunity_strata
             ]
@@ -428,14 +445,24 @@ class FullWindowRunner:
         beta = beta_hat(b)
         clip_stage2 = float(np.mean(np.abs(d_w) >= self.d_max))
 
-        staleness = np.array([
-            client_data[cid]["record"].model_age if cid in client_data else 0.0
+        raw_staleness = np.array([
+            client_data[cid]["record"].tau if cid in client_data else 0.0
             for cid in a_r_clients
         ], dtype=np.float64)
+        staleness = raw_staleness / float(max(int(self.s_max), 1))
+        if bool(np.any((staleness < 0.0) | (staleness > 1.0))):
+            raise RuntimeError("normalized staleness must be in [0, 1]")
 
+        lagged_s2 = np.array([
+            self.variance_state.get(cid, 1.0) for cid in a_r_clients
+        ], dtype=np.float64)
+        variance_cold_start = np.array([
+            self.variance_count.get(cid, 0) == 0 for cid in a_r_clients
+        ], dtype=bool)
         variance_diag = np.array([
-            self.variance_state.get(cid, 1.0)
-            for cid in a_r_clients
+            lagged_s2[i] / max(float(client_data[cid]["n_eff"]), 1.0)
+            + self.v_floor
+            for i, cid in enumerate(a_r_clients)
         ], dtype=np.float64)
 
         payload = WindowAggregateInput(
@@ -476,7 +503,7 @@ class FullWindowRunner:
 
         # Step 12: Update opportunity/p/q/variance state AFTER window close
         self._update_lagged_estimators(window_slice, client_data)
-        self._update_variance_state(client_data, a_r_clients)
+        self._update_variance_state(local_updates, a_r_clients)
 
         after_hash = self._theta_hash()
         by_client = {row["client_id"]: row for row in self.diagnostics if row["window_id"] == window_id}
@@ -486,6 +513,13 @@ class FullWindowRunner:
                     "q_hat": float(q_hat[i]),
                     "beta_hat": float(beta[i]),
                     "alpha": float(alpha[i]),
+                    "raw_tau": float(raw_staleness[i]),
+                    "normalized_tau": float(staleness[i]),
+                    "lagged_S2": float(lagged_s2[i]),
+                    "variance_proxy": float(variance_diag[i]),
+                    "cold_start": bool(variance_cold_start[i]),
+                    "update_norm": float(np.linalg.norm(local_updates[cid])),
+                    "variance_state_updated_after_close": True,
                     "global_model_hash": after_hash,
                 })
 
@@ -537,7 +571,8 @@ class FullWindowRunner:
                     self._hour_block(stratum) for stratum in rec.opportunity_strata
                 ]))
                 features = np.array([
-                    1.0, mean_block, float(np.log1p(rec.raw_workload)),
+                    1.0, mean_block,
+                    float(np.log1p(rec.planned_workload_pre)),
                 ])
                 self.obs_propensity.update_after_completion(
                     features, float(np.mean(rec.O)),
@@ -558,17 +593,29 @@ class FullWindowRunner:
 
     def _update_variance_state(
         self,
-        client_data: dict[str, dict],
+        local_updates: dict[str, np.ndarray],
         a_r_clients: list[str],
     ) -> None:
-        """Update lagged variance estimates for future windows."""
+        """Update EMA dispersion only after current aggregation has closed."""
         for cid in a_r_clients:
-            if cid in client_data:
-                n_eff = client_data[cid]["n_eff"]
-                v = self.a_bar_floor + self.v_floor
-                if n_eff > 0:
-                    v = v / max(n_eff, 1.0)
-                self.variance_state[cid] = float(v)
+            if cid not in local_updates:
+                continue
+            update = np.asarray(local_updates[cid], dtype=np.float64)
+            previous_mean = self.variance_mean.get(
+                cid, np.zeros_like(update),
+            )
+            if previous_mean.shape != update.shape:
+                raise RuntimeError("variance mean/update shape mismatch")
+            deviation = float(np.mean(np.square(update - previous_mean)))
+            previous_s2 = self.variance_state.get(cid, 1.0)
+            decay = float(self.variance_decay)
+            self.variance_state[cid] = (
+                decay * previous_s2 + (1.0 - decay) * deviation
+            )
+            self.variance_mean[cid] = decay * previous_mean + (
+                1.0 - decay
+            ) * update
+            self.variance_count[cid] = self.variance_count.get(cid, 0) + 1
 
     def omega_bar(self) -> np.ndarray:
         if self.scale <= 0:
@@ -586,12 +633,45 @@ def build_full_runner(
     learning_rate: float = 0.01,
     local_steps: int = 5,
     device: str = "cpu",
+    target_mu: np.ndarray | None = None,
+    pi_target: dict[tuple[str, str], float] | None = None,
+    s_max: int | None = None,
+    a_max: float = 20.0,
+    p_min: float = 0.05,
+    pi_min: float = 1e-6,
+    d_max: float = 10.0,
+    q_min: float = 0.05,
 ) -> FullWindowRunner:
     """Build a FullWindowRunner for end-to-end training."""
     if n_groups is None:
         n_groups = dataset.num_groups
 
-    mu = np.full(n_groups, 1.0 / n_groups, dtype=np.float64)
+    if target_mu is None:
+        atomic = dataset.atomic_df.copy()
+        if n_groups == 4:
+            atomic["target_group_main"] = RepeatableTimeOfDayMapper().map(atomic)
+        else:
+            atomic["target_group_main"] = pd.Categorical(
+                atomic["target_group"],
+            ).codes
+        target = TargetBuilder(
+            group_mapper=GroupMapper("target_group_main"),
+        ).build(atomic, split="test")
+        target_mu = np.asarray([
+            float(target.group_mass.get(str(group), 0.0))
+            for group in range(n_groups)
+        ], dtype=np.float64)
+    mu = np.asarray(target_mu, dtype=np.float64)
+    if len(mu) != n_groups or abs(float(mu.sum()) - 1.0) > 1e-12:
+        raise ValueError("target_mu must be normalized with n_groups entries")
+    if pi_target is None:
+        pi_frame = build_pi_target(atomic, dataset.client_df, split="test")
+        pi_target = {
+            (str(row.client_id), str(row.opportunity_stratum)): float(
+                row.pi_k_s_tar,
+            )
+            for row in pi_frame.itertuples()
+        }
     model = deterministic_common_ndmf(dataset.num_spatial, seed=model_seed)
     aggregator = get_aggregator(method)
     policy = get_method_policy(method)
@@ -606,6 +686,13 @@ def build_full_runner(
         num_groups=n_groups,
         learning_rate=learning_rate,
         local_steps=local_steps,
+        a_max=float(a_max),
+        p_min=float(p_min),
+        pi_min=float(pi_min),
+        d_max=float(d_max),
+        q_min=float(q_min),
+        pi_target=dict(pi_target or {}),
+        s_max=int(s_max if s_max is not None else trace.metadata.s_max),
         seed=model_seed,
         device=device,
     )

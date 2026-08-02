@@ -19,9 +19,10 @@ import numpy as np
 import pandas as pd
 import torch
 
+from raven_mcs.correction.pi_target import load_pi_target
 from raven_mcs.data.base import DatasetMetadata
 from raven_mcs.data.processed_dataset import ProcessedDataset
-from raven_mcs.data.target import FrozenTimeBlockMapper, GroupMapper, TargetBuilder
+from raven_mcs.data.target import GroupMapper, RepeatableTimeOfDayMapper, TargetBuilder
 from raven_mcs.metrics.accuracy import (
     atomic_arrival_weights,
     gap_mis,
@@ -95,8 +96,12 @@ def frozen_group_identity(root: Path) -> tuple[Path, str]:
 
 def add_e1_groups(frame: pd.DataFrame) -> pd.DataFrame:
     out = frame.copy()
-    out["target_group_main"] = FrozenTimeBlockMapper(E1_GROUPS).map(out)
-    out["target_group_fine"] = out["target_group"].astype(str)
+    out["target_group_main"] = RepeatableTimeOfDayMapper().map(out)
+    out["target_group_fine"] = (
+        out["spatial_id"].astype(str)
+        + "::tod"
+        + out["target_group_main"].astype(str)
+    )
     groups = set(out["target_group_main"].unique())
     if groups != set(range(E1_GROUPS)):
         raise RuntimeError(f"E1 main groups must be 0..3, got {sorted(groups)}")
@@ -109,8 +114,38 @@ def add_e1_groups(frame: pd.DataFrame) -> pd.DataFrame:
 
 
 def stable_client_mapping(
-    atomic: pd.DataFrame, num_clients: int = 10,
+    atomic: pd.DataFrame,
+    num_clients: int = 10,
+    client_measurements: pd.DataFrame | None = None,
 ) -> tuple[dict[str, str], dict[str, str]]:
+    if client_measurements is not None:
+        clients = sorted(client_measurements["client_id"].astype(str).unique())
+        if not clients:
+            raise RuntimeError("client measurement domain is empty")
+        station_map = {}
+        for station in sorted(atomic["spatial_id"].astype(str).unique()):
+            digest = hashlib.sha256(
+                f"{CLIENT_MAPPING_SALT}:{station}".encode("utf-8"),
+            ).digest()
+            station_map[station] = clients[
+                int.from_bytes(digest[:8], "big") % len(clients)
+            ]
+        unit_map = dict(zip(
+            atomic["unit_id"].astype(str),
+            atomic["spatial_id"].astype(str).map(station_map),
+        ))
+        available = set(zip(
+            client_measurements["client_id"].astype(str),
+            client_measurements["unit_id"].astype(str),
+        ))
+        missing = [
+            (client, unit) for unit, client in unit_map.items()
+            if (client, unit) not in available
+        ]
+        if missing:
+            raise RuntimeError(f"{len(missing)} mapped measurements are absent")
+        return station_map, unit_map
+
     stations = sorted(atomic["spatial_id"].astype(str).unique())
     station_map: dict[str, str] = {}
     for station in stations:
@@ -136,7 +171,10 @@ def generate_balanced_trace(
     atomic = add_e1_groups(dataset.atomic_df)
     # Training EventTrace never reads validation/test outcomes.
     train = atomic.loc[atomic["split"].astype(str) == "train"].copy()
-    station_map, unit_map = stable_client_mapping(atomic, num_clients)
+    station_map, unit_map = stable_client_mapping(
+        atomic, num_clients, dataset.client_df,
+    )
+    actual_num_clients = len(set(station_map.values()))
     slots = np.sort(train["time_index"].unique())
     blocks = np.array_split(slots, num_windows)
     if any(len(block) == 0 for block in blocks):
@@ -185,6 +223,7 @@ def generate_balanced_trace(
                 "network_duration": float(rng.uniform(0.05, 0.45)),
                 "arrival_time": float(window_id) + 0.5 + 0.001 * client_index,
                 "U": usable,
+                "planned_workload_pre": float(len(unit_ids)),
                 "raw_workload": float(len(observed)),
                 "oracle_p": observation_rate,
                 "oracle_q": usable_rate,
@@ -196,7 +235,7 @@ def generate_balanced_trace(
             dataset="sensorscope",
             seed=int(seed),
             num_windows=int(num_windows),
-            num_clients=int(num_clients),
+            num_clients=int(actual_num_clients),
             s_max=int(s_max),
             generator="official-e1-balanced-real-ids-v1",
             notes=(
@@ -229,28 +268,93 @@ def audit_e1_trace(
     downloaded = trace.events["downloaded_version"].to_numpy(dtype=int)
     usable = trace.events["U"].to_numpy(dtype=int)
     failures = int((trace.events["U"].astype(int) == 0).sum())
+    _, expected_unit_client = stable_client_mapping(
+        dataset.atomic_df, trace.metadata.num_clients, dataset.client_df,
+    )
+    event_duplicate_count = int(
+        trace.events.duplicated(["window_id", "client_id"]).sum()
+    )
+    risk_records = pd.DataFrame([
+        {
+            "window_id": int(row.window_id),
+            "client_id": str(row.client_id),
+            "unit_id": str(unit),
+        }
+        for row in trace.events.itertuples()
+        for unit in row.risk_set_unit_ids
+    ])
+    duplicate_risk = int(risk_records.duplicated(["window_id", "unit_id"]).sum())
+    mapping_violations = int(sum(
+        expected_unit_client.get(str(row.unit_id)) != str(row.client_id)
+        for row in risk_records.itertuples()
+    ))
+    expected_train = set(
+        dataset.atomic_df.loc[
+            dataset.atomic_df["split"].astype(str) == "train", "unit_id",
+        ].astype(str)
+    )
+    unassigned = len(expected_train - set(assigned))
+    time_lookup = dataset.atomic_df.set_index(
+        dataset.atomic_df["unit_id"].astype(str),
+    )["absolute_time"]
+    intervals = []
+    for window_id, frame in risk_records.groupby("window_id"):
+        times = pd.to_datetime(
+            frame["unit_id"].map(time_lookup), utc=True, errors="coerce",
+        )
+        if not times.empty:
+            intervals.append((int(window_id), times.min(), times.max()))
+    intervals.sort()
+    overlap = sum(
+        int(current[1] <= previous[2])
+        for previous, current in zip(intervals, intervals[1:])
+    )
+    chronological_violations = sum(
+        int(current[1] < previous[1])
+        for previous, current in zip(intervals, intervals[1:])
+    )
+    invalid_count = len(set(assigned) - real_units)
+    usable_over_smax = int(np.sum(
+        (usable == 1) & (tau > int(trace.metadata.s_max)),
+    ))
     result = {
-        "real_unit_id_lookup_failures": len(set(assigned) - real_units),
+        "invalid_unit_id_count": invalid_count,
+        "real_unit_id_lookup_failures": invalid_count,
         "dummy_unit_id_count": int(dummy),
+        "duplicate_event_count": event_duplicate_count,
+        "duplicate_risk_record_count": duplicate_risk,
         "duplicate_unit_assignments": len(assigned) - len(set(assigned)),
-        "unassigned_risk_set_records": 0,
+        "unassigned_risk_record_count": int(unassigned),
+        "unassigned_risk_set_records": int(unassigned),
+        "future_leakage_count": int(np.sum(downloaded > windows)),
         "future_leakage": int(np.sum(downloaded > windows)),
-        "window_overlap": 0,
+        "window_time_overlap_count": int(overlap),
+        "window_overlap": int(overlap),
+        "chronological_violation_count": int(chronological_violations),
+        "tau_inconsistency_count": int(np.sum(tau != windows - downloaded)),
         "tau_inconsistency": int(np.sum(tau != windows - downloaded)),
-        "usable_over_smax": int(np.sum((usable == 1) & (tau > E1_S_MAX))),
+        "usable_over_smax_count": usable_over_smax,
+        "usable_over_smax": usable_over_smax,
+        "missing_U0_attempt_count": int(failures == 0),
+        "client_mapping_violation_count": mapping_violations,
         "a_r_subset_e_r": set(observed).issubset(set(assigned)),
         "retained_u0_attempts": failures,
-        "chronological": bool(np.all(np.diff(np.sort(trace.events["window_id"].unique())) >= 0)),
+        "chronological": chronological_violations == 0,
     }
     result["hard_gate_pass"] = bool(
-        result["real_unit_id_lookup_failures"] == 0
+        result["invalid_unit_id_count"] == 0
         and result["dummy_unit_id_count"] == 0
-        and result["duplicate_unit_assignments"] == 0
-        and result["future_leakage"] == 0
-        and result["tau_inconsistency"] == 0
-        and result["usable_over_smax"] == 0
+        and result["duplicate_event_count"] == 0
+        and result["duplicate_risk_record_count"] == 0
+        and result["unassigned_risk_record_count"] == 0
+        and result["future_leakage_count"] == 0
+        and result["window_time_overlap_count"] == 0
+        and result["chronological_violation_count"] == 0
+        and result["tau_inconsistency_count"] == 0
+        and result["usable_over_smax_count"] == 0
+        and result["missing_U0_attempt_count"] == 0
+        and result["client_mapping_violation_count"] == 0
         and result["a_r_subset_e_r"]
-        and failures > 0
     )
     return result
 
@@ -373,6 +477,7 @@ def run_official_method(
     trace_dir: Path | None = None,
     output_root: Path | None = None,
     evaluation_split: str = "test",
+    weight_safety: dict[str, float] | None = None,
 ) -> Path:
     if method not in E1_METHODS:
         raise ValueError(f"method is not in frozen E1 registry: {method}")
@@ -399,10 +504,32 @@ def run_official_method(
         raise RuntimeError("EventTrace S_max does not match frozen E1 protocol")
     started = datetime.now(timezone.utc)
     started_perf = time.perf_counter()
+    target_for_runner = TargetBuilder(
+        group_mapper=GroupMapper("target_group_main"),
+    ).build(grouped, split="test")
+    target_mu = np.asarray([
+        float(target_for_runner.group_mass.get(str(group), 0.0))
+        for group in range(E1_GROUPS)
+    ], dtype=np.float64)
+    pi_path = root / "configs/frozen/e1_pi_target_client_stratum.parquet"
+    pi_target, pi_target_hash = load_pi_target(pi_path)
+    if weight_safety is None:
+        safety_path = root / "configs/frozen/e1_weight_safety.yaml"
+        weight_safety = (
+            load_yaml(safety_path).get("selected_parameters", {})
+            if safety_path.exists() else {}
+        )
     runner = build_full_runner(
         trace, dataset, method=method, n_groups=E1_GROUPS,
         model_seed=int(seed), local_steps=int(local_steps), device=device,
+        target_mu=target_mu, pi_target=pi_target, s_max=E1_S_MAX,
+        a_max=float(weight_safety.get("a_max", 20.0)),
+        p_min=float(weight_safety.get("p_min", 0.05)),
+        pi_min=float(weight_safety.get("pi_min", 1e-6)),
+        d_max=float(weight_safety.get("d_max", 10.0)),
+        q_min=float(weight_safety.get("q_min", 0.05)),
     )
+    initial_model_hash = runner._theta_hash()
     metrics = runner.run()
     prediction = _predict(runner, dataset, evaluation_split)
     target, arrival, arrival_details = _arrival_weights(
@@ -428,6 +555,10 @@ def run_official_method(
         y_pred, y_true, target, ratio,
         prediction["target_group_main"], mu_group,
     )
+    if not np.isfinite(head_tail["head_rmse"]) or not np.isfinite(
+        head_tail["tail_rmse"],
+    ):
+        raise RuntimeError("Tail and Head groups require positive test support")
     active = [item for item in metrics if item.active]
     all_n_eff = [
         value for item in active for value in item.n_eff_values
@@ -588,7 +719,7 @@ def run_official_method(
                if isinstance(value, (float, int)) and key not in {"seed"}):
         raise RuntimeError("NaN/Inf in official E1 run metrics")
     dump_json(metrics_run, run_dir / "metrics_run.json")
-    dump_yaml({
+    resolved_config = {
         "experiment": "E1_balanced",
         "dataset": "sensorscope",
         "method": method,
@@ -599,7 +730,10 @@ def run_official_method(
         "s_max": E1_S_MAX,
         "main_groups": E1_GROUPS,
         "device": device,
-    }, run_dir / "resolved_config.yaml")
+        "weight_safety": weight_safety,
+    }
+    resolved_path = run_dir / "resolved_config.yaml"
+    dump_yaml(resolved_config, resolved_path)
     dump_json({
         "path": str(trace_dir),
         "event_trace_hash": identity["trace_hash"],
@@ -614,6 +748,12 @@ def run_official_method(
     )
     (run_dir / "stderr.log").write_text("", encoding="utf-8")
     data_hash = sha256_path_tree(root / "data/processed/sensorscope")
+    protocol_path = root / "configs/frozen/e1_sensorscope_balanced.yaml"
+    client_mapping_path = root / "configs/frozen/e1_sensorscope_clients.yaml"
+    protocol_config_hash = sha256_file(protocol_path)
+    resolved_run_config_hash = sha256_file(resolved_path)
+    client_mapping_hash = sha256_file(client_mapping_path)
+    env_hash = environment_hash()
     manifest = {
         "run_id": run_id,
         "experiment": "E1_balanced",
@@ -622,10 +762,15 @@ def run_official_method(
         "method": method,
         "seed": int(seed),
         "git_commit": git_commit(root),
+        "protocol_config_hash": protocol_config_hash,
+        "resolved_run_config_hash": resolved_run_config_hash,
         "data_hash": data_hash,
         "event_trace_hash": identity["trace_hash"],
         "target_group_hash": group_hash,
-        "environment_hash": environment_hash(),
+        "client_mapping_hash": client_mapping_hash,
+        "pi_target_hash": pi_target_hash,
+        "initial_model_hash": initial_model_hash,
+        "environment_hash": env_hash,
         "model_hash": final_model_hash,
         "initial_model_seed": int(seed),
         "start_time": started.isoformat(),

@@ -1,0 +1,22 @@
+status: REVIEWED_WHITELIST_ONLY
+features:
+  bias:
+    availability_time: risk-set formation
+    source: intercept
+    role: logistic intercept
+    uses_current_outcome: false
+  hour_block:
+    availability_time: risk-set formation
+    source: opportunity_stratum
+    role: repeatable time-of-day covariate
+    uses_current_outcome: false
+  planned_workload_pre:
+    availability_time: before sensing
+    source: risk_set_unit_ids count
+    role: planned sensing workload
+    uses_current_outcome: false
+forbidden:
+  - observed_count
+  - len(observed)
+  - raw_workload
+  - current_successful_measurement_count

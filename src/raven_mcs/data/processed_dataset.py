@@ -91,6 +91,15 @@ class ProcessedDataset:
         self._unit_id_to_row: dict[str, int] = {}
         for idx, row in self._atomic_df.iterrows():
             self._unit_id_to_row[str(row["unit_id"])] = idx
+        duplicated = self._client_df.duplicated(["client_id", "unit_id"])
+        if bool(duplicated.any()):
+            raise ValueError("duplicate (client_id, unit_id) measurements")
+        self._measurement_index: dict[tuple[str, str], float] = {
+            (str(row["client_id"]), str(row["unit_id"])): float(
+                row["potential_measurement"],
+            )
+            for _, row in self._client_df.iterrows()
+        }
 
         spatial_ids = sorted(self._atomic_df["spatial_id"].unique())
         self._spatial_to_idx: dict[str, int] = {sid: i for i, sid in enumerate(spatial_ids)}
@@ -175,6 +184,15 @@ class ProcessedDataset:
             public_features={},
             support_flag=bool(row.get("support_flag", True)),
         )
+
+    def get_potential_measurement(self, client_id: str, unit_id: str) -> float:
+        """Return the client's potential measurement without truth fallback."""
+        key = (str(client_id), str(unit_id))
+        if key not in self._measurement_index:
+            raise KeyError(
+                f"potential_measurement missing for client={key[0]} unit={key[1]}",
+            )
+        return self._measurement_index[key]
 
     @property
     def atomic_df(self) -> pd.DataFrame:

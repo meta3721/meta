@@ -6,6 +6,31 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
 
 ## Open
 
+### E1-ENTRY-R1 semantic blockers
+
+- **ISSUE-026 — G=4 mapping incompatible with temporal split.** Closed by
+  repeatable UTC six-hour blocks and split-support audit.
+- **ISSUE-027 — Local training uses target_value instead of
+  potential_measurement.** Closed; exact `(client_id, unit_id)` lookup with no
+  truth fallback.
+- **ISSUE-028 — p_obs feature contains post-outcome observed count.** Closed;
+  frozen pre-outcome whitelist.
+- **ISSUE-029 — pi^tar_{k,s} is not frozen in zeta.** Closed; frozen parquet
+  and identity hash.
+- **ISSUE-030 — First-stage clip rate exceeds 5%.** Closed by validation-only
+  safety selection without changing `a_max`.
+- **ISSUE-031 — TimeAlign duplicates FedAsync.** **Blocked / unresolved.** No
+  primary TimeAlign definition was found; teacher must provide it or approve
+  method-registry re-freeze.
+- **ISSUE-032 — Lagged empirical variance is not implemented.** Closed.
+- **ISSUE-033 — P2 staleness is not normalized.** Closed.
+- **ISSUE-034 — Config hash is mixed with target-group hash.** Closed in the
+  R1 manifest and aggregator schema.
+- **ISSUE-035 — EventTrace evidence export omits events.parquet.** Closed in
+  the R1 exporter.
+- **ISSUE-036 — Empty Tail/Head group returns zero.** Closed; now NaN and a
+  run-stopping hard gate.
+
 ### ISSUE-020 — Official E1 runner ignores frozen G=4 mapping
 - **Severity:** Blocking
 - **Status:** Closed 2026-08-01; official runner validates the frozen mapping

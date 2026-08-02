@@ -1,0 +1,15 @@
+selection_data: validation_only
+seed: 26001
+windows: 20
+selected_candidate: pre_registered_default
+selected_parameters:
+  p_min: 0.05
+  pi_min: 1.0e-06
+  a_max: 20.0
+  q_min: 0.05
+  d_max: 10.0
+gates:
+  first_stage_clip_rate_max: 0.05
+  second_stage_clip_rate_max: 0.05
+  median_n_eff_min: 2.0
+a_max_unchanged: true

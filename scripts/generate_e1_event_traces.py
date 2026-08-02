@@ -38,6 +38,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--clients", type=int, default=10)
     parser.add_argument("--freeze", action="store_true")
     parser.add_argument("--output-dir", type=Path, default=ROOT / "outputs/event_traces")
+    parser.add_argument("--include-events", action="store_true")
     args = parser.parse_args(argv)
     if args.dataset != "sensorscope" or args.scenario != "balanced":
         raise ValueError("official E1 traces are SensorScope balanced only")
@@ -48,10 +49,12 @@ def main(argv: list[str] | None = None) -> int:
 
     dataset = sensorscope_dataset(ROOT)
     atomic = add_e1_groups(dataset.atomic_df)
-    station_map, _ = stable_client_mapping(atomic, args.clients)
+    station_map, _ = stable_client_mapping(
+        atomic, args.clients, dataset.client_df,
+    )
     mapping_payload = {
         "salt": "raven-mcs-e1-sensorscope-clients-v1",
-        "num_clients": args.clients,
+        "num_clients": len(set(station_map.values())),
         "station_to_client": station_map,
     }
     mapping_hash = sha256_json(mapping_payload)
@@ -81,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
             "seed": seed,
             "window_count": args.windows,
             "s_max": args.s_max,
-            "clients": args.clients,
+            "clients": trace.metadata.num_clients,
             "observation_rate": "0.20 +/- deterministic 0.015",
             "usable_rate": "0.60 +/- deterministic 0.02",
             "client_mapping_hash": mapping_hash,

@@ -1,5 +1,15 @@
 # Changelog
 
+## E1-ENTRY-R1 semantic audit
+
+- Replaced global time quartiles with repeatable UTC six-hour groups.
+- Routed local labels through exact client potential-measurement lookup.
+- Removed post-O workload from p features and froze client-stratum target mass.
+- Added validation-only weight safety, lagged empirical variance, normalized
+  staleness, separated identities, and recomputed EventTrace audits.
+- Marked TimeAlign-Agg `BASELINE_UNRESOLVED`; its missing primary definition
+  keeps formal E1 blocked instead of inventing a replacement.
+
 ## E1-ENTRY-SEAL
 
 - Added the official SensorScope E1 runner with frozen G=4 main groups and
