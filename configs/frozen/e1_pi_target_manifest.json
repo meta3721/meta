@@ -1,12 +1,21 @@
 {
-  "construction": "Lambda_s_tar from frozen atomic target weights; uniform supported client share within stratum",
+  "construction": "Lambda_s_tar times unique station-mapped client share",
+  "construction_source": "station_client_mapping",
+  "creation_git_commit": "d341d9a738142f6470343a57c6eb1eab1e619784",
   "dataset": "sensorscope",
   "evaluation_target_split": "test",
   "hard_gate_pass": true,
   "pi_sum": 0.9999999999999997,
-  "pi_target_hash": "1ae8d4d590210ad90bff898c8b8d44bf6ca99e5578fdcd797e9dd6ffafb36a50",
-  "positive_rows": 3520,
-  "row_count": 3520,
+  "pi_target_hash": "04f6aa0b485b3ea431f304368eb4cb6f72b412b274c5e0ca5cfec69eeee8d254",
+  "positive_pi_pair_count": 440,
+  "positive_rows": 440,
+  "row_count": 440,
   "scenario": "balanced",
-  "support_violations": 0
+  "station_client_mapping_file_hash": "804dd0fdb9f9f8865f70e42e4fba57926314d85205642e86972b98d560b3a64c",
+  "station_client_mapping_payload_hash": "e0adcf5f40cba6093cf9764b8badd297bd0f25b3b64104cc8b2470c6699ad7ff",
+  "stratum_definition_hash": "b42c24882fd3da89877f33697c97fb92d61480364fbfb3176291766b2a947f58",
+  "sum_pi": 0.9999999999999997,
+  "support_pair_count": 440,
+  "support_violations": 0,
+  "target_weight_hash": "037a933ded779a99812dd7b8b2c973716c0769ed44005aa6dfc76d0fe82cca24"
 }

@@ -1,0 +1,12 @@
+{
+  "Delta_cal": 0.25564198658603676,
+  "bias_centering_split": null,
+  "calibration_audit_hash": "2d614fd2c428a488cfad0b7503556aee0ca24ae4958968db824791e6c1792792",
+  "client_mapping_file_hash": "804dd0fdb9f9f8865f70e42e4fba57926314d85205642e86972b98d560b3a64c",
+  "mapped_client_count": 8,
+  "support_source": "station_client_mapping",
+  "target_split": "test_weights_only_no_bias_centering",
+  "target_weight_hash": "0c6a606c5b33d119efc0b59fe3e40544b37d72d0d2f68e07de3f5d4add806016",
+  "target_weight_sum": 0.9999999999999999,
+  "test_split_used_for_bias_centering": false
+}
