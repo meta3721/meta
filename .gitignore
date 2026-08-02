@@ -26,6 +26,7 @@ outputs/evidence_formal_r1/
 outputs/statistics/
 outputs/validation/
 outputs/aggregate/
+outputs/preflight/
 logs/
 deliverables/
 *.zip
