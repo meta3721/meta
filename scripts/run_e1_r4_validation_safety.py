@@ -43,7 +43,7 @@ def main() -> int:
             "unsupported_arrival_contribution": metrics[
                 "unsupported_arrival_contribution_sum"
             ],
-            "solver_failures": metrics["solver_failures"],
+            "solver_failures": metrics["solver_failure_count"],
             "run_dir": str(run.relative_to(root)),
         }
         row["passes"] = bool(

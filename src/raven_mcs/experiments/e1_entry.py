@@ -785,7 +785,14 @@ def run_official_method(
             "min_n_eff": float(np.min(item.n_eff_values)) if item.n_eff_values else 0.0,
             "alpha": json.dumps(item.alpha),
             "beta": json.dumps(item.beta_hat),
-            "group_mismatch": float(np.linalg.norm(np.asarray(item.omega) - runner.mu, 1)),
+            "group_mismatch": float(np.linalg.norm(
+                (
+                    np.asarray(item.omega, dtype=np.float64)
+                    if len(item.omega) == len(runner.mu)
+                    else np.zeros_like(runner.mu)
+                ) - runner.mu,
+                1,
+            )),
             "reference_deviation": float(
                 np.linalg.norm(np.asarray(item.alpha) - np.asarray(item.beta_hat))
             ) if item.alpha and len(item.alpha) == len(item.beta_hat) else 0.0,
