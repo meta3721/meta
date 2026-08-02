@@ -3,3 +3,7 @@ entries:
     symbol: generate_usable_events
     reason: Arrival is simulator truth used to construct the U outcome label, never a q-model input.
     allowed_role: simulator_truth
+  - file: src/raven_mcs/training/window_runner.py
+    symbol: FullWindowRunner._process_window
+    reason: Update norms are method diagnostics only; U labels update q after close and neither field is a q predictor.
+    allowed_role: diagnostics_and_lagged_label

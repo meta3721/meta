@@ -86,7 +86,7 @@ def validate_rows(frame: pd.DataFrame, *, mode: str) -> None:
         {26001}
         if mode in {
             "entry-smoke", "entry-r1-smoke", "entry-r2-smoke",
-            "entry-r3-smoke",
+            "entry-r3-smoke", "entry-r4-smoke",
         }
         else set(E1_SEEDS)
     )
@@ -185,7 +185,7 @@ def main(argv: list[str] | None = None) -> int:
         "--mode",
         choices=[
             "formal", "entry-smoke", "entry-r1-smoke", "entry-r2-smoke",
-            "entry-r3-smoke",
+            "entry-r3-smoke", "entry-r4-smoke",
         ],
         default="formal",
     )
@@ -223,6 +223,18 @@ def main(argv: list[str] | None = None) -> int:
         )
         output_dir = (
             args.output_dir or ROOT / "outputs/aggregate/E1_balanced_entry_r3"
+        )
+    elif args.mode == "entry-r4-smoke":
+        commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True,
+            capture_output=True, text=True,
+        ).stdout.strip()
+        input_dir = (
+            args.input_dir
+            or ROOT / f"outputs/entry_r4_smoke/runs_{commit[:12]}"
+        )
+        output_dir = (
+            args.output_dir or ROOT / "outputs/aggregate/E1_balanced_entry_r4"
         )
     else:
         input_dir = args.input_dir or ROOT / "outputs/runs"

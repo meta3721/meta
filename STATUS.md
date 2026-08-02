@@ -3,7 +3,7 @@
 **Updated:** 2026-08-01
 **Workspace root:** `D:\Cursor\raven.mcs`  
 **Source docs:** paper PDF + Cursor instruction TXT + design DOCX (`docs/SOURCES.md`)  
-**Current phase:** E1-ENTRY-R3 complete; teacher authorization pending
+**Current phase:** E1-ENTRY-R4 stage-2/arrival seal in progress
 **Main experiments:** Not started
 
 ---
@@ -16,7 +16,7 @@
 | P10-C | PASS | FedAvg/TwoStage local and server paths produce distinct audited updates |
 | P10-D | PASS | RMSE_mu/RMSE_rho are recomputed from atomic rows and Gap_mis identity is exact |
 | P10-E | PASS | Two same-seed SensorScope runs pass R1-G1 through R1-G8 |
-| E1 | READY_FOR_TEACHER_AUTHORIZATION | R3 gates passed; formal E1 not executed |
+| E1 | BLOCKED | Stage-2 attempt and arrival-support remediation in progress |
 
 ## Pre-E1 Seal
 
@@ -28,7 +28,10 @@
 - `E1-ENTRY-R2 = PASS`
 - `E1-OPPORTUNITY-SUPPORT-AUDIT = PASS`
 - `E1-ENTRY-R3 = PASS`
-- `E1 = READY_FOR_TEACHER_AUTHORIZATION`
+- `E1-STAGE2-ATTEMPT-SEMANTICS = FAIL`
+- `E1-ARRIVAL-SUPPORT-METRIC = FAIL`
+- `E1-ENTRY-R4 = IN PROGRESS`
+- `E1 = BLOCKED`
 
 FLAMF-TimeAlign-Adapted now uses the teacher-frozen temporal-coverage formula
 and differs from FedAsync in controlled and official-entry diagnostics.

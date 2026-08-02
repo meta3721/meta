@@ -129,6 +129,9 @@ class FullWindowRunner:
     diagnostics: list[dict[str, Any]] = field(default_factory=list)
     p_propensity_history: list[dict[str, Any]] = field(default_factory=list)
     p_model_version: int = 0
+    q_propensity_history: list[dict[str, Any]] = field(default_factory=list)
+    q_attempt_diagnostics: list[dict[str, Any]] = field(default_factory=list)
+    q_model_version: int = 0
 
     def __post_init__(self) -> None:
         self.mu = np.asarray(self.mu, dtype=np.float64)
@@ -315,6 +318,13 @@ class FullWindowRunner:
             cid for cid, data in client_data.items()
             if data["m_total"] > 0
         ]
+        attempted_clients = [
+            rec.client_id for rec in window_slice.records if rec.attempted == 1
+        ]
+        if set(e_r_clients) != set(attempted_clients):
+            raise RuntimeError("E_r must equal the frozen attempted set")
+        if any(rec.U == 1 and rec.attempted != 1 for rec in window_slice.records):
+            raise RuntimeError("usable implies attempted")
 
         # Step 6: Execute local SGD for each client
         local_updates: dict[str, np.ndarray] = {}
@@ -388,8 +398,8 @@ class FullWindowRunner:
             # U=0 attempts are still valid labels for future opportunity/p/q
             # estimators.  Update only after all current-window predictions and
             # local work are complete.
-            self._update_lagged_estimators(window_slice, client_data)
             self.clock.skip_empty_window()
+            self._update_lagged_estimators(window_slice, client_data)
             self.model_versions[self.clock.model_version] = copy.deepcopy(self.theta)
             after_hash = self._theta_hash()
             return WindowMetrics(
@@ -629,18 +639,45 @@ class FullWindowRunner:
                     })
                 self.p_model_version += 1
             if self.usable_propensity is not None:
-                self.usable_propensity.update_lagged(
-                    np.array([
-                        1.0,
-                        float(rec.model_age),
-                        0.0,
-                        0.0,
-                        deadline_slack_pre(
-                            rec.window_close_time, rec.registration_time,
-                        ),
-                    ]),
-                    float(rec.U),
-                )
+                q_features = np.array([
+                    1.0,
+                    float(rec.model_age),
+                    0.0,
+                    0.0,
+                    deadline_slack_pre(
+                        rec.window_close_time, rec.registration_time,
+                    ),
+                ])
+                q_hat = float(self.usable_propensity.predict(q_features))
+                included = bool(rec.attempted == 1)
+                audit_row = {
+                    "client_id": cid,
+                    "window_id": rec.window_id,
+                    "risk_set_size_pre": rec.risk_set_size_pre,
+                    "observed_count": rec.observed_count,
+                    "attempted": rec.attempted,
+                    "U": rec.U,
+                    "usable": int(rec.attempted == 1 and rec.U == 1),
+                    "attempt_failure": rec.attempt_failure,
+                    "non_attempt": rec.non_attempt,
+                    "model_age": float(rec.model_age),
+                    "deadline_slack_pre": float(q_features[-1]),
+                    "prediction_time": float(rec.registration_time),
+                    "update_time": float(rec.window_close_time),
+                    "q_hat": q_hat,
+                    "model_version": self.q_model_version,
+                    "included_in_q_training": included,
+                    "exclusion_reason": (
+                        None if included else "no_observation_buffer"
+                    ),
+                }
+                self.q_attempt_diagnostics.append(audit_row)
+                if included:
+                    self.usable_propensity.update_lagged(
+                        q_features, float(rec.U),
+                    )
+                    self.q_propensity_history.append(dict(audit_row))
+                    self.q_model_version += 1
         if self.opportunity_estimator is not None:
             self.opportunity_estimator.update_window(
                 window_slice.window_id, opportunity_counts,

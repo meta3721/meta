@@ -29,6 +29,12 @@ class WindowRecords:
     registration_time: float
     window_close_time: float
     planned_workload_pre: float
+    risk_set_size_pre: int
+    observed_count: int
+    attempted: int
+    usable: int
+    attempt_failure: int
+    non_attempt: int
 
 
 @dataclass
@@ -144,6 +150,15 @@ def extract_window_slice(
             planned_workload_pre=float(row.get(
                 "planned_workload_pre", len(risk_ids),
             )),
+            risk_set_size_pre=int(row.get("risk_set_size_pre", len(risk_ids))),
+            observed_count=int(row.get("observed_count", len(obs_ids))),
+            attempted=int(row.get("attempted", len(obs_ids) > 0)),
+            usable=int(row.get("usable", row["U"])),
+            attempt_failure=int(row.get(
+                "attempt_failure",
+                len(obs_ids) > 0 and int(row["U"]) == 0,
+            )),
+            non_attempt=int(row.get("non_attempt", len(obs_ids) == 0)),
         ))
 
     return WindowDataSlice(

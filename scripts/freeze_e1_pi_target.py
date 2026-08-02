@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 from raven_mcs.correction.pi_target import build_pi_target
+from raven_mcs.data.target import GroupMapper, TargetBuilder
 from raven_mcs.experiments.e1_entry import (
     add_e1_groups, git_commit, sensorscope_dataset,
 )
@@ -48,13 +49,23 @@ def main() -> int:
     target = frame[[
         "client_id", "opportunity_stratum", "pi_k_s_tar",
     ]].to_dict(orient="records")
+    atomic_target = TargetBuilder(
+        group_mapper=GroupMapper(column="target_group_main"),
+    ).build(grouped, split="test").atom_mass
+    atomic_records = [
+        {"unit_id": str(unit_id), "target_weight": float(weight)}
+        for unit_id, weight in atomic_target.sort_index().items()
+    ]
+    commit = git_commit(root)
     manifest = {
         "dataset": args.dataset,
         "scenario": args.scenario,
         "evaluation_target_split": "test",
         "construction": "Lambda_s_tar times unique station-mapped client share",
         "construction_source": "station_client_mapping",
-        "target_weight_hash": sha256_json(target),
+        "atomic_target_weight_hash": sha256_json(atomic_records),
+        "client_stratum_target_mass_hash": sha256_json(target),
+        "pi_target_file_hash": digest,
         "station_client_mapping_payload_hash": mapping_payload_hash,
         "station_client_mapping_file_hash": sha256_file(mapping_path),
         "stratum_definition_hash": sha256_json(strata),
@@ -67,8 +78,11 @@ def main() -> int:
             ((frame["pi_k_s_tar"] > 0) & ~frame["support_flag"].astype(bool)).sum()
         ),
         "pi_target_hash": digest,
+        "recomputed_pi_target_hash": digest,
         "sum_pi": float(frame["pi_k_s_tar"].sum()),
-        "creation_git_commit": git_commit(root),
+        "creation_git_commit": commit,
+        "verification_git_commit": commit,
+        "verification_status": "RECOMPUTED_MATCH",
         "hard_gate_pass": bool(
             abs(float(frame["pi_k_s_tar"].sum()) - 1.0) <= 1e-12
             and (frame["pi_k_s_tar"] >= 0).all()

@@ -50,6 +50,12 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
   teacher-review-only R3 status is frozen.
 - **ISSUE-049 — Test and Git evidence are not machine-verifiable.** Closed by
   structured summaries, hashed logs and clean Git evidence.
+- **ISSUE-050 — q-use history includes clients outside E_r.** Open for R4.
+- **ISSUE-051 — Failed attempts need explicit retention evidence.** Open.
+- **ISSUE-052 — Arrival risk gives unsupported pairs positive mass.** Open.
+- **ISSUE-053 — Pi target final-commit reproduction is unverified.** Open.
+- **ISSUE-054 — Exact command log omits workflow stages.** Open.
+- **ISSUE-055 — Target-weight hash names are ambiguous.** Open.
 
 ### ISSUE-020 — Official E1 runner ignores frozen G=4 mapping
 - **Severity:** Blocking

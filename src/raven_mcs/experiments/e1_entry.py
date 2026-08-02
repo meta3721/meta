@@ -56,6 +56,30 @@ E1_S_MAX = 5
 CLIENT_MAPPING_SALT = "raven-mcs-e1-sensorscope-clients-v1"
 
 
+def attempt_semantics(observed_count: int, u_value: int) -> dict[str, int]:
+    """Freeze E_r membership before interpreting second-stage usability."""
+    attempted = int(int(observed_count) > 0)
+    usable = int(attempted == 1 and int(u_value) == 1)
+    return {
+        "attempted": attempted,
+        "usable": usable,
+        "attempt_failure": int(attempted == 1 and int(u_value) == 0),
+        "non_attempt": int(attempted == 0),
+    }
+
+
+def masked_arrival_contributions(
+    pi_opp: np.ndarray,
+    support_mask: np.ndarray,
+    nu: np.ndarray,
+    p_hat: np.ndarray,
+    q_hat: np.ndarray,
+) -> np.ndarray:
+    """Compute arrival contributions with exact zero outside support."""
+    pi = np.where(np.asarray(support_mask, dtype=bool), pi_opp, 0.0)
+    return pi * np.asarray(nu)[None, :] * p_hat * q_hat
+
+
 def sensorscope_dataset(root: Path) -> ProcessedDataset:
     metadata = DatasetMetadata(
         dataset="sensorscope",
@@ -225,12 +249,17 @@ def generate_balanced_trace(
             ))
             flags = rng.random(len(unit_ids)) < observation_rate
             observed = [unit for unit, flag in zip(unit_ids, flags) if flag]
+            attempted = int(len(observed) > 0)
             max_tau = min(s_max, window_id)
             tau = int(rng.integers(0, max_tau + 1))
             compute_success = bool(rng.random() < 0.97)
             network_success = bool(rng.random() < 0.96)
             usable_draw = bool(rng.random() < usable_rate)
-            usable = int(compute_success and network_success and usable_draw)
+            attempt_fields = attempt_semantics(
+                len(observed),
+                int(compute_success and network_success and usable_draw),
+            )
+            usable = attempt_fields["usable"]
             rows.append({
                 "window_id": int(window_id),
                 "client_id": str(client_id),
@@ -253,6 +282,12 @@ def generate_balanced_trace(
                 "network_duration": float(rng.uniform(0.05, 0.45)),
                 "arrival_time": float(window_id) + 0.5 + 0.001 * client_index,
                 "U": usable,
+                "risk_set_size_pre": len(unit_ids),
+                "observed_count": len(observed),
+                "attempted": attempt_fields["attempted"],
+                "usable": usable,
+                "attempt_failure": attempt_fields["attempt_failure"],
+                "non_attempt": attempt_fields["non_attempt"],
                 "planned_workload_pre": float(len(unit_ids)),
                 "raw_workload": float(len(observed)),
                 "oracle_p": observation_rate,
@@ -427,7 +462,7 @@ def _predict(
 
 def _arrival_weights(
     prediction: dict[str, Any], runner: FullWindowRunner, split: str,
-) -> tuple[np.ndarray, np.ndarray, dict[str, np.ndarray]]:
+) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
     strata = prediction["opportunity_stratum"]
     unit_ids = pd.Index(prediction["unit_ids"], dtype=str)
     frame = add_e1_groups(runner.dataset.atomic_df)
@@ -454,9 +489,20 @@ def _arrival_weights(
     pi = np.zeros((len(clients), len(unit_ids)), dtype=np.float64)
     p = np.zeros_like(pi)
     q = np.zeros_like(pi)
+    support = np.zeros_like(pi, dtype=bool)
+    positive_support = {
+        pair for pair, mass in runner.pi_target.items() if float(mass) > 0
+    }
     for index, client in enumerate(clients):
+        support[index] = np.asarray([
+            (client, str(value)) in positive_support for value in strata
+        ])
         pi[index] = np.asarray([
-            opportunity.get((client, value), runner.p_min) for value in strata
+            (
+                opportunity.get((client, str(value)), 0.0)
+                if support[index, atom_index] else 0.0
+            )
+            for atom_index, value in enumerate(strata)
         ])
         p[index] = np.asarray([
             runner.obs_propensity.predict(np.asarray([
@@ -468,15 +514,34 @@ def _arrival_weights(
             1.0, mean_age.get(client, 0.0), 0.0, 0.0,
             mean_slack.get(client, 0.0),
         ]))
+    contribution = masked_arrival_contributions(pi, support, nu, p, q)
     intensity, arrival = atomic_arrival_weights(pi, nu, p, q)
     intensity = np.where(prediction["support_flag"], intensity, 0.0)
     arrival = intensity / float(intensity.sum())
+    support_rows = []
+    for client_index, client in enumerate(clients):
+        for atom_index, unit_id in enumerate(unit_ids):
+            value = float(contribution[client_index, atom_index])
+            support_rows.append({
+                "unit_id": str(unit_id),
+                "stratum_id": str(strata[atom_index]),
+                "client_id": client,
+                "support_mask": int(support[client_index, atom_index]),
+                "pi_opp_hat": float(pi[client_index, atom_index]),
+                "p_hat": float(p[client_index, atom_index]),
+                "q_hat": float(q[client_index, atom_index]),
+                "contribution": value,
+                "unsupported_positive_contribution": int(
+                    not support[client_index, atom_index] and value > 0.0
+                ),
+            })
     return target, arrival, {
         "arrival_intensity": intensity,
         "pi_hat_opp_contribution": pi.sum(axis=0),
         "nu_hat_contribution": nu,
         "p_hat_contribution": p.mean(axis=0),
         "q_hat_contribution": q.mean(axis=0),
+        "arrival_support_diagnostics": pd.DataFrame(support_rows),
     }
 
 
@@ -593,6 +658,19 @@ def run_official_method(
         head_tail["tail_rmse"],
     ):
         raise RuntimeError("Tail and Head groups require positive test support")
+    sorted_groups = np.argsort(ratio)
+    tail_groups = set(sorted_groups[:max(1, int(E1_GROUPS * 0.2))])
+    head_groups = set(sorted_groups[-max(1, int(E1_GROUPS * 0.2)):])
+    tail_mask = np.asarray([
+        group in tail_groups for group in prediction["target_group_main"]
+    ])
+    head_mask = np.asarray([
+        group in head_groups for group in prediction["target_group_main"]
+    ])
+    tail_test_support = float(target[tail_mask].sum())
+    head_test_support = float(target[head_mask].sum())
+    if tail_test_support <= 0 or head_test_support <= 0:
+        raise RuntimeError("Tail and Head groups require positive target mass")
     active = [item for item in metrics if item.active]
     all_n_eff = [
         value for item in active for value in item.n_eff_values
@@ -634,6 +712,18 @@ def run_official_method(
         "model_hash": final_model_hash,
     })
     pred_frame.to_parquet(run_dir / "predictions_test.parquet", index=False)
+    arrival_support = arrival_details.pop("arrival_support_diagnostics")
+    arrival_support.to_parquet(
+        run_dir / "arrival_support_diagnostics.parquet", index=False,
+    )
+    unsupported_count = int(
+        arrival_support["unsupported_positive_contribution"].sum()
+    )
+    unsupported_sum = float(arrival_support.loc[
+        arrival_support["support_mask"] == 0, "contribution"
+    ].sum())
+    if unsupported_count != 0 or abs(unsupported_sum) > 0.0:
+        raise RuntimeError("unsupported arrival contribution must be zero")
     pd.DataFrame({
         "unit_id": prediction["unit_ids"],
         "target_weight": target,
@@ -663,12 +753,22 @@ def run_official_method(
         window_tau = trace.events.loc[
             trace.events["window_id"].astype(int) == item.window_id, "tau",
         ].to_numpy(dtype=np.float64)
+        window_events = trace.events.loc[
+            trace.events["window_id"].astype(int) == item.window_id
+        ]
         window_rows.append({
             "r": item.window_id,
             "method": method,
             "seed": int(seed),
             "K_attempt": item.e_r_size,
             "K_usable": item.a_r_size,
+            "risk_set_size_pre": int(window_events["risk_set_size_pre"].sum()),
+            "observed_count": int(window_events["observed_count"].sum()),
+            "attempted": int(window_events["attempted"].sum()),
+            "U": int(window_events["U"].sum()),
+            "usable": int(window_events["usable"].sum()),
+            "attempt_failure": int(window_events["attempt_failure"].sum()),
+            "non_attempt": int(window_events["non_attempt"].sum()),
             "mean_p_hat": float(p_values.mean()) if len(p_values) else np.nan,
             "min_p_hat": float(p_values.min()) if len(p_values) else np.nan,
             "max_p_hat": float(p_values.max()) if len(p_values) else np.nan,
@@ -729,6 +829,30 @@ def run_official_method(
     if p_history.empty:
         raise RuntimeError("record-level p propensity history is empty")
     p_history.to_parquet(run_dir / "p_propensity_history.parquet", index=False)
+    q_history = pd.DataFrame(runner.q_propensity_history)
+    q_attempts = pd.DataFrame(runner.q_attempt_diagnostics)
+    if q_history.empty or q_attempts.empty:
+        raise RuntimeError("q attempt history is empty")
+    q_history.to_parquet(
+        run_dir / "q_propensity_history.parquet", index=False,
+    )
+    q_attempts.to_parquet(
+        run_dir / "q_attempt_diagnostics.parquet", index=False,
+    )
+    total_attempts = int(q_attempts["attempted"].sum())
+    failed_attempts = int(q_attempts["attempt_failure"].sum())
+    nonattempt_leakage = int((
+        (q_attempts["attempted"] == 0)
+        & q_attempts["included_in_q_training"].astype(bool)
+    ).sum())
+    failed_omission = int((
+        (q_attempts["attempt_failure"] == 1)
+        & ~q_attempts["included_in_q_training"].astype(bool)
+    ).sum())
+    if len(q_history) != total_attempts:
+        raise RuntimeError("q history rows must equal attempt count")
+    if nonattempt_leakage or failed_omission:
+        raise RuntimeError("q attempt population gate failed")
     opportunity_diagnostics = pd.DataFrame(
         runner.opportunity_estimator.diagnostics,
     )
@@ -787,6 +911,8 @@ def run_official_method(
         "Gap_mis": gap,
         "Head_RMSE": head_tail["head_rmse"],
         "Tail_RMSE": head_tail["tail_rmse"],
+        "head_test_support": head_test_support,
+        "tail_test_support": tail_test_support,
         "Delta_group": delta_group(omega_bar, runner.mu),
         "Delta_c_s": float(np.abs(target - arrival).sum()),
         "avg_delta_group": float(np.mean([
@@ -814,6 +940,17 @@ def run_official_method(
         "p_warmup_fallback_count": int(min(
             runner.obs_propensity.min_samples, len(p_history),
         )),
+        "total_attempts": total_attempts,
+        "total_failed_attempts": failed_attempts,
+        "total_successful_attempts": int(
+            ((q_attempts["attempted"] == 1) & (q_attempts["U"] == 1)).sum()
+        ),
+        "total_nonattempts": int(q_attempts["non_attempt"].sum()),
+        "q_history_rows": int(len(q_history)),
+        "q_nonattempt_leakage_count": nonattempt_leakage,
+        "q_failed_attempt_omission_count": failed_omission,
+        "unsupported_arrival_contribution_count": unsupported_count,
+        "unsupported_arrival_contribution_sum": unsupported_sum,
         "opportunity_ema_max_formula_error": float(
             opportunity_diagnostics["formula_error"].max(),
         ),
@@ -914,6 +1051,8 @@ def run_official_method(
         "predictions_test.parquet", "arrival_weights_test.parquet",
         "propensity_diagnostics.parquet", "solver_diagnostics.parquet",
         "p_propensity_history.parquet",
+        "q_propensity_history.parquet", "q_attempt_diagnostics.parquet",
+        "arrival_support_diagnostics.parquet",
         "opportunity_ema_diagnostics.parquet",
         "support_crosscheck_ref.json", "calibration_summary.json",
         "feature_encoding_manifest.json",

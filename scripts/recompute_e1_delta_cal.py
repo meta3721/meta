@@ -57,7 +57,7 @@ def recompute(root: Path) -> tuple[pd.DataFrame, dict]:
         "test_split_used_for_bias_centering": False,
         "target_weight_sum": float(selected["target_weight"].sum()),
         "mapped_client_count": int(selected["mapped_client"].nunique()),
-        "target_weight_hash": sha256_json(
+        "client_stratum_target_mass_hash": sha256_json(
             selected[["unit_id", "target_weight"]].to_dict(orient="records"),
         ),
         "client_mapping_file_hash": sha256_file(mapping_path),

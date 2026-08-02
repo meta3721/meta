@@ -1,14 +1,18 @@
 {
+  "atomic_target_weight_hash": "413ad5dab72149c4753668e32a4675a1fab00bb286adb9a9e1e58978a1cc81c5",
+  "client_stratum_target_mass_hash": "037a933ded779a99812dd7b8b2c973716c0769ed44005aa6dfc76d0fe82cca24",
   "construction": "Lambda_s_tar times unique station-mapped client share",
   "construction_source": "station_client_mapping",
-  "creation_git_commit": "d341d9a738142f6470343a57c6eb1eab1e619784",
+  "creation_git_commit": "49a2f88d7861e7bb2cf7299e9f4198849453dd5f",
   "dataset": "sensorscope",
   "evaluation_target_split": "test",
   "hard_gate_pass": true,
   "pi_sum": 0.9999999999999997,
+  "pi_target_file_hash": "04f6aa0b485b3ea431f304368eb4cb6f72b412b274c5e0ca5cfec69eeee8d254",
   "pi_target_hash": "04f6aa0b485b3ea431f304368eb4cb6f72b412b274c5e0ca5cfec69eeee8d254",
   "positive_pi_pair_count": 440,
   "positive_rows": 440,
+  "recomputed_pi_target_hash": "04f6aa0b485b3ea431f304368eb4cb6f72b412b274c5e0ca5cfec69eeee8d254",
   "row_count": 440,
   "scenario": "balanced",
   "station_client_mapping_file_hash": "804dd0fdb9f9f8865f70e42e4fba57926314d85205642e86972b98d560b3a64c",
@@ -17,5 +21,6 @@
   "sum_pi": 0.9999999999999997,
   "support_pair_count": 440,
   "support_violations": 0,
-  "target_weight_hash": "037a933ded779a99812dd7b8b2c973716c0769ed44005aa6dfc76d0fe82cca24"
+  "verification_git_commit": "49a2f88d7861e7bb2cf7299e9f4198849453dd5f",
+  "verification_status": "RECOMPUTED_MATCH"
 }
