@@ -35,7 +35,7 @@ def main() -> int:
         root / "outputs/aggregate/E1_balanced_entry_r4/per_seed_metrics.parquet"
     )
     stats = json.loads((
-        root / "outputs/statistics/E1_balanced/E1_balanced_statistics.json"
+        root / "outputs/statistics/E1_balanced/no_harm_summary.json"
     ).read_text())
     gate_path = root / "outputs/audits/e1_r4_gate_report.json"
     gates = json.loads(gate_path.read_text()) if gate_path.exists() else {

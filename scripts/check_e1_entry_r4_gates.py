@@ -37,7 +37,7 @@ def main() -> int:
         root / "outputs/aggregate/E1_balanced_entry_r4/per_seed_metrics.parquet"
     )
     stats = json.loads((
-        root / "outputs/statistics/E1_balanced/E1_balanced_statistics.json"
+        root / "outputs/statistics/E1_balanced/no_harm_summary.json"
     ).read_text())
     tests = json.loads((root / "logs/E1_ENTRY_R4_TEST_SUMMARY.json").read_text())
     command_rows = [
