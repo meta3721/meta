@@ -24,7 +24,7 @@
     },
     "configs/frozen/e1_r2_protocol.yaml": {
       "semantic_role": "protocol",
-      "sha256": "ba7bfffad05e7444de8de7c8bd4d98c800f0a17935cee6272926c5a53970fd6a",
+      "sha256": "393a262b9ada12696762b2d41dac662bac47636ec0728eed3f1a492b4d7bd3ee",
       "size_bytes": 3903
     },
     "configs/frozen/e1_r2_scheduler.yaml": {
@@ -77,9 +77,9 @@
       "selected_baseline",
       "weight_safety"
     ],
-    "sha256": "7032450778e92e9d498bfa3dc74c20051ca6ba6811ee12743c9c354009f28fb5"
+    "sha256": "6a30bb254e6ac3d23bf48aafc8253297bead0372c55ed7597fd19edfd9efa874"
   },
-  "postselection_hash": "7032450778e92e9d498bfa3dc74c20051ca6ba6811ee12743c9c354009f28fb5",
+  "postselection_hash": "6a30bb254e6ac3d23bf48aafc8253297bead0372c55ed7597fd19edfd9efa874",
   "preselection": {
     "file_count": 4,
     "roles": [

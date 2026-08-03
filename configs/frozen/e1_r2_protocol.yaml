@@ -70,7 +70,7 @@ selection_provenance:
   screening_split: calibration
   final_selection_split: validation
   artifact: outputs/audits/E1_R2_SELECTION_PROVENANCE.json
-  artifact_sha256: 6a511c956aba442cb166951754d93d0652d5a00a7fcc5ac5d6cf98375bc6f2ba
+  artifact_sha256: 8ac5ba4c5d85ef955b6f31debd43c9ef7895cb3ff192364fa11e68b3460df7f9
   source_groups:
     screening_calibration:
       selection_split: calibration
@@ -82,8 +82,8 @@ selection_provenance:
           sha256: c0f94835e006f106a1c9d0efc75445d668f74f200b833fc04e33171ee2787f41
           size_bytes: 1087
         outputs/e1_r2/calibration/candidate_gate_matrix.csv:
-          sha256: d58e88feaf846dab4352f8fbeb9b54768023e5357751def4a4fdbe5958bafcad
-          size_bytes: 1412
+          sha256: 3cf1ee08e2d13422319e15a5a51cb82cfb5eaa6a46c5ca2f13a9666b9fec4fc9
+          size_bytes: 1391
         outputs/e1_r2/calibration/passed_candidates.json:
           sha256: 0c8e056d50817e19b165ed510791580d572d65a0f62fb6e187373323b4e88280
           size_bytes: 94
@@ -100,8 +100,8 @@ selection_provenance:
           sha256: 698583b3ae347f7f2bde2bef19704a72d59ca37e9a609de041c23ae5884dddd4
           size_bytes: 17884
         outputs/e1_r2/validation/candidate_gate_matrix.csv:
-          sha256: 837b9a009a5cd4791c37db231767a05e740fc8000b4bf06deb983160a17518b8
-          size_bytes: 832
+          sha256: 38cb7e1e4d7f63377eeccebb4a678216019b273d1bca4b6e4e408b5461d5bd71
+          size_bytes: 816
         outputs/e1_r2/validation/final_candidate_selection.json:
           sha256: b4460599531a6337cf008bf38ed40b5855548a38bea721566075c5dc66a6dff3
           size_bytes: 1038
