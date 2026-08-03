@@ -143,11 +143,17 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
 - **ISSUE-080 — Evidence ZIP lacked a non-self-referential internal hash manifest.**
   Closed in E1-R2-FINAL-PACKAGE-AND-PRESENTATION-FIX-R1 via INTERNAL_EVIDENCE_MANIFEST.
 - **ISSUE-081 — Full-repository pytest evidence was substituted by a 16-test subset.**
-  Closed after recording the real full-repo JUnit run (510 collected).
+  Closed after recording the real full-repo JUnit run (514 collected, 499 passed, 15 skipped, 0 failed, 0 errors).
 - **ISSUE-082 — Command ledger contained placeholder pseudo-commands.**
   Closed after rewriting the ledger with real executable command entries.
 - **ISSUE-083 — Word report had broken table rows and duplicated figure captions.**
   Closed after camera-ready report rebuild with non-breaking rows and single captions.
+- **ISSUE-084 — Stray “Fig” headings and empty Final Gates section.**
+  Closed in E1-R2-FINAL-REPORT-SYNCHRONIZATION-R1 after template correction and render inspection.
+- **ISSUE-085 — Final report generated before final gates and identity.**
+  Closed in E1-R2-FINAL-REPORT-SYNCHRONIZATION-R1 by regenerating the report from a post-gate snapshot.
+- **ISSUE-086 — Final report contained stale AUDIT_INCOMPLETE and replay FAIL.**
+  Closed in E1-R2-FINAL-REPORT-SYNCHRONIZATION-R1; cover/status now FULLY_SEALED with replay PASS.
 
 ### ISSUE-020 — Official E1 runner ignores frozen G=4 mapping
 - **Severity:** Blocking
