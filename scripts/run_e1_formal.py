@@ -206,7 +206,7 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError("--smoke requires --formal false")
         seeds = list(args.seeds or [CALIBRATION_SEEDS[0]])
         windows = 2 if args.windows is None else int(args.windows)
-        output_root = args.output_root or SMOKE_OUTPUT
+        output_root = (args.output_root or SMOKE_OUTPUT).resolve()
         if seeds != [27001] or windows != 2:
             raise ValueError("smoke allows only calibration seed 27001 and 2 windows")
         if not allowed_smoke_output(output_root):
@@ -219,7 +219,7 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError("--formal false is allowed only with --smoke")
         seeds = list(args.seeds or FORMAL_SEEDS)
         windows = R2_HORIZON if args.windows is None else int(args.windows)
-        output_root = args.output_root or ROOT / "outputs/runs"
+        output_root = (args.output_root or ROOT / "outputs/runs").resolve()
 
     if not args.dry_run_scheduler:
         if args.formal and seeds != list(FORMAL_SEEDS):

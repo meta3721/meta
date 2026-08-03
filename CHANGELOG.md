@@ -10,6 +10,8 @@
   and enforced LF text policy via `.gitattributes`. Formal runs remain 0/25.
 - Ignored `outputs/smoke/` and `outputs/gates/` so exact-head smoke evidence
   does not dirty a clean candidate checkout.
+- Resolved formal/smoke `--output-root` to an absolute path so relative smoke
+  directories remain compatible with run-dir identity bookkeeping.
 
 ## E1-R2-FORMAL-FREEZE-SEAL-R1
 
