@@ -90,6 +90,16 @@ def _holm_metric_families_ok(holm: pd.DataFrame) -> bool:
 def evaluate_sealed_gates(root: Path) -> dict[str, Any]:
     root = Path(root).resolve()
     immutability = _json(root / "outputs/audits/E1_R2_FORMAL_RUN_IMMUTABILITY_SUMMARY.json")
+    if not immutability:
+        # Final-package ZIPs may carry the re-verification summary instead of the
+        # original freeze-time summary; both encode the same 25-run immutability facts.
+        immutability = _json(root / "outputs/audits/E1_R2_FINAL_PACKAGE_IMMUTABILITY_CHECK.json")
+    if immutability and "run_count" not in immutability and "formal_run_count" in immutability:
+        immutability = {
+            **immutability,
+            "run_count": immutability.get("formal_run_count"),
+            "missing_artifact_total": immutability.get("missing_artifact_total", 0),
+        }
     frozen = _json(root / "outputs/audits/E1_R2_25_RUNS_FROZEN_HASH_MANIFEST.json")
     semantic = _json(root / "outputs/audits/E1_R2_FORMAL_SEMANTIC_AUDIT.json")
     solver_residual = _json(root / "outputs/audits/E1_R2_RAVEN_SOLVER_RESIDUAL_MAXIMA.json")

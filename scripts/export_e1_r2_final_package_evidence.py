@@ -22,6 +22,8 @@ REQUIRED: Mapping[str, tuple[str, ...]] = {
     "immutability": (
         "outputs/audits/E1_R2_FINAL_PACKAGE_IMMUTABILITY_CHECK.json",
         "outputs/audits/E1_R2_FINAL_PACKAGE_IMMUTABILITY_CHECK.csv",
+        "outputs/audits/E1_R2_FORMAL_RUN_IMMUTABILITY_SUMMARY.json",
+        "outputs/audits/E1_R2_FORMAL_RUN_IMMUTABILITY_INDEX.csv",
     ),
     "identity": ("outputs/audits/E1_R2_FINAL_PACKAGE_IDENTITY.json",),
     "pytest_summary": ("outputs/audits/E1_R2_FINAL_PACKAGE_PYTEST_SUMMARY.json",),
