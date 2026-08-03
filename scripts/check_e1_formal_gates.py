@@ -3,18 +3,26 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
-from raven_mcs.utils.serialization import dump_json, load_json
 
 R2_AGGREGATE_DIR = ROOT / "outputs/aggregate/E1_R2"
 R2_STATISTICS_DIR = ROOT / "outputs/statistics/E1_R2"
 R2_GATES_DIR = ROOT / "outputs/gates/E1_R2"
+
+
+def _load_json(path: Path) -> dict:
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def _dump_json(payload: dict, path: Path) -> None:
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    Path(path).write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def resolve_r2_formal_directories(
@@ -95,10 +103,10 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError(
                 f"R2 formal gates must not default to E1_balanced {label} directory"
             )
-    aggregate = load_json(aggregate_dir / "aggregate_summary.json")
-    audit = load_json(aggregate_dir / "identity_audit.json")
+    aggregate = _load_json(aggregate_dir / "aggregate_summary.json")
+    audit = _load_json(aggregate_dir / "identity_audit.json")
     metrics = pd.read_parquet(aggregate_dir / "per_seed_metrics.parquet")
-    no_harm = load_json(statistics_dir / "no_harm_summary.json")
+    no_harm = _load_json(statistics_dir / "no_harm_summary.json")
     wilcoxon = pd.read_csv(statistics_dir / "wilcoxon_results.csv")
     holm = pd.read_csv(statistics_dir / "holm_results.csv")
     checks = {
@@ -141,8 +149,8 @@ def main(argv: list[str] | None = None) -> int:
               "statistics_dir": str(statistics_dir),
               "gates_dir": str(gates_dir)}
     gates_dir.mkdir(parents=True, exist_ok=True)
-    dump_json(report, gates_dir / "E1_FORMAL_GATE_REPORT.json")
-    dump_json(report, aggregate_dir / "E1_FORMAL_GATE_REPORT.json")
+    _dump_json(report, gates_dir / "E1_FORMAL_GATE_REPORT.json")
+    _dump_json(report, aggregate_dir / "E1_FORMAL_GATE_REPORT.json")
     print(report)
     return 0 if report["all_pass"] else 1
 

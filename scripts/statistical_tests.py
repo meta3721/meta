@@ -205,6 +205,87 @@ def _holm_correction(p_values: list[float], alpha: float = 0.05) -> dict[str, An
     }
 
 
+FAMILY_ID_BY_METRIC = {
+    "RMSE_mu": "FAMILY_RMSE_MU",
+    "RMSE_rho": "FAMILY_RMSE_RHO",
+    "Gap_mis": "FAMILY_GAP_MIS",
+    "Tail_RMSE": "FAMILY_TAIL_RMSE",
+    "runtime": "FAMILY_RUNTIME",
+}
+
+
+def apply_holm_by_family(
+    wilcoxon: pd.DataFrame,
+    *,
+    alpha: float = 0.05,
+    family_mode: str = "metric",
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """Apply Holm correction with one family per metric (size 4) or one pooled family."""
+    if wilcoxon.empty:
+        return wilcoxon.copy(), {"families": [], "family_mode": family_mode}
+
+    adjusted = wilcoxon.copy().reset_index(drop=True)
+    adjusted["family_id"] = ""
+    adjusted["family_size"] = 0
+    adjusted["holm_rank"] = 0
+    adjusted["holm_multiplier"] = 0.0
+    adjusted["holm_adjusted_p"] = 1.0
+    adjusted["holm_significant"] = False
+
+    registry: list[dict[str, Any]] = []
+    if family_mode == "pooled":
+        groups = [("FAMILY_POOLED_ALL", adjusted.index.tolist())]
+    else:
+        groups = []
+        for metric, family_id in FAMILY_ID_BY_METRIC.items():
+            indices = adjusted.index[adjusted["metric"] == metric].tolist()
+            if indices:
+                groups.append((family_id, indices))
+        for metric in sorted(set(adjusted["metric"]) - set(FAMILY_ID_BY_METRIC)):
+            indices = adjusted.index[adjusted["metric"] == metric].tolist()
+            groups.append((f"FAMILY_{str(metric).upper()}", indices))
+
+    for family_id, indices in groups:
+        family_size = len(indices)
+        ordered = sorted(indices, key=lambda i: float(adjusted.at[i, "p_value"]))
+        running = 0.0
+        significant = []
+        for rank0, index in enumerate(ordered):
+            multiplier = float(family_size - rank0)
+            raw_p = float(adjusted.at[index, "p_value"])
+            running = max(running, raw_p * multiplier)
+            adj_p = min(1.0, running)
+            adjusted.at[index, "family_id"] = family_id
+            adjusted.at[index, "family_size"] = family_size
+            adjusted.at[index, "holm_rank"] = rank0 + 1
+            adjusted.at[index, "holm_multiplier"] = multiplier
+            adjusted.at[index, "holm_adjusted_p"] = adj_p
+            is_sig = adj_p < alpha
+            adjusted.at[index, "holm_significant"] = is_sig
+            if is_sig:
+                significant.append(str(adjusted.at[index, "comparison"]))
+        registry.append({
+            "family_id": family_id,
+            "family_size": family_size,
+            "metric": (
+                adjusted.at[indices[0], "metric"]
+                if family_mode != "pooled" and indices else None
+            ),
+            "comparisons": [
+                str(adjusted.at[i, "comparison"]) for i in ordered
+            ],
+            "significant_comparisons": significant,
+        })
+
+    return adjusted, {
+        "schema_version": 1,
+        "family_mode": family_mode,
+        "alpha": alpha,
+        "families": registry,
+        "n_families": len(registry),
+    }
+
+
 def load_per_seed_metrics(data_dir: str | Path) -> pd.DataFrame:
     """Load per-seed metrics from experiment output directory."""
     data_path = Path(data_dir)
@@ -333,6 +414,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--formal", action="store_true",
                         help="Require the complete formal E1 matrix.")
+    parser.add_argument(
+        "--holm-family",
+        choices=("metric", "pooled"),
+        default="metric",
+        help="Holm family definition: one family per metric (size 4) or one pooled family.",
+    )
     args = parser.parse_args(argv)
     if args.output_root is not None:
         args.output_dir = args.output_root
@@ -470,23 +557,36 @@ def main(argv: list[str] | None = None) -> int:
                     })
             wilcoxon = pd.DataFrame(comparisons)
             wilcoxon.to_csv(output_dir / "wilcoxon_results.csv", index=False)
-            adjusted = wilcoxon.copy()
-            ordered_index = adjusted["p_value"].sort_values().index.tolist()
-            holm_values: dict[int, float] = {}
-            running = 0.0
-            for rank, index in enumerate(ordered_index):
-                running = max(running, float(adjusted.at[index, "p_value"]) * (len(adjusted) - rank))
-                holm_values[index] = min(1.0, running)
-            adjusted["holm_adjusted_p"] = adjusted.index.map(holm_values)
-            adjusted["holm_significant"] = adjusted["holm_adjusted_p"] < args.alpha
+            adjusted, family_registry = apply_holm_by_family(
+                wilcoxon, alpha=args.alpha, family_mode=args.holm_family,
+            )
+            column_order = [
+                "comparison", "metric", "family_id", "family_size", "statistic",
+                "p_value", "holm_rank", "holm_multiplier", "holm_adjusted_p",
+                "holm_significant", "n",
+            ]
+            for column in column_order:
+                if column not in adjusted.columns:
+                    adjusted[column] = None
+            adjusted = adjusted[column_order]
             adjusted.to_csv(output_dir / "holm_results.csv", index=False)
+            dump_json(family_registry, output_dir / "holm_family_registry.json")
+            raven_nh = tests.get("no_harm_tests", {}).get("raven", {})
+            rmse_holm = adjusted[adjusted["metric"] == "RMSE_mu"]
             report = (
-                "# E1 no-harm statistics\n\n"
+                "# E1 statistical summary\n\n"
                 f"Status: {tests['status']}\n\n"
                 f"Frozen baseline: {baseline_method}\n\n"
-                "RAVEN is compared pairwise against each frozen baseline.\n"
+                f"Holm family mode: `{args.holm_family}` "
+                f"(n_families={family_registry.get('n_families')})\n\n"
+                "Each metric forms an independent Holm family of size 4 "
+                "(RAVEN vs four baselines).\n\n"
+                f"No-harm upper bound: {raven_nh.get('one_sided_upper_bound')}\n\n"
+                f"RMSE_mu Holm-significant count: "
+                f"{int(rmse_holm['holm_significant'].sum()) if not rmse_holm.empty else 0}\n"
             )
             (output_dir / "statistics_report.md").write_text(report, encoding="utf-8")
+            (output_dir / "statistical_summary.md").write_text(report, encoding="utf-8")
             print(f"Statistical dry-run → {output_dir}")
             for m, nh in stats.get("no_harm_tests", {}).items():
                 decision = (

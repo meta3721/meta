@@ -128,6 +128,18 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
   Closed after fallback and residual aggregation for five RAVEN formal runs.
 - **ISSUE-073 — Communication metric is update count, not bytes.**
   Closed after schema/report naming correction to communication updates.
+- **ISSUE-074 — Holm correction family incorrectly pooled across metrics.**
+  Closed in E1-R2-RESULTS-EVIDENCE-SEAL-FIX-R1 by metric-wise families of size 4.
+- **ISSUE-075 — SEALED evidence ZIP was not self-contained.**
+  Closed after packaging seal-gate sources and verifying unpacked replay.
+- **ISSUE-076 — Full test/JUnit evidence incomplete.**
+  Closed after full/unit/integration JUnit and pip check artifacts.
+- **ISSUE-077 — Final deliverable hash manifest self-referenced.**
+  Closed by excluding FINAL_DELIVERABLE_HASHES.* from hashed artifacts.
+- **ISSUE-078 — Results audit commit identity not independently packaged.**
+  Closed via clean results_evidence_seal_commit, source archive, and Git bundle.
+- **ISSUE-079 — Report and figure presentation not publication-ready.**
+  Closed after formal Word report rebuild and IEEE-style tables/figures.
 
 ### ISSUE-020 — Official E1 runner ignores frozen G=4 mapping
 - **Severity:** Blocking

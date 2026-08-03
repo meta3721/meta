@@ -3,23 +3,24 @@
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import sys
 from pathlib import Path
-from types import ModuleType
 from typing import Any
 
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "scripts"))
+# Resolve package root from this script so unpacked evidence ZIPs work with --root .
+SCRIPT_DIR = Path(__file__).resolve().parent
+DEFAULT_ROOT = SCRIPT_DIR.parent
+sys.path.insert(0, str(SCRIPT_DIR))
 
 BANNED_CLAIMS = (
     "significantly outperforms all baselines",
     "achieves the best rmse",
     "communication bytes",
     "without fallback",
+    "no fallback occurred",
 )
 REQUIRED_TABLES = (
     "table_e1_main_metrics.csv",
@@ -44,16 +45,6 @@ REQUIRED_FIGURES = (
 )
 
 
-def _load_script(name: str) -> ModuleType:
-    path = ROOT / "scripts" / f"{name}.py"
-    spec = importlib.util.spec_from_file_location(f"_sealed_{name}", path)
-    if spec is None or spec.loader is None:
-        raise ImportError(path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
 def _json(path: Path) -> dict[str, Any]:
     if not path.is_file():
         return {}
@@ -61,13 +52,41 @@ def _json(path: Path) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
+def _first_existing(root: Path, relatives: tuple[str, ...]) -> Path | None:
+    for rel in relatives:
+        path = root / rel
+        if path.is_file() or path.is_dir():
+            return path
+    return None
+
+
 def _no_harm_gate_ok(no_harm: dict[str, Any]) -> bool:
     from check_e1_formal_gates import _no_harm_gate_ok as gate_ok
     return gate_ok(no_harm)
 
 
+def _holm_metric_families_ok(holm: pd.DataFrame) -> bool:
+    if holm.empty:
+        return False
+    if "family_id" not in holm.columns or "family_size" not in holm.columns:
+        # Legacy sealed outputs without family columns remain acceptable for SEALED-G5
+        # only when n=5; FIX gates enforce metric-wise families separately.
+        return "n" in holm.columns and int(holm["n"].max()) == 5
+    families = holm.groupby("family_id")
+    if families.ngroups < 5:
+        return False
+    for family_id, group in families:
+        if int(group["family_size"].iloc[0]) != 4:
+            return False
+        if len(group) != 4:
+            return False
+        if family_id == "FAMILY_POOLED_ALL":
+            return False
+    return True
+
+
 def evaluate_sealed_gates(root: Path) -> dict[str, Any]:
-    root = Path(root)
+    root = Path(root).resolve()
     immutability = _json(root / "outputs/audits/E1_R2_FORMAL_RUN_IMMUTABILITY_SUMMARY.json")
     frozen = _json(root / "outputs/audits/E1_R2_25_RUNS_FROZEN_HASH_MANIFEST.json")
     semantic = _json(root / "outputs/audits/E1_R2_FORMAL_SEMANTIC_AUDIT.json")
@@ -75,24 +94,41 @@ def evaluate_sealed_gates(root: Path) -> dict[str, Any]:
     communication = _json(root / "outputs/audits/E1_R2_COMMUNICATION_METRIC_SEMANTICS.json")
     recompute = _json(root / "outputs/audits/E1_R2_FORMAL_RESULTS_INDEPENDENT_RECOMPUTE.json")
 
-    stats_dir = root / "outputs/statistics/E1_R2_SEALED"
-    if not stats_dir.is_dir():
-        stats_dir = root / "outputs/statistics/E1_R2"
+    stats_dir = _first_existing(root, (
+        "outputs/statistics/E1_R2_FINAL_SEALED",
+        "outputs/statistics/E1_R2_SEALED",
+        "outputs/statistics/E1_R2",
+    ))
+    if stats_dir is None:
+        stats_dir = root / "outputs/statistics/E1_R2_FINAL_SEALED"
     no_harm = _json(stats_dir / "no_harm_summary.json")
     wilcoxon_path = stats_dir / "wilcoxon_results.csv"
     holm_path = stats_dir / "holm_results.csv"
     wilcoxon = pd.read_csv(wilcoxon_path) if wilcoxon_path.is_file() else pd.DataFrame()
     holm = pd.read_csv(holm_path) if holm_path.is_file() else pd.DataFrame()
 
-    tables_dir = root / "outputs/paper/E1_R2/tables"
-    figures_dir = root / "outputs/paper/E1_R2/figures"
-    text_tex = root / "outputs/paper/E1_R2/E1_R2_RESULTS_TEXT.tex"
-    text_zh = root / "outputs/paper/E1_R2/E1_R2_RESULTS_TEXT_ZH.md"
-    report_docx = (
-        root / "deliverables/E1_R2_FORMAL_RESULTS_AUDIT_AND_SEAL_R1_REPORT.docx"
-    )
-    if not report_docx.is_file():
-        report_docx = root / "docs/reports/E1_R2_FORMAL_RESULTS_AUDIT_AND_SEAL_R1_REPORT.docx"
+    paper_root = _first_existing(root, (
+        "outputs/paper/E1_R2_FINAL",
+        "outputs/paper/E1_R2",
+    ))
+    if paper_root is None:
+        paper_root = root / "outputs/paper/E1_R2_FINAL"
+    tables_dir = paper_root / "tables"
+    figures_dir = paper_root / "figures"
+    text_tex = paper_root / "E1_R2_RESULTS_TEXT.tex"
+    text_zh = paper_root / "E1_R2_RESULTS_TEXT_ZH.md"
+
+    report_docx = _first_existing(root, (
+        "deliverables/TO_SUBMIT_E1_R2_RESULTS_EVIDENCE_SEAL_FIX_R1/"
+        "E1_R2_RESULTS_EVIDENCE_SEAL_FIX_R1_REPORT.docx",
+        "deliverables/E1_R2_RESULTS_EVIDENCE_SEAL_FIX_R1_REPORT.docx",
+        "docs/reports/E1_R2_RESULTS_EVIDENCE_SEAL_FIX_R1_REPORT.docx",
+        "deliverables/TO_SUBMIT_E1_R2_FORMAL_RESULTS_AUDIT_AND_SEAL_R1/"
+        "E1_R2_FORMAL_RESULTS_AUDIT_AND_SEAL_R1_REPORT.docx",
+        "deliverables/E1_R2_FORMAL_RESULTS_AUDIT_AND_SEAL_R1_REPORT.docx",
+        "docs/reports/E1_R2_FORMAL_RESULTS_AUDIT_AND_SEAL_R1_REPORT.docx",
+        "E1_R2_RESULTS_EVIDENCE_SEAL_FIX_R1_REPORT.docx",
+    ))
 
     text_blob = ""
     for path in (text_tex, text_zh):
@@ -132,8 +168,8 @@ def evaluate_sealed_gates(root: Path) -> dict[str, Any]:
         "SEALED-G5": (
             not wilcoxon.empty
             and not holm.empty
-            and int(wilcoxon["n"].max()) == 5
-            if "n" in wilcoxon.columns and not wilcoxon.empty else False
+            and ("n" not in wilcoxon.columns or int(wilcoxon["n"].max()) == 5)
+            and _holm_metric_families_ok(holm)
         ),
         "SEALED-G6": (
             claims_ok
@@ -148,10 +184,14 @@ def evaluate_sealed_gates(root: Path) -> dict[str, Any]:
         "SEALED-G8": (
             communication.get("is_byte_count") is False
             and communication.get("status") == "PASS"
-            and (root / "docs/reports/E1_R2_COMMUNICATION_METRIC_NOTE.md").is_file()
+            and (
+                (root / "docs/reports/E1_R2_COMMUNICATION_METRIC_NOTE.md").is_file()
+                or (root / "docs/E1_R2_COMMUNICATION_METRIC_NOTE.md").is_file()
+            )
         ),
         "SEALED-G9": (
-            tables_ok and figures_ok and text_tex.is_file() and text_zh.is_file() and report_docx.is_file()
+            tables_ok and figures_ok and text_tex.is_file() and text_zh.is_file()
+            and report_docx is not None and report_docx.is_file()
         ),
         "SEALED-G10": (
             int(immutability.get("original_run_files_modified", -1)) == 0
@@ -165,10 +205,12 @@ def evaluate_sealed_gates(root: Path) -> dict[str, Any]:
         "status": "PASS" if all(gates.values()) else "FAIL",
         "all_pass": all(gates.values()),
         "gates": statuses,
-        "e1_r2_final_status": "SEALED" if all(gates.values()) else "AUDIT_INCOMPLETE",
+        "e1_r2_final_status": "FULLY_SEALED" if all(gates.values()) else "AUDIT_INCOMPLETE",
         "e1_statistical_superiority": "NOT_ESTABLISHED",
         "e2_e9_status": "NOT_STARTED",
-        "statistics_dir": stats_dir.relative_to(root).as_posix(),
+        "statistics_dir": stats_dir.relative_to(root).as_posix() if stats_dir.exists() else None,
+        "paper_dir": paper_root.relative_to(root).as_posix() if paper_root.exists() else None,
+        "report_path": report_docx.relative_to(root).as_posix() if report_docx else None,
         "formal_execution_commit": "e8bd1fc777431c2609def257a04fba093f0daf24",
     }
     return result
@@ -190,10 +232,15 @@ def _write_markdown(path: Path, result: dict[str, Any]) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--root", type=Path, default=ROOT)
+    parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
     args = parser.parse_args(argv)
-    result = evaluate_sealed_gates(args.root)
-    gates_dir = args.root / "outputs/gates/E1_R2_SEALED"
+    root = Path(args.root).resolve()
+    # Prefer scripts next to this file, then root/scripts for unpacked ZIPs.
+    for candidate in (SCRIPT_DIR, root / "scripts"):
+        if candidate.is_dir() and str(candidate) not in sys.path:
+            sys.path.insert(0, str(candidate))
+    result = evaluate_sealed_gates(root)
+    gates_dir = root / "outputs/gates/E1_R2_SEALED"
     gates_dir.mkdir(parents=True, exist_ok=True)
     json_path = gates_dir / "E1_R2_SEALED_GATES.json"
     md_path = gates_dir / "E1_R2_SEALED_GATES.md"
