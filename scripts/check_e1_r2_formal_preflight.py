@@ -199,6 +199,9 @@ def check_preflight(
             and int(item.attrib.get("errors", 0)) == 0
             for item in suites
         )
+    elif mode == "review":
+        # Review may run before the full suite writes JUnit evidence.
+        junit_ok = True
     noninspection = _json(
         root / "outputs/audits/E1_R2_FORMAL_SEED_NONINSPECTION.json"
     )

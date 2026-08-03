@@ -16,6 +16,8 @@
   bytes so exact-head verification is not poisoned by Windows CRLF working trees.
 - Detect R1 aggregate directories by path suffix so worktrees named `*e1_r2*` do not
   bypass the E1_balanced rejection guard.
+- Allow review-mode preflight to pass when full pytest JUnit has not been written
+  yet; an existing failing JUnit still fails the check.
 
 ## E1-R2-FORMAL-FREEZE-SEAL-R1
 
