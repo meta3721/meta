@@ -1,0 +1,23 @@
+{
+  "alpha": 0.05,
+  "confidence_interval": 0.95,
+  "effect_size": [
+    "paired median difference",
+    "relative difference"
+  ],
+  "holm_family": "per metric within pre-registered comparisons",
+  "non_significance_boundary": "not significant does not mean no misalignment",
+  "paired_test": "Wilcoxon signed-rank two-sided",
+  "paired_unit": "same dataset \u00d7 scenario \u00d7 seed",
+  "questions": {
+    "Q-E2-1": [
+      "delta_RMSE_rho",
+      "delta_RMSE_mu",
+      "delta_Gap_mis",
+      "delta_Tail_RMSE"
+    ],
+    "Q-E2-2": "Complete-aligned: target-risk degradation versus arrival-risk degradation",
+    "Q-E2-3": "Complete-counteracting: arrival improvement without target improvement"
+  },
+  "status": "PRE_REGISTERED_CANDIDATE_PENDING_TEACHER_AUTHORIZATION"
+}

@@ -1,0 +1,41 @@
+{
+  "created_at_utc": "2026-08-03T23:38:15.041514+00:00",
+  "e1_files_copied_into_e2_results": 0,
+  "e1_files_modified_by_e2": 0,
+  "e1_formal_seeds_reused": 0,
+  "e1_r2_final_status": "FULLY_SEALED",
+  "e2_formal_runs": 0,
+  "final_package_presentation_commit": "88550483a40a2b94cb9edbdc3825b59ef9a437c3",
+  "final_report_sync_package_fix_commit": "4af6f3c6288c07b43d7fbcad708e2239d08c1a9f",
+  "final_report_synchronization_commit": "bc0c97b2db87174c1ccb4c2b4540a446892ae6f8",
+  "formal_execution_commit": "e8bd1fc777431c2609def257a04fba093f0daf24",
+  "references": {
+    "e1_final_evidence_zip": {
+      "path": "deliverables/TO_SUBMIT_E1_R2_FINAL_REPORT_SYNC_EVIDENCE_PACKAGE_FIX_R1/RAVEN_MCS_E1_R2_FINAL_REPORT_SYNC_EVIDENCE_PACKAGE_FIX_R1_EVIDENCE.zip",
+      "sha256": "8ed45817f508ab008f903cf86af36fdc5443fb6042512288254f6fd9c77fb31e",
+      "size_bytes": 162980
+    },
+    "e1_final_report": {
+      "path": "deliverables/TO_SUBMIT_E1_R2_FINAL_REPORT_SYNCHRONIZATION_R1/E1_R2_FINAL_REPORT_SYNCHRONIZATION_R1_REPORT.docx",
+      "sha256": "fc95fa07b4a6a41e1152858ef776175d1cfe1c3969cd68519cb6cd6a4e2a2b3e",
+      "size_bytes": 98219
+    },
+    "e1_frozen_run_manifest": {
+      "path": "outputs/audits/E1_R2_25_RUNS_FROZEN_HASH_MANIFEST.json",
+      "sha256": "041e35de7d3a70aa842f9bd5e69506e7f6573357e5ac914165528ca194c11f16",
+      "size_bytes": 39629
+    },
+    "e1_protocol": {
+      "path": "configs/frozen/e1_r2_protocol.yaml",
+      "sha256": "393a262b9ada12696762b2d41dac662bac47636ec0728eed3f1a492b4d7bd3ee",
+      "size_bytes": 3903
+    },
+    "e1_seed_registry": {
+      "path": "configs/frozen/e1_r2_seed_registry.yaml",
+      "sha256": "c1e54520cd42289d8492c9178328404ab56b42cf4ff5719319ca36c31336f5b6",
+      "size_bytes": 275
+    }
+  },
+  "results_evidence_seal_commit": "255bd0be433059a3e1bcc3cc497297d6818845e9",
+  "schema_version": 1
+}

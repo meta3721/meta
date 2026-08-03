@@ -1,0 +1,266 @@
+{
+  "formal_execution_prohibited": true,
+  "protocol_status": "CANDIDATE_PENDING_TEACHER_AUTHORIZATION",
+  "scenarios": [
+    {
+      "calibration_residual_delta_cal": 0.0,
+      "client_bias_sigma_b": 0.2,
+      "drift": {
+        "boundary": "E2 does not execute drift.",
+        "enabled": false
+      },
+      "enabled_biases": [],
+      "expected_qualitative_effect": "reference; no intentional misalignment",
+      "forbidden_claims": [
+        "arrival risk substitutes for target risk",
+        "any RAVEN superiority claim",
+        "formal performance conclusion from canary"
+      ],
+      "generator_formula": "target mass fixed; arrival mass is target mass multiplied by enabled opportunity/observation/usable stage factors then normalized",
+      "hidden_confounding": {
+        "boundary": "E2 does not execute hidden confounding.",
+        "enabled": false
+      },
+      "kappa_opp": 0.0,
+      "name": "balanced",
+      "observation_rate_target": 0.2,
+      "p_heterogeneity_strength": 0.0,
+      "parameter_status": "provisional_structural_candidate; teacher authorization required before formal execution",
+      "q_heterogeneity_strength": 0.0,
+      "scenario_payload_sha256": "4b4897bdb2b65050fcc83c09f431bb2fafbf8e98db5e3e44fb3c6fce7f50398c",
+      "sign_direction_map": {
+        "opportunity": "near_target",
+        "p": "constant",
+        "q": "constant"
+      },
+      "support_requirements": {
+        "arrival_positive_support": true,
+        "head_tail_positive_support": true,
+        "p_q_do_not_use_outcome_or_model_error": true,
+        "same_test_support_all_methods": true,
+        "target_positive_support": true
+      },
+      "target_distribution": "fixed_atomic_uniform_over_supported_groups",
+      "usable_rate_target": 0.6
+    },
+    {
+      "calibration_residual_delta_cal": 0.0,
+      "client_bias_sigma_b": 0.2,
+      "drift": {
+        "boundary": "E2 does not execute drift.",
+        "enabled": false
+      },
+      "enabled_biases": [
+        "opportunity"
+      ],
+      "expected_qualitative_effect": "arrival composition differs from target",
+      "forbidden_claims": [
+        "arrival risk substitutes for target risk",
+        "any RAVEN superiority claim",
+        "formal performance conclusion from canary"
+      ],
+      "generator_formula": "target mass fixed; arrival mass is target mass multiplied by enabled opportunity/observation/usable stage factors then normalized",
+      "hidden_confounding": {
+        "boundary": "E2 does not execute hidden confounding.",
+        "enabled": false
+      },
+      "kappa_opp": 1.0,
+      "name": "opportunity_only",
+      "observation_rate_target": 0.2,
+      "p_heterogeneity_strength": 0.0,
+      "parameter_status": "provisional_structural_candidate; teacher authorization required before formal execution",
+      "q_heterogeneity_strength": 0.0,
+      "scenario_payload_sha256": "7ae748558da706af0e7f79fa8f1f39627f20c7d6edbedfba51210ef89e113bfa",
+      "sign_direction_map": {
+        "opportunity": "underrepresent_tail",
+        "p": "constant",
+        "q": "constant"
+      },
+      "support_requirements": {
+        "arrival_positive_support": true,
+        "head_tail_positive_support": true,
+        "p_q_do_not_use_outcome_or_model_error": true,
+        "same_test_support_all_methods": true,
+        "target_positive_support": true
+      },
+      "target_distribution": "fixed_atomic_uniform_over_supported_groups",
+      "usable_rate_target": 0.6
+    },
+    {
+      "calibration_residual_delta_cal": 0.0,
+      "client_bias_sigma_b": 0.2,
+      "drift": {
+        "boundary": "E2 does not execute drift.",
+        "enabled": false
+      },
+      "enabled_biases": [
+        "observation"
+      ],
+      "expected_qualitative_effect": "observation selection shifts arrival mass",
+      "forbidden_claims": [
+        "arrival risk substitutes for target risk",
+        "any RAVEN superiority claim",
+        "formal performance conclusion from canary"
+      ],
+      "generator_formula": "target mass fixed; arrival mass is target mass multiplied by enabled opportunity/observation/usable stage factors then normalized",
+      "hidden_confounding": {
+        "boundary": "E2 does not execute hidden confounding.",
+        "enabled": false
+      },
+      "kappa_opp": 0.0,
+      "name": "observation_only",
+      "observation_rate_target": 0.2,
+      "p_heterogeneity_strength": 1.0,
+      "parameter_status": "provisional_structural_candidate; teacher authorization required before formal execution",
+      "q_heterogeneity_strength": 0.0,
+      "scenario_payload_sha256": "e7a9256802b634e981f71e3fb4ea50273a33958e5b56826b25c44d66f4084318",
+      "sign_direction_map": {
+        "opportunity": "near_target",
+        "p": "underrepresent_tail",
+        "q": "constant"
+      },
+      "support_requirements": {
+        "arrival_positive_support": true,
+        "head_tail_positive_support": true,
+        "p_q_do_not_use_outcome_or_model_error": true,
+        "same_test_support_all_methods": true,
+        "target_positive_support": true
+      },
+      "target_distribution": "fixed_atomic_uniform_over_supported_groups",
+      "usable_rate_target": 0.6
+    },
+    {
+      "calibration_residual_delta_cal": 0.0,
+      "client_bias_sigma_b": 0.2,
+      "drift": {
+        "boundary": "E2 does not execute drift.",
+        "enabled": false
+      },
+      "enabled_biases": [
+        "usable"
+      ],
+      "expected_qualitative_effect": "usable selection shifts effective mass",
+      "forbidden_claims": [
+        "arrival risk substitutes for target risk",
+        "any RAVEN superiority claim",
+        "formal performance conclusion from canary"
+      ],
+      "generator_formula": "target mass fixed; arrival mass is target mass multiplied by enabled opportunity/observation/usable stage factors then normalized",
+      "hidden_confounding": {
+        "boundary": "E2 does not execute hidden confounding.",
+        "enabled": false
+      },
+      "kappa_opp": 0.0,
+      "name": "usable_only",
+      "observation_rate_target": 0.2,
+      "p_heterogeneity_strength": 0.0,
+      "parameter_status": "provisional_structural_candidate; teacher authorization required before formal execution",
+      "q_heterogeneity_strength": 1.0,
+      "scenario_payload_sha256": "083f803eeb99c95f16ee73a4f4c688db4d86792948b0bfddfb9d0a1c646c9de9",
+      "sign_direction_map": {
+        "opportunity": "near_target",
+        "p": "constant",
+        "q": "underrepresent_tail"
+      },
+      "support_requirements": {
+        "arrival_positive_support": true,
+        "head_tail_positive_support": true,
+        "p_q_do_not_use_outcome_or_model_error": true,
+        "same_test_support_all_methods": true,
+        "target_positive_support": true
+      },
+      "target_distribution": "fixed_atomic_uniform_over_supported_groups",
+      "usable_rate_target": 0.6
+    },
+    {
+      "calibration_residual_delta_cal": 0.0,
+      "client_bias_sigma_b": 0.2,
+      "drift": {
+        "boundary": "E2 does not execute drift.",
+        "enabled": false
+      },
+      "enabled_biases": [
+        "opportunity",
+        "observation",
+        "usable"
+      ],
+      "expected_qualitative_effect": "aligned stages amplify target/arrival misalignment",
+      "forbidden_claims": [
+        "arrival risk substitutes for target risk",
+        "any RAVEN superiority claim",
+        "formal performance conclusion from canary"
+      ],
+      "generator_formula": "target mass fixed; arrival mass is target mass multiplied by enabled opportunity/observation/usable stage factors then normalized",
+      "hidden_confounding": {
+        "boundary": "E2 does not execute hidden confounding.",
+        "enabled": false
+      },
+      "kappa_opp": 1.0,
+      "name": "complete_aligned",
+      "observation_rate_target": 0.2,
+      "p_heterogeneity_strength": 1.0,
+      "parameter_status": "provisional_structural_candidate; teacher authorization required before formal execution",
+      "q_heterogeneity_strength": 1.0,
+      "scenario_payload_sha256": "f93b68ff7499296754db8f1ade3b2264303d8580666ec5ead46d65087978a6cc",
+      "sign_direction_map": {
+        "opportunity": "underrepresent_tail",
+        "p": "underrepresent_tail",
+        "q": "underrepresent_tail"
+      },
+      "support_requirements": {
+        "arrival_positive_support": true,
+        "head_tail_positive_support": true,
+        "p_q_do_not_use_outcome_or_model_error": true,
+        "same_test_support_all_methods": true,
+        "target_positive_support": true
+      },
+      "target_distribution": "fixed_atomic_uniform_over_supported_groups",
+      "usable_rate_target": 0.6
+    },
+    {
+      "calibration_residual_delta_cal": 0.0,
+      "client_bias_sigma_b": 0.2,
+      "drift": {
+        "boundary": "E2 does not execute drift.",
+        "enabled": false
+      },
+      "enabled_biases": [
+        "opportunity",
+        "observation",
+        "usable"
+      ],
+      "expected_qualitative_effect": "stages partially cancel; strict protocol makes no single-stage-correction claim",
+      "forbidden_claims": [
+        "arrival risk substitutes for target risk",
+        "any RAVEN superiority claim",
+        "formal performance conclusion from canary"
+      ],
+      "generator_formula": "target mass fixed; arrival mass is target mass multiplied by enabled opportunity/observation/usable stage factors then normalized",
+      "hidden_confounding": {
+        "boundary": "E2 does not execute hidden confounding.",
+        "enabled": false
+      },
+      "kappa_opp": 1.0,
+      "name": "complete_counteracting",
+      "observation_rate_target": 0.2,
+      "p_heterogeneity_strength": 1.0,
+      "parameter_status": "provisional_structural_candidate; teacher authorization required before formal execution",
+      "q_heterogeneity_strength": 1.0,
+      "scenario_payload_sha256": "ffc9948eed699d6c15ad28b40c4c97c102ec4a6f895ba39a0854d7dcc7e905de",
+      "sign_direction_map": {
+        "opportunity": "underrepresent_tail",
+        "p": "underrepresent_tail",
+        "q": "overrepresent_tail"
+      },
+      "support_requirements": {
+        "arrival_positive_support": true,
+        "head_tail_positive_support": true,
+        "p_q_do_not_use_outcome_or_model_error": true,
+        "same_test_support_all_methods": true,
+        "target_positive_support": true
+      },
+      "target_distribution": "fixed_atomic_uniform_over_supported_groups",
+      "usable_rate_target": 0.6
+    }
+  ]
+}
