@@ -34,6 +34,9 @@ REQUIRED_EVIDENCE: Mapping[str, tuple[str, ...]] = {
     "source_equivalence": (
         "**/*E1_R2*SOURCE_EQUIVALENCE*",
         "**/*e1_r2*source_equivalence*",
+        "outputs/audits/e1_r2_source_identity/E1_R2_C1_SOURCE_IDENTITY.json",
+        "outputs/replay/e1_r2_calval_source_identity/"
+        "E1_R2_CALVAL_DETERMINISTIC_REPLAY.json",
     ),
     "provenance": (
         "**/*E1_R2*PROVENANCE*",
@@ -42,10 +45,12 @@ REQUIRED_EVIDENCE: Mapping[str, tuple[str, ...]] = {
     "pre_export_hashes": (
         "**/*E1_R2*PRE*HASH*",
         "**/*e1_r2*pre*hash*",
+        "configs/frozen/E1_R2_FROZEN_CONFIG_MANIFEST.json",
     ),
     "post_export_hashes": (
         "**/*E1_R2*POST*HASH*",
         "**/*e1_r2*post*hash*",
+        "configs/frozen/E1_R2_FROZEN_CONFIG_MANIFEST.json",
     ),
     "frozen_protocol": ("configs/frozen/e1_r2_protocol.yaml",),
     "frozen_manifest": ("configs/frozen/E1_R2_FROZEN_CONFIG_MANIFEST.json",),
@@ -62,14 +67,19 @@ REQUIRED_EVIDENCE: Mapping[str, tuple[str, ...]] = {
     "smoke": (
         "**/*E1_R2*SMOKE*.json",
         "**/*E1_R2*SMOKE*.log",
+        "outputs/smoke/e1_r2_formal_runner_compatibility/**/*",
     ),
     "aggregate_rejection": (
         "**/*E1_R2*AGGREGATE*REJECTION*.json",
         "**/*E1_R2*AGGREGATE*REJECTION*.csv",
+        "logs/e1_r2_freeze_seal/aggregate_rejection_final.stderr.log",
     ),
     "junit": (
         "**/*E1_R2*JUNIT*.xml",
         "**/junit*e1_r2*.xml",
+        "logs/e1_r2_full_pytest.xml",
+        "logs/e1_r2_freeze_seal_unit.xml",
+        "logs/e1_r2_freeze_seal_integration.xml",
     ),
     "logs": (
         "logs/*E1_R2*FORMAL*FREEZE*",
@@ -90,6 +100,7 @@ REQUIRED_EVIDENCE: Mapping[str, tuple[str, ...]] = {
     "r2fs_gates": (
         "**/*R2FS*GATE*.json",
         "**/*FORMAL*FREEZE*SEAL*GATE*.json",
+        "outputs/audits/E1_R2_FREEZE_SEAL_GATES_FINAL.json",
     ),
 }
 
@@ -97,6 +108,7 @@ OPTIONAL_EVIDENCE: Mapping[str, tuple[str, ...]] = {
     "source_snapshot": (
         "**/*E1_R2*SOURCE_SNAPSHOT*",
         "**/*e1_r2*source_snapshot*",
+        "outputs/audits/e1_r2_source_identity/E1_R2_C1_SOURCE.tar.gz",
     ),
     "source_bundle": (
         "**/*E1_R2*SOURCE_BUNDLE*",
@@ -107,6 +119,7 @@ OPTIONAL_EVIDENCE: Mapping[str, tuple[str, ...]] = {
         "**/*e1_r2*source_diff*",
         "**/*E1_R2*.diff",
         "**/*E1_R2*.patch",
+        "outputs/audits/e1_r2_source_identity/AUTHORIZED_TO_C1.patch",
     ),
 }
 
@@ -421,7 +434,10 @@ def main(argv: list[str] | None = None) -> int:
     root = args.root.resolve()
     result = export_evidence(
         root,
-        (args.deliverables or root / "deliverables").resolve(),
+        (
+            args.deliverables
+            or root / "deliverables/TO_SUBMIT_E1_R2_FORMAL_FREEZE_SEAL_R1"
+        ).resolve(),
     )
     print(json.dumps(result, indent=2))
     return 0 if result["status"] == "COMPLETE" else 2
