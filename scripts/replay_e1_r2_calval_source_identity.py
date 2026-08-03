@@ -59,10 +59,9 @@ def replay(root: Path, output: Path) -> dict[str, Any]:
     ]
     results = []
     for role, method, seed, source, filters in cases:
-        selected = source.loc[
-            (source["seed"].astype(int) == seed)
-            & (source["method"].astype(str) == method)
-        ]
+        selected = source.loc[source["seed"].astype(int) == seed]
+        if "method" in source.columns:
+            selected = selected.loc[source["method"].astype(str) == method]
         for key, value in filters.items():
             selected = selected.loc[selected[key].astype(str) == value]
         if len(selected) != 1:
