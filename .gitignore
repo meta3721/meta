@@ -61,3 +61,8 @@ data/processed/**
 !data/processed/**/.gitkeep
 data/manifests/**
 !data/manifests/.gitkeep
+
+outputs/paper/
+outputs/statistics/E1_R2_SEALED/
+outputs/gates/E1_R2_SEALED/
+

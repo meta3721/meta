@@ -302,10 +302,21 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="E1-R2 selects the frozen R2 baseline path and hash checks.",
     )
-    parser.add_argument("--input", type=Path, default=None, help="Input JSON with results")
+    parser.add_argument(
+        "--input",
+        type=Path,
+        default=None,
+        help="Input JSON results, or a per_seed_metrics.parquet path",
+    )
     parser.add_argument("--input-dir", type=Path, default=None,
                         help="Directory with per_seed_metrics.parquet")
     parser.add_argument("--output-dir", type=Path, default=None)
+    parser.add_argument(
+        "--output-root",
+        type=Path,
+        default=None,
+        help="Alias for --output-dir",
+    )
     parser.add_argument("--alpha", type=float, default=0.05)
     parser.add_argument("--threshold", type=float, default=0.03,
                         help="No-harm degradation threshold")
@@ -323,6 +334,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--formal", action="store_true",
                         help="Require the complete formal E1 matrix.")
     args = parser.parse_args(argv)
+    if args.output_root is not None:
+        args.output_dir = args.output_root
     protocol_version = args.protocol_version
     if protocol_version is None and args.experiment == "E1_R2":
         protocol_version = R2_PROTOCOL_VERSION
@@ -335,6 +348,10 @@ def main(argv: list[str] | None = None) -> int:
     args.selected_baseline = resolve_selected_baseline_path(
         protocol_version, args.selected_baseline,
     )
+    if args.input is not None and str(args.input).lower().endswith(".parquet"):
+        # Treat parquet path as the aggregate metrics source.
+        args.input_dir = Path(args.input).parent
+        args.input = None
     if args.input_dir is None:
         args.input_dir = (
             _ROOT / "outputs/aggregate/E1_balanced_entry_r4"
@@ -401,10 +418,28 @@ def main(argv: list[str] | None = None) -> int:
             if single_seed and not args.dry_run:
                 raise RuntimeError("single-seed E1 statistics require --dry-run")
             tests["status"] = "DRY_RUN_SCHEMA_PASS" if args.dry_run else "FORMAL"
-            tests["formal_no_harm_conclusion"] = not args.dry_run
             if args.dry_run:
                 for result in tests.get("no_harm_tests", {}).values():
                     result["no_harm_pass"] = None
+                tests["formal_no_harm_conclusion"] = False
+                tests["formal_no_harm_conclusion_source"] = "dry_run"
+            else:
+                raven_nh = tests.get("no_harm_tests", {}).get("raven", {})
+                nh_pass = raven_nh.get("no_harm_pass")
+                upper = raven_nh.get("one_sided_upper_bound")
+                finite_upper = (
+                    upper is not None
+                    and isinstance(upper, (int, float, np.floating))
+                    and bool(np.isfinite(float(upper)))
+                )
+                tests["formal_no_harm_conclusion"] = bool(
+                    nh_pass is True
+                    and finite_upper
+                    and float(upper) < float(args.threshold)
+                )
+                tests["formal_no_harm_conclusion_source"] = (
+                    "no_harm_tests.raven.no_harm_pass"
+                )
             output_dir.mkdir(parents=True, exist_ok=True)
             dump_json(tests, output_dir / "no_harm_summary.json")
             paired = df.loc[

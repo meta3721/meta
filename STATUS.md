@@ -1,10 +1,10 @@
-# STATUS — RAVEN-MCS V2.3
+﻿# STATUS 鈥?RAVEN-MCS V2.3
 
 **Updated:** 2026-08-03
 **Workspace root:** `D:\Cursor\raven.mcs`  
 **Source docs:** paper PDF + Cursor instruction TXT + design DOCX (`docs/SOURCES.md`)  
-**Current phase:** E1-R2-CANDIDATE-HEAD-CHECK-R1
-**Main experiments:** E1-R2 exact-head candidate check; formal execution still unauthorized
+**Current phase:** E1-R2-FORMAL-RESULTS-AUDIT-AND-SEAL-R1
+**Main experiments:** E1-R2 formal 25/25 complete; results audit/seal in progress
 
 ---
 ## P10 Status (2026-08-01)
@@ -48,14 +48,16 @@
 - `E1-R1 = PERMANENTLY_STOPPED / PERFORMANCE NOT EVALUATED`
 - `E1-R2-PROTOCOL-CALIBRATION-R1 = PASS`
 - `E1-R2-FORMAL-FREEZE-SEAL-R1 = PASS`
-- `E1-R2-CANDIDATE-HEAD-CHECK-R1 = IN_PROGRESS`
-- `E1-R2 = READY_FOR_FINAL_FORMAL_EXECUTION_AUTHORIZATION / FORMAL 0/25`
+- `E1-R2-CANDIDATE-HEAD-CHECK-R1 = PASS`
+- `E1-R2-FORMAL-EXECUTION-R1 = PASS (25/25)`
+- `E1-R2-FORMAL-RESULTS-AUDIT-AND-SEAL-R1 = PASS`
+- `E1-R2 = SEALED / FORMAL 25/25 / STATISTICAL SUPERIORITY NOT ESTABLISHED`
 - `E2-E9 = NOT STARTED`
 
 Phase A sealed `formal_execution_commit=c077cfb7...` with HARNESS-G1..G10
 PASS. Phase B fail-fast stopped on
 `E1_FORMAL_fedavg_window_26001_*` when
-`first_stage_clip_rate≈0.0637 > 0.05` (E1-RUN-G6). Failed run retained;
+`first_stage_clip_rate鈮?.0637 > 0.05` (E1-RUN-G6). Failed run retained;
 24 remaining formal runs not started; no retuning. DIAG-R1 reproduced that
 macro `>=` rate exactly, found zero exact-boundary hits and risk/observed
 true-exceed rates above 5% within persisted attempted-client rows, and
@@ -66,19 +68,19 @@ because nonattempted p/zeta vectors were not persisted. Evidence under
 
 E1-R2 now uses a unique observed-record global-micro true-exceed gate
 (`u > a_max + 1e-12`, threshold 5%) with disjoint 100-window calibration,
-validation, and formal seed roles. C0 (`a_max=20`) failed calibration; C1–C3
+validation, and formal seed roles. C0 (`a_max=20`) failed calibration; C1鈥揅3
 passed. Validation rejected C1 on per-seed safety and selected C2
 (`a_max=40`, opportunity forgetting unchanged at 0.95) over C3 by the
 pre-registered RMSE rule. The validation baseline is
 `flamf_timealign_adapted`; no-harm upper 95% is about 0.00146 < 0.03.
-R2P-G1–G10 PASS. Formal seeds 28001–28005 have structural traces only:
+R2P-G1鈥揋10 PASS. Formal seeds 28001鈥?8005 have structural traces only:
 zero training, prediction, RMSE, clip, or ESS outputs.
 
 R2 freeze-seal binds the protocol, runner, observed-record global-micro
 strict-exceed gate, aggregate rejection rules, and all 15 traces to one clean
 execution candidate. The real runner compatibility smoke used calibration
 seed 27001 for two non-formal windows only; formal aggregation rejected it.
-R2FS-G1–G10 PASS; formal execution remains 0/25.
+R2FS-G1鈥揋10 PASS; formal execution remains 0/25.
 
 ## P10-E Smoke Results (2026-08-01)
 
@@ -117,14 +119,14 @@ All P10 smoke checks and R1-G1 through R1-G8: **PASS**.
 | 3 Target / strata | **DONE** | TargetBuilder / GroupMapper / StrataMapper |
 | 4 EventTrace + G1 | **DONE** | Immutable parquet+hash; G1 PASS |
 | 5 Common-NDMF | **DONE** | Shared backbone; no client embedding |
-| 6 WindowRunner + G2 | **DONE** | Frozen θ + one update; G2 PASS |
+| 6 WindowRunner + G2 | **DONE** | Frozen 胃 + one update; G2 PASS |
 | 7 Propensity / opportunity | **DONE** | Lagged p/q + EMA opportunity cores |
 | 8 Methods | **PARTIAL** | E1 five-method official entry verified; centralized methods remain pending |
-| 9 P2 / debt + G3–G5 | **DONE** | G3–G5 PASS via `check_hard_gates.py` |
+| 9 P2 / debt + G3鈥揋5 | **DONE** | G3鈥揋5 PASS via `check_hard_gates.py` |
 | 10 Metrics / artifacts | **DONE FOR E1 ENTRY** | Full predictions, risks, RMSE/Gap/ESS/clip/solver artifacts |
-| E0 unit suite | **DONE** | E0.1–E0.6 green via `scripts/check_e0.py` |
+| E0 unit suite | **DONE** | E0.1鈥揈0.6 green via `scripts/check_e0.py` |
 | E1 Balanced / G6 | READY_FOR_FINAL_EXECUTION_AUTHORIZATION | Freeze-R1 PASS; formal 25-run E1 not started |
-| E2–E9 / 20-seed | BLOCKED | |
+| E2鈥揈9 / 20-seed | BLOCKED | |
 
 ---
 
@@ -171,7 +173,7 @@ All P10 smoke checks and R1-G1 through R1-G8: **PASS**.
 
 ## Phase 1 report (2026-07-30)
 
-### 1. 本阶段完成内容
+### 1. 鏈樁娈靛畬鎴愬唴瀹?
 
 - Built `src/raven_mcs/` package layout and `configs/` tree.
 - Implemented seed manager and RNG capture/restore, package-aware environment hash, stable run hash, YAML config validation, manifest start/finalize lifecycle, atomic run-directory ownership, and binary checkpoint resume.
@@ -179,7 +181,7 @@ All P10 smoke checks and R1-G1 through R1-G8: **PASS**.
 - Cleaned accidental dirs (`correctionmkdir`, `utilsmkdir`) and misnamed `requirements.txt.txt`.
 - Verified on project `.venv` Python **3.11.8**; regenerated `requirements-lock.txt`.
 
-### 2. 新增/修改文件
+### 2. 鏂板/淇敼鏂囦欢
 
 - `pyproject.toml`, `environment.yml`, `requirements.txt`, `requirements-lock.txt`, `Makefile`, `README.md`, `CHANGELOG.md`, `.gitignore`
 - `configs/**`
@@ -188,7 +190,7 @@ All P10 smoke checks and R1-G1 through R1-G8: **PASS**.
 - `tests/unit/test_*.py` (including run lifecycle and strict Git behavior)
 - Updated `STATUS.md`, `ISSUES.md`
 
-### 3. 关键设计决策
+### 3. 鍏抽敭璁捐鍐崇瓥
 
 - Use existing `.venv` (3.11.8) as official engineering interpreter for this machine.
 - Seed module path kept as `utils/seed.py` (user-started file), exposing `seed_everything` / `SeedBundle`.
@@ -200,11 +202,11 @@ All P10 smoke checks and R1-G1 through R1-G8: **PASS**.
 - Paper-facing runs require Git by default; Git 2.55 is installed and the repository is initialized.
 - Canonical configs live under `configs/`; empty legacy `config/` and `raven/` ignored.
 
-### 4. 对应论文公式
+### 4. 瀵瑰簲璁烘枃鍏紡
 
-- None numerically; infrastructure only (F1–F9 still PLANNED).
+- None numerically; infrastructure only (F1鈥揊9 still PLANNED).
 
-### 5. 运行的命令
+### 5. 杩愯鐨勫懡浠?
 
 ```text
 .\.venv\Scripts\python.exe -m pip install -e .
@@ -213,7 +215,7 @@ All P10 smoke checks and R1-G1 through R1-G8: **PASS**.
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-### 6. 测试结果
+### 6. 娴嬭瘯缁撴灉
 
 - ENVIRONMENT CHECK **PASSED** (Python 3.11.8 matches official pin)
 - REPOSITORY CHECK **PASSED**
@@ -221,29 +223,29 @@ All P10 smoke checks and R1-G1 through R1-G8: **PASS**.
 - pytest: **33 passed**
 - Strict `--require-git`: **required for paper-facing runs**
 
-### 7. 硬门状态
+### 7. 纭棬鐘舵€?
 
 | Gate | Status |
 |------|--------|
 | G0 | PASS (Phase 2B) |
-| G1–G5 | PASS (`scripts/check_hard_gates.py`) |
-| G6–G7 | Pending (E1 / oracle ordering) |
+| G1鈥揋5 | PASS (`scripts/check_hard_gates.py`) |
+| G6鈥揋7 | Pending (E1 / oracle ordering) |
 | E0 | DONE (formula unit suite) |
 
-### 8. 发现的问题
+### 8. 鍙戠幇鐨勯棶棰?
 
 - ISSUE-001 mitigated via `.venv` 3.11.8.
 - ISSUE-002 resolved: Git installed and repository initialized with an auditable initial commit.
 - ISSUE-006: no raw datasets yet.
 - Empty legacy `config/`, `raven/`, `docs/IMPLEMENTATION_PLAN.md.txt` remain.
 
-### 9. 尚未完成事项（Phase 1 handoff）
+### 9. 灏氭湭瀹屾垚浜嬮」锛圥hase 1 handoff锛?
 
-- E0.1–E0.6 synthetic fixtures and formula tests
-- Phase 2B real adapters and Phases 3–10
+- E0.1鈥揈0.6 synthetic fixtures and formula tests
+- Phase 2B real adapters and Phases 3鈥?0
 - Real datasets
 
-### 10. 下一步动作（updated after Phase 2A）
+### 10. 涓嬩竴姝ュ姩浣滐紙updated after Phase 2A锛?
 
 1. Acquire raw data and implement Phase 2B real adapters / G0.
 2. Implement **E0** formula, P2, debt, and leakage tests in parallel.
@@ -276,7 +278,7 @@ All P10 smoke checks and R1-G1 through R1-G8: **PASS**.
 
 - CLI prepare+freeze+audit is exercised end-to-end in
   `tests/unit/test_data_cli.py`.
-- No paper formula F1–F9 is claimed as numerically implemented.
+- No paper formula F1鈥揊9 is claimed as numerically implemented.
 - **G0 status at Phase 2A close:** not yet passed (real adapters / provenance
   missing). **Superseded by [Phase 2B report](#phase-2b-report-2026-07-31):**
   four official adapters frozen and `g0_overall=PASS`. The separate
@@ -286,7 +288,7 @@ All P10 smoke checks and R1-G1 through R1-G8: **PASS**.
 
 1. Acquire/document raw SensorScope, U-Air, Traffic Volume, and T-Drive data.
 2. Implement and audit each real adapter; stop on Traffic continuity failure.
-3. Run G0 data checks — see Phase 2B. Test-entry freeze gate remains open.
+3. Run G0 data checks 鈥?see Phase 2B. Test-entry freeze gate remains open.
 
 ---
 
@@ -298,19 +300,19 @@ All P10 smoke checks and R1-G1 through R1-G8: **PASS**.
   with provenance JSON and checksum verification.
 - Real adapters: `sensorscope`, `uair`, `traffic`, `tdrive_speed` registered and
   frozen under `data/processed/` + `data/manifests/`.
-- Traffic quality report written; hard floor ≥30×336 met (selected **43×720**).
-  Preferred ≥60 stations **not** met — recorded, no PEMS substitution.
-- G0 checker: `scripts/check_g0_data.py` → `docs/audits/g0_data_check.json`.
+- Traffic quality report written; hard floor 鈮?0脳336 met (selected **43脳720**).
+  Preferred 鈮?0 stations **not** met 鈥?recorded, no PEMS substitution.
+- G0 checker: `scripts/check_g0_data.py` 鈫?`docs/audits/g0_data_check.json`.
 - Dictionary: `docs/DATA_DICTIONARY.md`.
 
 ### Per-dataset G0
 
 | Dataset | Download | Freeze audit | G0 | Shape / notes |
 |---------|----------|--------------|----|---------------|
-| sensorscope | PASS (Zenodo md5 match) | PASS | PASS | 55×312, coverage 1.0 |
-| uair | PASS (`Data-1.zip`) | PASS | PASS | 36×264, coverage 1.0 |
-| traffic | PASS (TfNSW) | PASS | PASS | 43×720; preferred 60 stations unmet |
-| tdrive_speed | PASS (MSR zips 06–014) | PASS | PASS | 500 m / 30 min; fleet 30/70 |
+| sensorscope | PASS (Zenodo md5 match) | PASS | PASS | 55脳312, coverage 1.0 |
+| uair | PASS (`Data-1.zip`) | PASS | PASS | 36脳264, coverage 1.0 |
+| traffic | PASS (TfNSW) | PASS | PASS | 43脳720; preferred 60 stations unmet |
+| tdrive_speed | PASS (MSR zips 06鈥?14) | PASS | PASS | 500 m / 30 min; fleet 30/70 |
 
 ### Verification
 
@@ -332,9 +334,9 @@ g0_overall=PASS
 
 ### Completed
 
-- Correction cores: design ratio, Hájek `a/m/ā/c`, ESS dual identity, stage-2 `d/b/β`.
-- Aggregation cores: debt update, coverage mix, CVXPY+CLARABEL P2, λ constraints.
-- Timing skeleton: `WindowClock` (θ frozen in-window; one update; empty skip).
+- Correction cores: design ratio, H谩jek `a/m/膩/c`, ESS dual identity, stage-2 `d/b/尾`.
+- Aggregation cores: debt update, coverage mix, CVXPY+CLARABEL P2, 位 constraints.
+- Timing skeleton: `WindowClock` (胃 frozen in-window; one update; empty skip).
 - Leakage scan: forbidden q feature tokens (E0.6).
 - Tests: `tests/unit/test_e0_*.py`; runner `scripts/check_e0.py`.
 
@@ -350,15 +352,15 @@ e0_overall=PASS
 ### Scope note
 
 E0 validates formula units on synthetic/hand fixtures. EventTrace / Common-NDMF /
-WindowRunner / G1–G5 were completed in the following report. E1 remains blocked.
+WindowRunner / G1鈥揋5 were completed in the following report. E1 remains blocked.
 
 ### Next (historical; completed below)
 
-1. Phase 3–9 cores and G1–G5 — see following report.
+1. Phase 3鈥? cores and G1鈥揋5 鈥?see following report.
 
 ---
 
-## Phases 3–9 + G1–G5 report (2026-07-31)
+## Phases 3鈥? + G1鈥揋5 report (2026-07-31)
 
 ### Completed
 
@@ -368,7 +370,7 @@ WindowRunner / G1–G5 were completed in the following report. E1 remains blocke
 - Phase 6: `training/window_runner.py` with WindowClock invariants.
 - Phase 7: lagged `ObservationPropensity` / `UsablePropensity` + opportunity EMA.
 - Phase 8: Aggregator interface + FedAvg / FedAsync / TwoStage-Hajek / RAVEN.
-- Phase 9: P2/debt wired through runner; G3–G5 executable checks.
+- Phase 9: P2/debt wired through runner; G3鈥揋5 executable checks.
 
 ### Verification
 
@@ -391,3 +393,4 @@ g1_g5_overall=PASS
 ## Workspace move (2026-07-29)
 
 - Root: `D:\Cursor\raven.mcs`. See ISSUE-008.
+

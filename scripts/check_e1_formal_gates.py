@@ -31,6 +31,33 @@ def resolve_r2_formal_directories(
     }
 
 
+def _no_harm_gate_ok(no_harm: dict) -> bool:
+    """Require formal conclusion to follow the real one-sided upper-bound test."""
+    raven = no_harm.get("no_harm_tests", {}).get("raven", {})
+    upper = raven.get("one_sided_upper_bound")
+    threshold = float(no_harm.get("no_harm_threshold", 0.03))
+    try:
+        finite = upper is not None and float(upper) == float(upper)  # NaN != NaN
+        upper_f = float(upper) if finite else None
+    except (TypeError, ValueError):
+        finite = False
+        upper_f = None
+    nh_pass = raven.get("no_harm_pass") is True
+    conclusion = no_harm.get("formal_no_harm_conclusion") is True
+    return bool(
+        nh_pass
+        and finite
+        and upper_f is not None
+        and upper_f < threshold
+        and conclusion
+        and conclusion == nh_pass
+        and no_harm.get("formal_no_harm_conclusion_source")
+        == "no_harm_tests.raven.no_harm_pass"
+        and no_harm.get("baseline_method") == "flamf_timealign_adapted"
+        and float(no_harm.get("alpha", -1)) == 0.05
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -96,7 +123,7 @@ def main(argv: list[str] | None = None) -> int:
         ),
         "E1-G4": audit.get("all_hard_gates_pass") is True and len(audit.get("execution_commits", [])) == 1,
         "E1-G5": len(wilcoxon) == 20 and len(holm) == 20,
-        "E1-G6": no_harm.get("formal_no_harm_conclusion") is True
+        "E1-G6": _no_harm_gate_ok(no_harm)
                  and "raven" in no_harm.get("no_harm_tests", {})
                  and metrics["c_clip_obs"].notna().all()
                  and metrics["c_clip_obs"].astype(float).le(0.05).all()

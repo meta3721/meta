@@ -6,22 +6,12 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
 
 ## Open
 
-### E1-R2 protocol calibration
+### E1 follow-ups (non-blocking for E1-R2 seal)
 
-- **ISSUE-068 — E1-R2 formal execution requires teacher authorization.**
-  R2 protocol calibration is complete with C2 (`a_max=40`) and
-  `flamf_timealign_adapted` selected using validation only. R2P-G1–G10 and
-  R2FS-G1–G10 pass. Candidate-head exact-HEAD revalidation is required before
-  formal authorization; formal seeds remain structurally inspected only and
-  formal runs are 0/25. Do not start formal execution without final teacher
-  authorization.
+- **ISSUE-013 — Traffic preferred station coverage unmet.** Retained; Traffic
+  preferred ≥60 stations not met. Does not block SensorScope E1-R2 seal.
 
-- **ISSUE-069 — Exact-head smoke/replay/preflight must share one candidate.**
-  Freeze-seal evidence mixed older commits for smoke/replay with the final
-  preflight HEAD. Candidate-head check must prove one clean commit binds all
-  exact-head validations before formal authorization.
-
-### E1-FORMAL-EXECUTION-R1
+### E1-FORMAL-EXECUTION-R1 (historical R1)
 
 - **ISSUE-066 — Formal 100-window first-stage clip exceeds 5%.**
   `fedavg_window` seed 26001 under
@@ -124,6 +114,20 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
   E1-FORMAL-FREEZE-R1.
 - **ISSUE-060b — Protocol self-referenced final Git commit (R1).** Closed in
   E1-FORMAL-FREEZE-R1.
+- **ISSUE-068 — E1-R2 formal execution requires teacher authorization.**
+  Closed after candidate-head PASS, teacher authorization, and formal 25/25
+  completion on `e8bd1fc777431c2609def257a04fba093f0daf24`.
+- **ISSUE-069 — Exact-head smoke/replay/preflight must share one candidate.**
+  Closed by E1-R2-CANDIDATE-HEAD-CHECK-R1; one clean HEAD bound all checks.
+- **ISSUE-070 — Formal no-harm conclusion was set unconditionally.**
+  Closed in E1-R2-FORMAL-RESULTS-AUDIT-AND-SEAL-R1 after logic repair and
+  recomputation from immutable 25-run metrics.
+- **ISSUE-071 — Formal report omitted substantive results.**
+  Closed after complete formal-results audit report regeneration.
+- **ISSUE-072 — RAVEN solver fallback frequency requires disclosure.**
+  Closed after fallback and residual aggregation for five RAVEN formal runs.
+- **ISSUE-073 — Communication metric is update count, not bytes.**
+  Closed after schema/report naming correction to communication updates.
 
 ### ISSUE-020 — Official E1 runner ignores frozen G=4 mapping
 - **Severity:** Blocking

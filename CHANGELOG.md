@@ -1,5 +1,14 @@
 # Changelog
 
+## E1-R2-FORMAL-RESULTS-AUDIT-AND-SEAL-R1
+
+- Froze immutable hashes for the completed 25 formal runs without modifying
+  any original run artifacts.
+- Fixed `formal_no_harm_conclusion` so it follows the real one-sided upper-bound
+  test instead of an unconditional formal-mode PASS.
+- Recomputed sealed no-harm / Wilcoxon / Holm, solver fallback residuals,
+  communication update semantics, paper tables/figures, and SEALED-G1–G10.
+
 ## E1-R2-CANDIDATE-HEAD-CHECK-R1
 
 - Bound exact-head preflight, 2-window smoke, deterministic replay, aggregate
