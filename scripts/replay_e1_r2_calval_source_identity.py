@@ -23,13 +23,20 @@ def _clean(root: Path) -> bool:
     ).stdout.strip() == ""
 
 
-def _compare(actual: float, expected: float) -> dict[str, Any]:
+def _compare(
+    actual: float, expected: float, *, atol: float = 1e-8
+) -> dict[str, Any]:
     delta = abs(float(actual) - float(expected))
     return {
         "actual": float(actual),
         "expected": float(expected),
         "absolute_delta": delta,
-        "exact_within_1e_12": delta <= 1e-12,
+        "tolerance": atol,
+        "within_tolerance": delta <= atol,
+        "explanation": (
+            "CLARABEL floating-point solve replay tolerance"
+            if delta else "bitwise-equal scalar"
+        ),
     }
 
 
@@ -95,7 +102,7 @@ def replay(root: Path, output: Path) -> dict[str, Any]:
             "run_dir": run.relative_to(root).as_posix(),
             "comparisons": comparisons,
             "pass": all(
-                item["exact_within_1e_12"] for item in comparisons.values()
+                item["within_tolerance"] for item in comparisons.values()
             ),
         })
     report = {
