@@ -16,7 +16,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from raven_mcs.experiments.e1_entry import E1_METHODS  # noqa: E402
-from raven_mcs.utils.serialization import dump_json, load_yaml  # noqa: E402
+from raven_mcs.utils.serialization import dump_json, load_json, load_yaml  # noqa: E402
 from e1_r2_common import (  # noqa: E402
     CALIBRATION_SEEDS,
     FORMAL_SEEDS,
@@ -27,7 +27,15 @@ from e1_r2_common import (  # noqa: E402
 )
 
 R2_CONFIG = ROOT / "configs/frozen/e1_r2_protocol.yaml"
-SMOKE_OUTPUT = ROOT / "outputs/smoke/e1_r2_formal_runner_compatibility"
+SMOKE_OUTPUT_COMPAT = ROOT / "outputs/smoke/e1_r2_formal_runner_compatibility"
+SMOKE_OUTPUT_EXACT_HEAD = ROOT / "outputs/smoke/e1_r2_exact_head"
+ALLOWED_SMOKE_OUTPUTS = {
+    SMOKE_OUTPUT_COMPAT.resolve(),
+    SMOKE_OUTPUT_EXACT_HEAD.resolve(),
+}
+# Prefer exact-head for new candidate-head checks; compatibility path remains valid.
+SMOKE_OUTPUT = SMOKE_OUTPUT_EXACT_HEAD
+EXACT_RESTART_MODE = "exact_restart_from_beginning"
 
 
 def _load_run_gates():
@@ -72,6 +80,88 @@ def build_matrix(
     ]
 
 
+def allowed_smoke_output(path: Path) -> bool:
+    return Path(path).resolve() in ALLOWED_SMOKE_OUTPUTS
+
+
+def write_exact_head_smoke_summary(
+    output_root: Path,
+    *,
+    completed: list[dict[str, object]],
+    candidate_commit: str,
+) -> Path | None:
+    if Path(output_root).resolve() != SMOKE_OUTPUT_EXACT_HEAD.resolve():
+        return None
+    by_method = {str(item["method"]): item for item in completed}
+    fedavg = by_method.get("fedavg_window")
+    raven = by_method.get("raven")
+    if fedavg is None or raven is None:
+        raise RuntimeError("exact-head smoke summary requires fedavg_window and raven")
+    fedavg_dir = ROOT / str(fedavg["run_dir"])
+    raven_dir = ROOT / str(raven["run_dir"])
+    fedavg_metrics = load_json(fedavg_dir / "metrics_run.json")
+    raven_metrics = load_json(raven_dir / "metrics_run.json")
+    summary = {
+        "candidate_commit": candidate_commit,
+        "fedavg_run_dir": str(fedavg["run_dir"]),
+        "raven_run_dir": str(raven["run_dir"]),
+        "observed_micro_clip": {
+            "fedavg_window": fedavg_metrics.get(
+                "first_stage_clip_observed_micro_true_exceed"
+            ),
+            "raven": raven_metrics.get(
+                "first_stage_clip_observed_micro_true_exceed"
+            ),
+        },
+        "legacy_macro_clip": {
+            "fedavg_window": fedavg_metrics.get(
+                "first_stage_clip_rate_legacy_macro"
+            ),
+            "raven": raven_metrics.get("first_stage_clip_rate_legacy_macro"),
+        },
+        "gate_field_used": "first_stage_clip_observed_micro_true_exceed",
+        "aggregate_eligible": False,
+        "retry_mode": EXACT_RESTART_MODE,
+        "checkpoint_resume_supported": False,
+    }
+    path = output_root / "EXACT_HEAD_SMOKE_SUMMARY.json"
+    dump_json(summary, path)
+    return path
+
+
+def _execute_item(
+    *,
+    seed: int,
+    method: str,
+    windows: int,
+    device: str,
+    output_root: Path,
+    formal: bool,
+    smoke: bool,
+    retry_mode: str | None,
+    check_e1_run_gates,
+) -> Path:
+    """Run one matrix cell from the beginning (never checkpoint resume)."""
+    role = "formal" if formal else "calibration"
+    run_dir = run_r2_method(
+        ROOT,
+        role=role,
+        method=method,
+        seed=seed,
+        custom_trace_dir=trace_dir(ROOT, role, seed),
+        windows=windows,
+        device=device,
+        output_root=output_root,
+        formal=bool(formal),
+        smoke=bool(smoke),
+        retry_mode=retry_mode,
+    )
+    report = check_e1_run_gates(run_dir)
+    if not report["all_pass"]:
+        raise RuntimeError(f"per-run hard gates failed: {run_dir}")
+    return run_dir
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -86,7 +176,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--output-root", type=Path)
     parser.add_argument("--fail-fast", action="store_true")
-    parser.add_argument("--restart-failed-exact", action="store_true")
+    parser.add_argument(
+        "--restart-failed-exact",
+        action="store_true",
+        help=(
+            "On failure, exact-restart the same commit/seed/method/config/"
+            "trace/initial-model from the beginning. Not checkpoint resume."
+        ),
+    )
     parser.add_argument("--dry-run-scheduler", action="store_true")
     args = parser.parse_args(argv)
 
@@ -112,9 +209,10 @@ def main(argv: list[str] | None = None) -> int:
         output_root = args.output_root or SMOKE_OUTPUT
         if seeds != [27001] or windows != 2:
             raise ValueError("smoke allows only calibration seed 27001 and 2 windows")
-        if output_root.resolve() != SMOKE_OUTPUT.resolve():
+        if not allowed_smoke_output(output_root):
             raise ValueError(
-                "smoke output must be outputs/smoke/e1_r2_formal_runner_compatibility"
+                "smoke output must be outputs/smoke/e1_r2_exact_head or "
+                "outputs/smoke/e1_r2_formal_runner_compatibility"
             )
     else:
         if not args.formal:
@@ -155,6 +253,11 @@ def main(argv: list[str] | None = None) -> int:
         "smoke": bool(args.smoke),
         "dry_run_scheduler": bool(args.dry_run_scheduler),
         "execution_commit": _git_head(),
+        "restart_failed_exact": bool(args.restart_failed_exact),
+        "retry_mode": (
+            EXACT_RESTART_MODE if args.restart_failed_exact else None
+        ),
+        "checkpoint_resume_supported": False,
         "planned": matrix,
         "completed": [],
         "failed": [],
@@ -177,6 +280,9 @@ def main(argv: list[str] | None = None) -> int:
             "matrix_size": len(matrix),
             "first": matrix[0] if matrix else None,
             "last": matrix[-1] if matrix else None,
+            "restart_failed_exact": bool(args.restart_failed_exact),
+            "checkpoint_resume_supported": False,
+            "retry_mode": progress["retry_mode"],
         }, indent=2))
         return 0
 
@@ -186,66 +292,83 @@ def main(argv: list[str] | None = None) -> int:
     check_e1_run_gates = _load_run_gates()
     execution_head = _git_head()
     tick0 = time.perf_counter()
-    for index, item in enumerate(matrix):
-        seed = int(item["seed"])
-        method = str(item["method"])
-        progress["current_seed"] = seed
-        progress["current_method"] = method
-        progress["current_window"] = windows
-        progress["last_update_time"] = datetime.now(timezone.utc).isoformat()
-        dump_json(progress, progress_path)
-        try:
-            if args.formal and _git_head() != execution_head:
-                raise RuntimeError("runtime HEAD changed during formal execution")
-            role = "formal" if args.formal else "calibration"
-            run_dir = run_r2_method(
-                ROOT,
-                role=role,
-                method=method,
-                seed=seed,
-                custom_trace_dir=trace_dir(ROOT, role, seed),
-                windows=windows,
-                device=args.device,
-                output_root=output_root,
-                formal=bool(args.formal),
-                smoke=bool(args.smoke),
-            )
-            if args.formal and _git_head() != execution_head:
-                raise RuntimeError("runtime HEAD changed during formal execution")
-            report = check_e1_run_gates(run_dir)
-            if not report["all_pass"]:
-                raise RuntimeError(
-                    f"per-run hard gates failed: {run_dir}"
+
+    def _run_matrix_items(
+        items: list[dict[str, object]],
+        *,
+        retry_mode: str | None,
+    ) -> None:
+        for item in items:
+            seed = int(item["seed"])
+            method = str(item["method"])
+            progress["current_seed"] = seed
+            progress["current_method"] = method
+            progress["current_window"] = windows
+            progress["last_update_time"] = datetime.now(timezone.utc).isoformat()
+            dump_json(progress, progress_path)
+            try:
+                if args.formal and _git_head() != execution_head:
+                    raise RuntimeError("runtime HEAD changed during formal execution")
+                run_dir = _execute_item(
+                    seed=seed,
+                    method=method,
+                    windows=windows,
+                    device=args.device,
+                    output_root=output_root,
+                    formal=bool(args.formal),
+                    smoke=bool(args.smoke),
+                    retry_mode=retry_mode,
+                    check_e1_run_gates=check_e1_run_gates,
                 )
-            progress["completed"].append({
-                "run_dir": str(run_dir.relative_to(ROOT)),
-                "seed": seed,
-                "method": method,
-            })
-            progress["passed_runs"] = len(progress["completed"])
-            progress["last_completed_run"] = str(run_dir)
-            progress["current_run_id"] = run_dir.name
-        except Exception as exc:  # noqa: BLE001
-            progress["failed"].append({
-                "seed": seed, "method": method, "error": str(exc),
-            })
-            progress["failed_runs"] = len(progress["failed"])
-            if args.fail_fast:
-                progress["last_update_time"] = (
-                    datetime.now(timezone.utc).isoformat()
+                if args.formal and _git_head() != execution_head:
+                    raise RuntimeError("runtime HEAD changed during formal execution")
+                progress["completed"].append({
+                    "run_dir": str(run_dir.relative_to(ROOT)),
+                    "seed": seed,
+                    "method": method,
+                    "retry_mode": retry_mode,
+                })
+                progress["passed_runs"] = len(progress["completed"])
+                progress["last_completed_run"] = str(run_dir)
+                progress["current_run_id"] = run_dir.name
+            except Exception as exc:  # noqa: BLE001
+                progress["failed"].append({
+                    "seed": seed,
+                    "method": method,
+                    "error": str(exc),
+                    "retry_mode": retry_mode,
+                })
+                progress["failed_runs"] = len(progress["failed"])
+                if args.fail_fast and not args.restart_failed_exact:
+                    progress["last_update_time"] = (
+                        datetime.now(timezone.utc).isoformat()
+                    )
+                    dump_json(progress, progress_path)
+                    print(json.dumps(progress, indent=2))
+                    raise SystemExit(1)
+            done = len(progress["completed"]) + len(progress["failed"])
+            progress["completed_runs"] = done
+            elapsed = time.perf_counter() - tick0
+            if done:
+                progress["estimated_remaining_sec"] = (
+                    (elapsed / done) * (len(matrix) - done)
                 )
-                dump_json(progress, progress_path)
-                print(json.dumps(progress, indent=2))
-                return 1
-        done = len(progress["completed"]) + len(progress["failed"])
-        progress["completed_runs"] = done
-        elapsed = time.perf_counter() - tick0
-        if done:
-            progress["estimated_remaining_sec"] = (
-                (elapsed / done) * (len(matrix) - done)
-            )
-        progress["last_update_time"] = datetime.now(timezone.utc).isoformat()
+            progress["last_update_time"] = datetime.now(timezone.utc).isoformat()
+            dump_json(progress, progress_path)
+
+    _run_matrix_items(matrix, retry_mode=None)
+
+    if args.restart_failed_exact and progress["failed"]:
+        # Exact restart from beginning under the same identity — not resume.
+        retry_items = [
+            {"seed": int(item["seed"]), "method": str(item["method"])}
+            for item in list(progress["failed"])
+        ]
+        progress["failed"] = []
+        progress["failed_runs"] = 0
+        progress["exact_restart_attempted"] = retry_items
         dump_json(progress, progress_path)
+        _run_matrix_items(retry_items, retry_mode=EXACT_RESTART_MODE)
 
     progress["formal_performance_result"] = bool(
         args.formal and not progress["failed"] and len(progress["completed"]) == 25
@@ -254,12 +377,24 @@ def main(argv: list[str] | None = None) -> int:
         args.smoke and not progress["failed"] and len(progress["completed"]) == 2
     )
     progress["finished_at"] = datetime.now(timezone.utc).isoformat()
+    if args.smoke and progress["smoke_compatibility_pass"]:
+        summary_path = write_exact_head_smoke_summary(
+            output_root,
+            completed=list(progress["completed"]),
+            candidate_commit=str(progress["execution_commit"]),
+        )
+        if summary_path is not None:
+            progress["exact_head_smoke_summary"] = str(
+                summary_path.relative_to(ROOT)
+            )
     dump_json(progress, progress_path)
     print(json.dumps({
         "formal_performance_result": progress["formal_performance_result"],
         "passed_runs": progress["passed_runs"],
         "failed_runs": progress["failed_runs"],
         "execution_commit": progress["execution_commit"],
+        "checkpoint_resume_supported": False,
+        "retry_mode": progress["retry_mode"],
     }, indent=2))
     success = (
         progress["formal_performance_result"]

@@ -9,7 +9,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from aggregate_results import validate_rows
+from aggregate_results import frozen_r2_selected_baseline_hash, validate_rows
 from e1_r2_common import (
     FORMAL_SEEDS,
     R2_SELECTED_A_MAX,
@@ -19,6 +19,8 @@ from e1_r2_common import (
 )
 from run_e1_formal import build_matrix
 from raven_mcs.experiments.e1_entry import E1_METHODS
+
+_R2_BASELINE_HASH = frozen_r2_selected_baseline_hash(ROOT)
 
 
 def _formal_frame() -> pd.DataFrame:
@@ -51,7 +53,7 @@ def _formal_frame() -> pd.DataFrame:
                 "hard_gate_status": "PASS",
                 "num_windows": 100,
                 "local_steps": 2,
-                "selected_baseline_hash": "baseline-hash",
+                "selected_baseline_hash": _R2_BASELINE_HASH,
                 "execution_commit": "head",
                 "config_hash": "config",
                 "resolved_run_config_hash": "config",

@@ -10,10 +10,16 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
 
 - **ISSUE-068 — E1-R2 formal execution requires teacher authorization.**
   R2 protocol calibration is complete with C2 (`a_max=40`) and
-  `flamf_timealign_adapted` selected using validation only. R2P-G1–G10 pass,
-  R2FS-G1–G10 also pass under the unique clean freeze-seal candidate, but all
-  formal seeds remain structurally inspected only and formal runs are 0/25.
-  Do not start formal execution without final teacher authorization.
+  `flamf_timealign_adapted` selected using validation only. R2P-G1–G10 and
+  R2FS-G1–G10 pass. Candidate-head exact-HEAD revalidation is required before
+  formal authorization; formal seeds remain structurally inspected only and
+  formal runs are 0/25. Do not start formal execution without final teacher
+  authorization.
+
+- **ISSUE-069 — Exact-head smoke/replay/preflight must share one candidate.**
+  Freeze-seal evidence mixed older commits for smoke/replay with the final
+  preflight HEAD. Candidate-head check must prove one clean commit binds all
+  exact-head validations before formal authorization.
 
 ### E1-FORMAL-EXECUTION-R1
 

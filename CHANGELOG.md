@@ -1,5 +1,14 @@
 # Changelog
 
+## E1-R2-CANDIDATE-HEAD-CHECK-R1
+
+- Bound exact-head preflight, 2-window smoke, deterministic replay, aggregate
+  rejection, and Git bundle evidence to one final clean candidate HEAD.
+- Fixed R2 statistics/formal-gate defaults away from R1 baseline and
+  `E1_balanced` directories; clarified exact restart is not checkpoint resume.
+- Separated `atomic_target_weight_hash` from `client_stratum_target_mass_hash`
+  and enforced LF text policy via `.gitattributes`. Formal runs remain 0/25.
+
 ## E1-R2-FORMAL-FREEZE-SEAL-R1
 
 - Sealed the R2 protocol, provenance, pre/postselection hashes, formal runner,

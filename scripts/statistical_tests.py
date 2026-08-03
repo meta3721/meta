@@ -36,7 +36,56 @@ _SRC = _ROOT / "src"
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
+from raven_mcs.utils.hashing import sha256_file
 from raven_mcs.utils.serialization import dump_json, load_json, load_yaml
+
+R1_SELECTED_BASELINE = _ROOT / "configs/frozen/e1_selected_baseline.yaml"
+R2_SELECTED_BASELINE = _ROOT / "configs/frozen/e1_r2_selected_baseline.yaml"
+R2_FROZEN_MANIFEST = _ROOT / "configs/frozen/E1_R2_FROZEN_CONFIG_MANIFEST.json"
+R2_PROTOCOL_VERSION = "E1-R2"
+R2_BASELINE_METHOD = "flamf_timealign_adapted"
+
+
+def resolve_selected_baseline_path(
+    protocol_version: str | None,
+    selected_baseline: Path | None = None,
+) -> Path:
+    """Resolve frozen baseline path; E1-R2 never defaults to the R1 file."""
+    if selected_baseline is not None:
+        return Path(selected_baseline)
+    if protocol_version == R2_PROTOCOL_VERSION:
+        return R2_SELECTED_BASELINE
+    return R1_SELECTED_BASELINE
+
+
+def verify_r2_selected_baseline(path: Path) -> str:
+    """Require R2 baseline identity and frozen-manifest file hash."""
+    path = Path(path)
+    if path.resolve() == R1_SELECTED_BASELINE.resolve():
+        raise RuntimeError(
+            "E1-R2 statistics must not use configs/frozen/e1_selected_baseline.yaml"
+        )
+    selected = load_yaml(path)
+    baseline_method = selected.get("selected_baseline")
+    if baseline_method != R2_BASELINE_METHOD:
+        raise RuntimeError(
+            "E1-R2 selected_baseline must be flamf_timealign_adapted"
+        )
+    file_hash = sha256_file(path)
+    manifest = load_json(R2_FROZEN_MANIFEST)
+    recorded = manifest["files"]["configs/frozen/e1_r2_selected_baseline.yaml"][
+        "sha256"
+    ]
+    if file_hash != recorded:
+        raise RuntimeError(
+            "E1-R2 selected_baseline_hash does not match frozen manifest: "
+            f"{file_hash} != {recorded}"
+        )
+    if path.name == "e1_selected_baseline.yaml":
+        raise RuntimeError(
+            "E1-R2 statistics rejects R1 baseline path/hash"
+        )
+    return file_hash
 
 
 def _bootstrap_ci(
@@ -247,7 +296,12 @@ def compute_all_statistics(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="RAVEN-MCS statistical tests.")
-    parser.add_argument("--experiment", default="E1_balanced")
+    parser.add_argument("--experiment", default=None)
+    parser.add_argument(
+        "--protocol-version",
+        default=None,
+        help="E1-R2 selects the frozen R2 baseline path and hash checks.",
+    )
     parser.add_argument("--input", type=Path, default=None, help="Input JSON with results")
     parser.add_argument("--input-dir", type=Path, default=None,
                         help="Directory with per_seed_metrics.parquet")
@@ -257,18 +311,34 @@ def main(argv: list[str] | None = None) -> int:
                         help="No-harm degradation threshold")
     parser.add_argument("--baseline", default=None,
                         help="Explicit override; normally read from frozen selection")
-    parser.add_argument("--selected-baseline", type=Path,
-                        default=_ROOT / "configs/frozen/e1_selected_baseline.yaml")
+    parser.add_argument(
+        "--selected-baseline",
+        type=Path,
+        default=None,
+        help="Frozen baseline YAML; E1-R2 defaults to e1_r2_selected_baseline.yaml",
+    )
     parser.add_argument("--metric", default="RMSE_mu",
                         help="Metric to compare")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--formal", action="store_true",
                         help="Require the complete formal E1 matrix.")
     args = parser.parse_args(argv)
+    protocol_version = args.protocol_version
+    if protocol_version is None and args.experiment == "E1_R2":
+        protocol_version = R2_PROTOCOL_VERSION
+    if args.experiment is None:
+        args.experiment = (
+            "E1_R2" if protocol_version == R2_PROTOCOL_VERSION else "E1_balanced"
+        )
+    if protocol_version is None and args.experiment == "E1_R2":
+        protocol_version = R2_PROTOCOL_VERSION
+    args.selected_baseline = resolve_selected_baseline_path(
+        protocol_version, args.selected_baseline,
+    )
     if args.input_dir is None:
         args.input_dir = (
             _ROOT / "outputs/aggregate/E1_balanced_entry_r4"
-            if args.dry_run
+            if args.dry_run and protocol_version != R2_PROTOCOL_VERSION
             else _ROOT / "outputs/aggregate" / args.experiment
         )
 
@@ -276,19 +346,29 @@ def main(argv: list[str] | None = None) -> int:
         raise FileNotFoundError(
             f"frozen selected baseline missing: {args.selected_baseline}",
         )
+    selected_baseline_hash = None
+    if protocol_version == R2_PROTOCOL_VERSION:
+        selected_baseline_hash = verify_r2_selected_baseline(args.selected_baseline)
     selected = load_yaml(args.selected_baseline)
     baseline_method = args.baseline or selected.get("selected_baseline")
-    if baseline_method not in {
+    if protocol_version == R2_PROTOCOL_VERSION:
+        if baseline_method != R2_BASELINE_METHOD:
+            raise RuntimeError(
+                "E1-R2 selected_baseline must be flamf_timealign_adapted"
+            )
+    elif baseline_method not in {
         "fedavg_window", "fedasync_window", "flamf_timealign_adapted",
     }:
         raise RuntimeError("invalid or missing frozen E1 selected baseline")
     output_dir = args.output_dir or _ROOT / "outputs/statistics" / args.experiment
     tests: dict[str, Any] = {
         "experiment": args.experiment,
+        "protocol_version": protocol_version,
         "alpha": args.alpha,
         "no_harm_threshold": args.threshold,
         "baseline_method": baseline_method,
         "baseline_source": str(args.selected_baseline),
+        "selected_baseline_hash": selected_baseline_hash,
         "metric": args.metric,
     }
 

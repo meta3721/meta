@@ -20,8 +20,54 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 from raven_mcs.experiments.e1_entry import E1_METHODS, E1_SEEDS
+from raven_mcs.utils.hashing import sha256_file
 from raven_mcs.utils.serialization import dump_json, load_json
 from e1_r2_common import FORMAL_SEEDS
+
+R2_BASELINE_PATH = ROOT / "configs/frozen/e1_r2_selected_baseline.yaml"
+R2_FROZEN_MANIFEST = ROOT / "configs/frozen/E1_R2_FROZEN_CONFIG_MANIFEST.json"
+R2_PROTOCOL_VERSION = "E1-R2"
+
+
+def frozen_r2_selected_baseline_hash(root: Path = ROOT) -> str:
+    manifest = load_json(Path(root) / "configs/frozen/E1_R2_FROZEN_CONFIG_MANIFEST.json")
+    recorded = manifest["files"]["configs/frozen/e1_r2_selected_baseline.yaml"][
+        "sha256"
+    ]
+    file_hash = sha256_file(Path(root) / "configs/frozen/e1_r2_selected_baseline.yaml")
+    if file_hash != recorded:
+        raise RuntimeError(
+            "frozen R2 baseline file hash does not match manifest"
+        )
+    return recorded
+
+
+def resolve_aggregate_output_dir(
+    experiment: str, output_dir: Path | None = None,
+) -> Path:
+    if output_dir is not None:
+        return Path(output_dir)
+    if experiment == "E1_R2":
+        return ROOT / "outputs/aggregate/E1_R2"
+    return ROOT / "outputs/aggregate/E1_balanced"
+
+
+def formal_rejection_reasons(frame: pd.DataFrame) -> list[str]:
+    """Structured rejection phrases for smoke / nonformal / incomplete matrices."""
+    reasons: list[str] = []
+    if frame.empty:
+        reasons.append("incomplete 25-run matrix")
+        return reasons
+    if "formal" in frame.columns and frame["formal"].eq(False).any():
+        reasons.append("formal=false")
+    if "num_windows" in frame.columns and frame["num_windows"].eq(2).any():
+        reasons.append("windows=2")
+    seeds = set(int(seed) for seed in frame["seed"].tolist()) if "seed" in frame.columns else set()
+    if seeds and not seeds.issubset(set(FORMAL_SEEDS)):
+        reasons.append("seed not in formal registry")
+    if len(frame) != 25:
+        reasons.append("incomplete 25-run matrix")
+    return reasons
 
 PER_SEED_COLUMNS = (
     "seed", "method", "RMSE_mu", "RMSE_rho", "Gap_mis", "Head_RMSE",
@@ -120,18 +166,29 @@ def collect_run(run_dir: Path) -> dict[str, Any]:
 def validate_rows(frame: pd.DataFrame, *, mode: str) -> None:
     r2_formal = mode == "formal" and "protocol_version" in frame.columns
     if mode == "formal":
-        if (
+        is_smoke = (
             not frame.empty
             and "smoke" in frame.columns
             and frame["smoke"].eq(True).any()
             and frame["formal"].eq(False).any()
+            and "num_windows" in frame.columns
             and frame["num_windows"].eq(2).any()
-        ):
-            raise RuntimeError("nonformal two-window smoke rejected")
+        )
+        if is_smoke:
+            reasons = formal_rejection_reasons(frame)
+            detail = "; ".join(reasons) if reasons else "nonformal smoke"
+            raise RuntimeError(
+                f"nonformal two-window smoke rejected ({detail})"
+            )
         if len(frame) != 25:
-            raise RuntimeError("formal aggregation requires exactly 25 rows")
+            raise RuntimeError(
+                "formal aggregation requires exactly 25 rows "
+                "(incomplete 25-run matrix)"
+            )
         if not frame["formal"].eq(True).all():
-            raise RuntimeError("formal aggregation rejects non-formal run")
+            raise RuntimeError(
+                "formal aggregation rejects non-formal run (formal=false)"
+            )
         if not frame["hard_gate_status"].eq("PASS").all():
             raise RuntimeError("formal aggregation requires PASS hard gates")
         if not frame["num_windows"].eq(100).all() or not frame["local_steps"].eq(2).all():
@@ -139,12 +196,15 @@ def validate_rows(frame: pd.DataFrame, *, mode: str) -> None:
         if frame["selected_baseline_hash"].isna().any():
             raise RuntimeError("formal aggregation requires selected baseline identity")
     if r2_formal:
-        if not frame["protocol_version"].eq("E1-R2").all():
+        if not frame["protocol_version"].eq(R2_PROTOCOL_VERSION).all():
             raise RuntimeError("formal aggregation rejects R1/wrong protocol version")
         if not frame["seed_role"].eq("formal").all():
             raise RuntimeError("formal aggregation rejects calibration/validation role")
         if frame["smoke"].ne(False).any():
-            raise RuntimeError("formal aggregation rejects smoke run")
+            raise RuntimeError(
+                "formal aggregation rejects smoke run "
+                f"({'; '.join(formal_rejection_reasons(frame))})"
+            )
         if not frame["selected_candidate"].eq("C2").all():
             raise RuntimeError("formal aggregation requires selected candidate C2")
         if not frame["a_max"].eq(40.0).all():
@@ -155,6 +215,12 @@ def validate_rows(frame: pd.DataFrame, *, mode: str) -> None:
             )
         if not frame["selected_baseline"].eq("flamf_timealign_adapted").all():
             raise RuntimeError("formal aggregation requires frozen R2 baseline")
+        expected_hash = frozen_r2_selected_baseline_hash(ROOT)
+        if not frame["selected_baseline_hash"].astype(str).eq(expected_hash).all():
+            raise RuntimeError(
+                "formal aggregation selected_baseline_hash must equal "
+                "frozen R2 baseline file hash from manifest"
+            )
         if frame["c_clip_obs"].isna().any() or frame[
             "first_stage_clip_observed_micro_true_exceed"
         ].isna().any():
@@ -176,6 +242,7 @@ def validate_rows(frame: pd.DataFrame, *, mode: str) -> None:
             raise RuntimeError("formal aggregation requires strict-exceed clip metric")
         if frame["c_clip_obs"].astype(float).gt(0.05).any():
             raise RuntimeError("formal aggregation observed clip hard gate failed")
+        # Legacy macro clip remains diagnostic-only and must not gate formal rows.
     required_seeds = (
         {26001}
         if mode in {
@@ -185,8 +252,13 @@ def validate_rows(frame: pd.DataFrame, *, mode: str) -> None:
         else set(FORMAL_SEEDS if r2_formal else E1_SEEDS)
     )
     if set(frame["seed"]) != required_seeds:
+        extra = ""
+        if r2_formal or mode == "formal":
+            seeds = set(int(seed) for seed in frame["seed"].tolist())
+            if not seeds.issubset(set(FORMAL_SEEDS)):
+                extra = " (seed not in formal registry)"
         raise RuntimeError(
-            f"{mode} seed set mismatch: {sorted(set(frame['seed']))}",
+            f"{mode} seed set mismatch: {sorted(set(frame['seed']))}{extra}",
         )
     duplicates = frame.duplicated(["seed", "method"], keep=False)
     if duplicates.any():
@@ -233,9 +305,21 @@ def validate_rows(frame: pd.DataFrame, *, mode: str) -> None:
         raise RuntimeError("methods do not share initial model within seed")
 
 
-def aggregate(input_root: Path, output_dir: Path, *, mode: str) -> pd.DataFrame:
+def aggregate(
+    input_root: Path,
+    output_dir: Path,
+    *,
+    mode: str,
+    experiment: str = "E1_balanced",
+) -> pd.DataFrame:
     successes = []
     failures = []
+    input_text = str(input_root).replace("\\", "/").lower()
+    if experiment == "E1_R2" and mode == "formal":
+        if "e1_balanced" in input_text and "e1_r2" not in input_text:
+            raise RuntimeError(
+                "E1_R2 aggregation rejects R1 directory"
+            )
     for manifest_path in sorted(input_root.rglob("manifest.json")):
         run_dir = manifest_path.parent
         if mode == "formal" and any(
@@ -246,7 +330,11 @@ def aggregate(input_root: Path, output_dir: Path, *, mode: str) -> pd.DataFrame:
             )
         ):
             if "smoke" in str(run_dir).lower():
-                raise RuntimeError("nonformal two-window smoke rejected")
+                raise RuntimeError(
+                    "nonformal two-window smoke rejected "
+                    "(formal=false; windows=2; seed not in formal registry; "
+                    "incomplete 25-run matrix)"
+                )
             raise RuntimeError(
                 f"formal aggregation rejects R1/non-formal path: {run_dir}"
             )
@@ -297,8 +385,11 @@ def aggregate(input_root: Path, output_dir: Path, *, mode: str) -> pd.DataFrame:
         columns=list(E1_METHODS),
     ).to_csv(output_dir / "completeness_matrix.csv")
     dump_json({
-        "experiment": "E1_balanced",
+        "experiment": experiment,
         "mode": mode,
+        "protocol_version": (
+            R2_PROTOCOL_VERSION if experiment == "E1_R2" else None
+        ),
         "successful_runs": len(frame),
         "failed_runs": len(failures),
         "seeds": sorted(frame["seed"].unique().tolist()),
@@ -312,6 +403,7 @@ def aggregate(input_root: Path, output_dir: Path, *, mode: str) -> pd.DataFrame:
         },
         "hard_gate_pass": True,
         "aggregate_status": "PASS",
+        "legacy_macro_clip_is_diagnostic_only": True,
     }, output_dir / "aggregate_summary.json")
     return ordered
 
@@ -383,8 +475,40 @@ def main(argv: list[str] | None = None) -> int:
         )
     else:
         input_dir = args.input_dir or ROOT / "outputs/runs"
-        output_dir = args.output_dir or ROOT / "outputs/aggregate/E1_balanced"
-    frame = aggregate(input_dir, output_dir, mode=args.mode)
+        output_dir = resolve_aggregate_output_dir(args.experiment, args.output_dir)
+        if args.experiment == "E1_R2":
+            input_text = str(input_dir).replace("\\", "/").lower()
+            if "e1_balanced" in input_text and "e1_r2" not in input_text:
+                raise RuntimeError("E1_R2 aggregation rejects R1 directory")
+    try:
+        frame = aggregate(
+            input_dir, output_dir, mode=args.mode, experiment=args.experiment,
+        )
+    except RuntimeError as exc:
+        if args.experiment == "E1_R2" and args.mode == "formal":
+            message = str(exc)
+            reasons = [
+                token for token in (
+                    "formal=false",
+                    "windows=2",
+                    "seed not in formal registry",
+                    "incomplete 25-run matrix",
+                )
+                if token in message
+            ]
+            if reasons or "smoke" in message.lower() or "r1 directory" in message.lower():
+                audit_dir = ROOT / "outputs/audits"
+                audit_dir.mkdir(parents=True, exist_ok=True)
+                dump_json({
+                    "rejection_status": "PASS",
+                    "rejected_as_expected": True,
+                    "experiment": "E1_R2",
+                    "protocol_version": R2_PROTOCOL_VERSION,
+                    "input_root": str(input_dir),
+                    "error": message,
+                    "reasons": reasons or [message],
+                }, audit_dir / "E1_R2_EXACT_HEAD_AGGREGATE_REJECTION.json")
+        raise
     print(f"Aggregated {len(frame)} rows -> {output_dir / 'per_seed_metrics.parquet'}")
     return 0
 

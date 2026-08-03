@@ -207,6 +207,7 @@ def postprocess_r2_run(
     *,
     role: str,
     smoke: bool,
+    retry_mode: str | None = None,
 ) -> dict[str, Any]:
     """Seal R2 identity and observed-record strict-exceed diagnostics."""
     root, run_dir = Path(root), Path(run_dir)
@@ -270,6 +271,8 @@ def postprocess_r2_run(
         ["git", "status", "--porcelain"], cwd=root, check=True,
         capture_output=True, text=True,
     ).stdout.strip() == ""
+    # Infrastructure retry is always an exact restart from the beginning.
+    # Checkpoint resume is not supported for R2 formal/smoke execution.
     manifest.update({
         "protocol_version": R2_PROTOCOL_VERSION,
         "seed_role": role,
@@ -281,6 +284,8 @@ def postprocess_r2_run(
         "smoke": bool(smoke),
         "execution_commit": execution_commit,
         "execution_git_clean": execution_git_clean,
+        "git_clean_at_start": execution_git_clean,
+        "checkpoint_resume_supported": False,
         "performance_claim": not smoke,
         "protocol_file_hash": sha256_file(protocol_path),
         "protocol_payload_hash": sha256_json(frozen["protocol"]),
@@ -288,6 +293,13 @@ def postprocess_r2_run(
         "resolved_run_config_hash": sha256_file(resolved_path),
         "config_hash": sha256_file(resolved_path),
     })
+    if retry_mode is not None:
+        if retry_mode != "exact_restart_from_beginning":
+            raise ValueError(
+                "R2 retry_mode must be exact_restart_from_beginning "
+                "(not checkpoint resume)"
+            )
+        manifest["retry_mode"] = "exact_restart_from_beginning"
     if smoke:
         manifest["phase"] = "smoke"
     dump_json(manifest, run_dir / "manifest.json")
@@ -308,6 +320,7 @@ def run_r2_method(
     device: str = "cpu",
     formal: bool = False,
     smoke: bool = False,
+    retry_mode: str | None = None,
 ) -> Path:
     """Run the existing official formulas through the frozen R2 adapter."""
     if role not in {"calibration", "validation", "formal"}:
@@ -371,7 +384,9 @@ def run_r2_method(
         "summary": support["seeds"][str(seed)],
         "performance_values_modified": False,
     }, run_dir / "support_crosscheck_ref.json")
-    postprocess_r2_run(root, run_dir, role=role, smoke=smoke)
+    postprocess_r2_run(
+        root, run_dir, role=role, smoke=smoke, retry_mode=retry_mode,
+    )
     return run_dir
 
 

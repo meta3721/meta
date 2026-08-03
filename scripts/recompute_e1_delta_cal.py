@@ -11,7 +11,7 @@ import pandas as pd
 from raven_mcs.data.target import GroupMapper, TargetBuilder
 from raven_mcs.experiments.e1_entry import add_e1_groups, sensorscope_dataset
 from raven_mcs.utils.hashing import sha256_file, sha256_json
-from raven_mcs.utils.serialization import dump_json, load_yaml
+from raven_mcs.utils.serialization import dump_json, load_json, load_yaml
 
 
 def recompute(root: Path) -> tuple[pd.DataFrame, dict]:
@@ -49,6 +49,22 @@ def recompute(root: Path) -> tuple[pd.DataFrame, dict]:
     )
     delta = float(selected["weighted_abs_bias"].sum())
     selected["Delta_cal"] = delta
+    atomic_records = [
+        {"unit_id": str(unit_id), "target_weight": float(weight)}
+        for unit_id, weight in (
+            selected.set_index("unit_id")["target_weight"].sort_index().items()
+        )
+    ]
+    pi_manifest = root / "configs/frozen/e1_pi_target_manifest.json"
+    client_stratum_hash = load_json(pi_manifest).get(
+        "client_stratum_target_mass_hash"
+    )
+    atomic_hash = sha256_json(atomic_records)
+    if not client_stratum_hash or client_stratum_hash == atomic_hash:
+        raise RuntimeError(
+            "atomic_target_weight_hash and client_stratum_target_mass_hash "
+            "must be present and distinct"
+        )
     summary = {
         "Delta_cal": delta,
         "support_source": "station_client_mapping",
@@ -57,9 +73,8 @@ def recompute(root: Path) -> tuple[pd.DataFrame, dict]:
         "test_split_used_for_bias_centering": False,
         "target_weight_sum": float(selected["target_weight"].sum()),
         "mapped_client_count": int(selected["mapped_client"].nunique()),
-        "client_stratum_target_mass_hash": sha256_json(
-            selected[["unit_id", "target_weight"]].to_dict(orient="records"),
-        ),
+        "atomic_target_weight_hash": atomic_hash,
+        "client_stratum_target_mass_hash": client_stratum_hash,
         "client_mapping_file_hash": sha256_file(mapping_path),
     }
     return selected, summary

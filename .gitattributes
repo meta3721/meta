@@ -1,0 +1,12 @@
+# Force LF for portable text artifacts used by protocol/file identity hashes.
+# After adding this file, coordinate renormalization before a large commit:
+#   python scripts/renormalize_text_eol_lf.py --dry-run
+#   python scripts/renormalize_text_eol_lf.py --apply
+#   python scripts/rebuild_e1_r2_frozen_manifest.py
+*.py    text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
+*.csv   text eol=lf

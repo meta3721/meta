@@ -15,11 +15,18 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from raven_mcs.experiments.e1_entry import E1_METHODS
+from raven_mcs.utils.hashing import sha256_file
 from raven_mcs.utils.serialization import dump_json, load_json
+
+R2_SELECTED_BASELINE_PATH = ROOT / "configs/frozen/e1_r2_selected_baseline.yaml"
 
 
 def _check(name: str, condition: bool, detail: str) -> dict[str, Any]:
     return {"gate": name, "status": "PASS" if condition else "FAIL", "detail": detail}
+
+
+def r2_selected_baseline_file_hash() -> str:
+    return sha256_file(R2_SELECTED_BASELINE_PATH)
 
 
 def check_e1_run_gates(run_dir: Path) -> dict[str, Any]:
@@ -61,13 +68,14 @@ def check_e1_run_gates(run_dir: Path) -> dict[str, Any]:
             and metrics.get("first_stage_clip_hard_gate_metric")
             == "first_stage_clip_observed_micro_true_exceed"
         )
+        expected_baseline_hash = r2_selected_baseline_file_hash()
         selection_ok = (
             manifest.get("method") in E1_METHODS
             and manifest.get("selected_candidate") == "C2"
             and manifest.get("selected_baseline") == "flamf_timealign_adapted"
             and float(manifest.get("a_max", -1)) == 40.0
             and float(manifest.get("opportunity_forgetting", -1)) == 0.95
-            and bool(manifest.get("selected_baseline_hash"))
+            and manifest.get("selected_baseline_hash") == expected_baseline_hash
         )
     else:
         identity_ok = (

@@ -3,8 +3,8 @@
 **Updated:** 2026-08-03
 **Workspace root:** `D:\Cursor\raven.mcs`  
 **Source docs:** paper PDF + Cursor instruction TXT + design DOCX (`docs/SOURCES.md`)  
-**Current phase:** E1-R2-FORMAL-FREEZE-SEAL-R1 PASS
-**Main experiments:** E1-R2 sealed; awaiting final formal execution authorization
+**Current phase:** E1-R2-CANDIDATE-HEAD-CHECK-R1
+**Main experiments:** E1-R2 exact-head candidate check; formal execution still unauthorized
 
 ---
 ## P10 Status (2026-08-01)
@@ -48,6 +48,7 @@
 - `E1-R1 = PERMANENTLY_STOPPED / PERFORMANCE NOT EVALUATED`
 - `E1-R2-PROTOCOL-CALIBRATION-R1 = PASS`
 - `E1-R2-FORMAL-FREEZE-SEAL-R1 = PASS`
+- `E1-R2-CANDIDATE-HEAD-CHECK-R1 = IN_PROGRESS`
 - `E1-R2 = READY_FOR_FINAL_FORMAL_EXECUTION_AUTHORIZATION / FORMAL 0/25`
 - `E2-E9 = NOT STARTED`
 
