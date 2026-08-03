@@ -31,7 +31,11 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def verify(root: Path) -> dict[str, Any]:
+def verify(
+    root: Path,
+    *,
+    output_prefix: str = "E1_R2_RESULTS_EVIDENCE_FIX_IMMUTABILITY_CHECK",
+) -> dict[str, Any]:
     root = Path(root).resolve()
     frozen_path = root / "outputs/audits/E1_R2_25_RUNS_FROZEN_HASH_MANIFEST.json"
     frozen = json.loads(frozen_path.read_text(encoding="utf-8"))
@@ -85,8 +89,8 @@ def verify(root: Path) -> dict[str, Any]:
     }
     audits = root / "outputs/audits"
     audits.mkdir(parents=True, exist_ok=True)
-    json_path = audits / "E1_R2_RESULTS_EVIDENCE_FIX_IMMUTABILITY_CHECK.json"
-    csv_path = audits / "E1_R2_RESULTS_EVIDENCE_FIX_IMMUTABILITY_CHECK.csv"
+    json_path = audits / f"{output_prefix}.json"
+    csv_path = audits / f"{output_prefix}.csv"
     json_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     frame.to_csv(csv_path, index=False)
     summary["outputs"] = {
@@ -99,8 +103,13 @@ def verify(root: Path) -> dict[str, Any]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=ROOT)
+    parser.add_argument(
+        "--output-prefix",
+        default="E1_R2_RESULTS_EVIDENCE_FIX_IMMUTABILITY_CHECK",
+        help="Audit artifact basename without extension.",
+    )
     args = parser.parse_args(argv)
-    summary = verify(args.root)
+    summary = verify(args.root, output_prefix=args.output_prefix)
     print(json.dumps(summary, indent=2))
     return 0 if summary["status"] == "PASS" else 1
 

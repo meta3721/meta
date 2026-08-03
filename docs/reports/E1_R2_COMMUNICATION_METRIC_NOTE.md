@@ -1,6 +1,6 @@
 # E1-R2 Communication Metric Note
 
-Generated: 2026-08-03T11:42:59.137301+00:00
+Generated: 2026-08-03T14:23:48.620551+00:00
 
 The formal E1-R2 runs record **communication as an update count**, not bytes.
 

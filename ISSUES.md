@@ -140,6 +140,14 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
   Closed via clean results_evidence_seal_commit, source archive, and Git bundle.
 - **ISSUE-079 — Report and figure presentation not publication-ready.**
   Closed after formal Word report rebuild and IEEE-style tables/figures.
+- **ISSUE-080 — Evidence ZIP lacked a non-self-referential internal hash manifest.**
+  Closed in E1-R2-FINAL-PACKAGE-AND-PRESENTATION-FIX-R1 via INTERNAL_EVIDENCE_MANIFEST.
+- **ISSUE-081 — Full-repository pytest evidence was substituted by a 16-test subset.**
+  Closed after recording the real full-repo JUnit run (510 collected).
+- **ISSUE-082 — Command ledger contained placeholder pseudo-commands.**
+  Closed after rewriting the ledger with real executable command entries.
+- **ISSUE-083 — Word report had broken table rows and duplicated figure captions.**
+  Closed after camera-ready report rebuild with non-breaking rows and single captions.
 
 ### ISSUE-020 — Official E1 runner ignores frozen G=4 mapping
 - **Severity:** Blocking

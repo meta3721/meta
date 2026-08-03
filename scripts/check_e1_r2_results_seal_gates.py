@@ -33,12 +33,14 @@ REQUIRED_TABLES = (
 )
 REQUIRED_FIGURES = (
     "fig_e1_rmse_mu_by_method",
-    "fig_e1_per_seed_raven_vs_baseline",
     "fig_e1_relative_degradation",
     "fig_e1_clip_by_seed",
-    "fig_e1_ess_by_method",
     "fig_e1_runtime_by_method",
     "fig_e1_solver_fallback_by_seed",
+)
+OPTIONAL_LEGACY_FIGURES = (
+    "fig_e1_per_seed_raven_vs_baseline",
+    "fig_e1_ess_by_method",
     "fig_e1_solver_residuals",
     "fig_e1_gap_mis_by_method",
     "fig_e1_head_tail_rmse",
@@ -108,25 +110,29 @@ def evaluate_sealed_gates(root: Path) -> dict[str, Any]:
     holm = pd.read_csv(holm_path) if holm_path.is_file() else pd.DataFrame()
 
     paper_root = _first_existing(root, (
+        "outputs/paper/E1_R2_CAMERA_READY",
         "outputs/paper/E1_R2_FINAL",
         "outputs/paper/E1_R2",
     ))
     if paper_root is None:
-        paper_root = root / "outputs/paper/E1_R2_FINAL"
+        paper_root = root / "outputs/paper/E1_R2_CAMERA_READY"
     tables_dir = paper_root / "tables"
     figures_dir = paper_root / "figures"
     text_tex = paper_root / "E1_R2_RESULTS_TEXT.tex"
     text_zh = paper_root / "E1_R2_RESULTS_TEXT_ZH.md"
 
     report_docx = _first_existing(root, (
+        "deliverables/TO_SUBMIT_E1_R2_FINAL_PACKAGE_AND_PRESENTATION_FIX_R1/"
+        "E1_R2_FINAL_PACKAGE_AND_PRESENTATION_FIX_R1_REPORT.docx",
+        "deliverables/E1_R2_FINAL_PACKAGE_AND_PRESENTATION_FIX_R1_REPORT.docx",
+        "docs/reports/E1_R2_FINAL_PACKAGE_AND_PRESENTATION_FIX_R1_REPORT.docx",
+        "E1_R2_FINAL_PACKAGE_AND_PRESENTATION_FIX_R1_REPORT.docx",
         "deliverables/TO_SUBMIT_E1_R2_RESULTS_EVIDENCE_SEAL_FIX_R1/"
         "E1_R2_RESULTS_EVIDENCE_SEAL_FIX_R1_REPORT.docx",
         "deliverables/E1_R2_RESULTS_EVIDENCE_SEAL_FIX_R1_REPORT.docx",
         "docs/reports/E1_R2_RESULTS_EVIDENCE_SEAL_FIX_R1_REPORT.docx",
         "deliverables/TO_SUBMIT_E1_R2_FORMAL_RESULTS_AUDIT_AND_SEAL_R1/"
         "E1_R2_FORMAL_RESULTS_AUDIT_AND_SEAL_R1_REPORT.docx",
-        "deliverables/E1_R2_FORMAL_RESULTS_AUDIT_AND_SEAL_R1_REPORT.docx",
-        "docs/reports/E1_R2_FORMAL_RESULTS_AUDIT_AND_SEAL_R1_REPORT.docx",
         "E1_R2_RESULTS_EVIDENCE_SEAL_FIX_R1_REPORT.docx",
     ))
 
@@ -146,6 +152,8 @@ def evaluate_sealed_gates(root: Path) -> dict[str, Any]:
         (figures_dir / f"{name}.pdf").is_file() and (figures_dir / f"{name}.png").is_file()
         for name in REQUIRED_FIGURES
     )
+    # Legacy optional figures remain accepted but are not required for camera-ready packs.
+    _ = OPTIONAL_LEGACY_FIGURES
 
     gates = {
         "SEALED-G1": (

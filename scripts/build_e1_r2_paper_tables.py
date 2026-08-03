@@ -245,8 +245,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--output-root", type=Path, default=None)
+    parser.add_argument("--camera-ready", action="store_true")
     args = parser.parse_args(argv)
-    result = build_tables(args.root, args.output_root)
+    if args.camera_ready:
+        from build_e1_r2_camera_ready_tables import build_tables as build_camera
+        result = build_camera(args.root, args.output_root)
+    else:
+        result = build_tables(args.root, args.output_root)
     print(json.dumps(result, indent=2))
     return 0
 

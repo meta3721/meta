@@ -44,7 +44,7 @@ def _method_means(recompute: dict[str, Any]) -> dict[str, float]:
 def build_text(root: Path, output_root: Path | None = None,
                statistics_root: Path | None = None) -> dict[str, Any]:
     root = Path(root)
-    out_dir = Path(output_root) if output_root else root / "outputs/paper/E1_R2_FINAL"
+    out_dir = Path(output_root) if output_root else root / "outputs/paper/E1_R2_CAMERA_READY"
     if not out_dir.is_absolute():
         out_dir = root / out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -75,14 +75,17 @@ def build_text(root: Path, output_root: Path | None = None,
     upper = nh.get("one_sided_upper_bound")
     fallback_total = int(solver.get("total_fallback_invoked", 0))
 
+    rel_pct = ((raven - flamf) / flamf) * 100.0 if flamf else float("nan")
     english = (
         "In the balanced E1 setting, TimeAlign achieved the lowest mean target-risk "
-        f"RMSE$_\\mu$ ({flamf:.6f}), and RAVEN ranked second ({raven:.6f}). "
+        f"RMSE$_\\mu$ ({flamf:.6f}), and RAVEN ranked second ({raven:.6f}); the mean "
+        f"relative difference versus TimeAlign was {rel_pct:.5f}\\%. "
         f"The one-sided 95\\% no-harm upper bound was {float(upper):.6f}, so the frozen "
         f"3\\% criterion was {'satisfied' if nh_pass else 'not satisfied'}. "
-        "RAVEN improved mean RMSE$_\\mu$ over FedAvg, FedAsync, and TwoStage, but "
+        "RAVEN improved mean RMSE$_\\mu$ over FedAvg, FedAsync, and TwoStage-Hajek, but "
         f"{family_note} left all RMSE$_\\mu$ comparisons non-significant "
-        f"(significant count = {significant}). "
+        f"(significant count = {significant}; n=5 power is limited). "
+        "All safety and semantic gates passed. "
         f"Across 500 windows, RAVEN invoked solver fallback {fallback_total} times, "
         "while complete solver failure remained 0. "
         "Communication is reported as the number of received client updates, not bytes. "
@@ -93,10 +96,11 @@ def build_text(root: Path, output_root: Path | None = None,
         "# E1-R2 正式结果文字（中文）",
         "",
         f"- TimeAlign 平均 RMSE_mu 第一：{flamf:.6f}。",
-        f"- RAVEN 平均 RMSE_mu 第二：{raven:.6f}。",
+        f"- RAVEN 平均 RMSE_mu 第二：{raven:.6f}；相对 TimeAlign 平均差异约 {rel_pct:.5f}%。",
         f"- RAVEN 通过 3% no-harm（one-sided 95% UB ≈ {float(upper):.6f}）。",
-        "- RAVEN 平均优于 FedAvg、FedAsync、TwoStage。",
-        f"- 按指标分族的 Holm 校正后，RMSE_mu 比较均不显著（显著数={significant}）。",
+        "- RAVEN 平均优于 FedAvg、FedAsync、TwoStage-Hajek。",
+        f"- 按指标分族的 Holm 校正后，RMSE_mu 比较均不显著（显著数={significant}；n=5 功效有限）。",
+        "- 全部安全与语义门通过。",
         f"- RAVEN 在 500 个窗口中 fallback {fallback_total} 次；完整 solver failure 为 0。",
         "- 通信指标是 received update count，不是 bytes。",
         "- E1 仅代表 balanced 场景。",

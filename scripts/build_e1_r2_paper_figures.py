@@ -269,7 +269,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-root", type=Path, default=None)
     parser.add_argument("--publication-ready", action="store_true")
     args = parser.parse_args(argv)
-    result = build_figures(args.root, args.output_root, publication_ready=args.publication_ready)
+    out = args.output_root.as_posix() if args.output_root else ""
+    if args.publication_ready and "CAMERA_READY" in out:
+        from build_e1_r2_camera_ready_figures import build_figures as build_camera
+        result = build_camera(args.root, args.output_root)
+    else:
+        result = build_figures(args.root, args.output_root, publication_ready=args.publication_ready)
     print(json.dumps(result, indent=2))
     return 0
 

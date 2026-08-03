@@ -41,7 +41,8 @@ def test_holm_family_registry_metric_mode() -> None:
 
 
 def test_final_deliverable_hashes_no_self_reference_helper() -> None:
-    from build_final_deliverable_hashes import ALLOWED_PREFIXES
+    from build_final_deliverable_hashes import allowed_names
 
-    assert "FINAL_DELIVERABLE_HASHES.json" not in ALLOWED_PREFIXES
-    assert "FINAL_DELIVERABLE_HASHES.txt" not in ALLOWED_PREFIXES
+    names = allowed_names("E1_R2_RESULTS_EVIDENCE_SEAL_FIX_R1")
+    assert "FINAL_DELIVERABLE_HASHES.json" not in names
+    assert "FINAL_DELIVERABLE_HASHES.txt" not in names
