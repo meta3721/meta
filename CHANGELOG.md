@@ -12,6 +12,8 @@
   does not dirty a clean candidate checkout.
 - Resolved formal/smoke `--output-root` to an absolute path so relative smoke
   directories remain compatible with run-dir identity bookkeeping.
+- Rebuilt `E1_R2_FROZEN_CONFIG_MANIFEST.json` file hashes from clean LF checkout
+  bytes so exact-head verification is not poisoned by Windows CRLF working trees.
 
 ## E1-R2-FORMAL-FREEZE-SEAL-R1
 

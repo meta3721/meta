@@ -9,18 +9,18 @@
   "files": {
     "configs/frozen/e1_r2_analysis.yaml": {
       "semantic_role": "analysis",
-      "sha256": "2046dd329353b84f0ad6ba07ff6d8c8a525a61c69fe4e84f9f55173643f3b521",
-      "size_bytes": 638
+      "sha256": "b1b02c4bcf8bdd367a82115e7f2153a7eb2c8b575a1c81cf03901b3fccc90733",
+      "size_bytes": 620
     },
     "configs/frozen/e1_r2_candidate_selection.json": {
       "semantic_role": "candidate_selection",
-      "sha256": "dd7945a123ee0002429668a5692ced6384f13870c95c65aa8cfdadefea9dfd1f",
-      "size_bytes": 418
+      "sha256": "16cea499d713eebbb2dcab955db9370e6703c68c08c19a2b7fa3380d7a2bcacb",
+      "size_bytes": 399
     },
     "configs/frozen/e1_r2_eventtrace_manifest.json": {
       "semantic_role": "eventtrace_manifest",
-      "sha256": "f6ab8f6ebda529662e7f274cd9eb14c204f6038873e19a68dd58af869b8571c7",
-      "size_bytes": 27084
+      "sha256": "d67117b495c7486277592cbe1ad46cfba0e0647c158ac86fb30f71816f1ce40e",
+      "size_bytes": 26598
     },
     "configs/frozen/e1_r2_protocol.yaml": {
       "semantic_role": "protocol",
@@ -29,23 +29,23 @@
     },
     "configs/frozen/e1_r2_scheduler.yaml": {
       "semantic_role": "scheduler",
-      "sha256": "87ce9fe400987d8de9f156fff52552e1c9acad217156f8205e2d073286c0e1e9",
-      "size_bytes": 297
+      "sha256": "f5c0e520db3d1b1ab985cc37a252d097bc414532a5202848bf7496d9e9e45074",
+      "size_bytes": 280
     },
     "configs/frozen/e1_r2_seed_registry.yaml": {
       "semantic_role": "seed_registry",
-      "sha256": "84a942dcdcc92cb4beedab4802d98d0c031197ab4eb5b3f995d53e83d62f463b",
-      "size_bytes": 301
+      "sha256": "c1e54520cd42289d8492c9178328404ab56b42cf4ff5719319ca36c31336f5b6",
+      "size_bytes": 275
     },
     "configs/frozen/e1_r2_selected_baseline.yaml": {
       "semantic_role": "selected_baseline",
-      "sha256": "5df8e9b45665e00b29e779873b5cea71e4593be15eb38950457e4068c7e27a89",
-      "size_bytes": 184
+      "sha256": "cfe0c6ce28080df52c23f34c24fcb2486af33c167870adc1f3a0ef30a90060b9",
+      "size_bytes": 174
     },
     "configs/frozen/e1_r2_weight_safety.yaml": {
       "semantic_role": "weight_safety",
-      "sha256": "921ad39c4eba99a55d4b8d921d2217dcb9f6dc78d33fc170d813665d7c1a01a7",
-      "size_bytes": 485
+      "sha256": "551d49af9cd220011457f0d3a7d6218a5961ab8a213b3d6bf4d6db7457ca6cab",
+      "size_bytes": 468
     }
   },
   "formal_experiments_run": 0,
@@ -77,9 +77,9 @@
       "selected_baseline",
       "weight_safety"
     ],
-    "sha256": "6a30bb254e6ac3d23bf48aafc8253297bead0372c55ed7597fd19edfd9efa874"
+    "sha256": "218553adac5bc8a602958d075747f9d48d8530319f5d862319e5b1a627268749"
   },
-  "postselection_hash": "6a30bb254e6ac3d23bf48aafc8253297bead0372c55ed7597fd19edfd9efa874",
+  "postselection_hash": "218553adac5bc8a602958d075747f9d48d8530319f5d862319e5b1a627268749",
   "preselection": {
     "file_count": 4,
     "roles": [
@@ -88,9 +88,9 @@
       "scheduler",
       "seed_registry"
     ],
-    "sha256": "1ac91d72293d188104504c74edd2a4825fd345220b29bc77e8e198afd27e733e"
+    "sha256": "5dc668cced3d8d14a27fff5d6b8e68e9dbc71e7d2c146568acca9d7a2f9f350b"
   },
-  "preselection_hash": "1ac91d72293d188104504c74edd2a4825fd345220b29bc77e8e198afd27e733e",
+  "preselection_hash": "5dc668cced3d8d14a27fff5d6b8e68e9dbc71e7d2c146568acca9d7a2f9f350b",
   "protocol_parent_commit": "c077cfb742a1f25d612228dd6881e4866ca36e04",
   "seal": "E1_R2_FORMAL_FREEZE_SEAL_R1",
   "status": "FROZEN_POST_SELECTION"
