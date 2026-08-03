@@ -8,6 +8,8 @@
   `E1_balanced` directories; clarified exact restart is not checkpoint resume.
 - Separated `atomic_target_weight_hash` from `client_stratum_target_mass_hash`
   and enforced LF text policy via `.gitattributes`. Formal runs remain 0/25.
+- Ignored `outputs/smoke/` and `outputs/gates/` so exact-head smoke evidence
+  does not dirty a clean candidate checkout.
 
 ## E1-R2-FORMAL-FREEZE-SEAL-R1
 

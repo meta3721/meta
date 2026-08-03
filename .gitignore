@@ -22,8 +22,10 @@ outputs/entry_smoke/
 outputs/entry_r2_smoke/
 outputs/entry_r3_smoke/
 outputs/entry_r4_smoke/
+outputs/smoke/
 outputs/evidence_formal_r1/
 outputs/statistics/
+outputs/gates/
 outputs/validation/
 outputs/aggregate/
 outputs/preflight/
