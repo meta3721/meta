@@ -52,6 +52,15 @@ def resolve_aggregate_output_dir(
     return ROOT / "outputs/aggregate/E1_balanced"
 
 
+def is_r1_aggregate_directory(path: Path) -> bool:
+    """True when path is the R1 aggregate root, ignoring parent dir names."""
+    parts = [part.lower() for part in Path(path).resolve().parts]
+    for index in range(len(parts) - 2):
+        if parts[index : index + 3] == ["outputs", "aggregate", "e1_balanced"]:
+            return True
+    return Path(path).name.lower() == "e1_balanced"
+
+
 def formal_rejection_reasons(frame: pd.DataFrame) -> list[str]:
     """Structured rejection phrases for smoke / nonformal / incomplete matrices."""
     reasons: list[str] = []
@@ -314,9 +323,8 @@ def aggregate(
 ) -> pd.DataFrame:
     successes = []
     failures = []
-    input_text = str(input_root).replace("\\", "/").lower()
     if experiment == "E1_R2" and mode == "formal":
-        if "e1_balanced" in input_text and "e1_r2" not in input_text:
+        if is_r1_aggregate_directory(input_root):
             raise RuntimeError(
                 "E1_R2 aggregation rejects R1 directory"
             )
@@ -476,10 +484,8 @@ def main(argv: list[str] | None = None) -> int:
     else:
         input_dir = args.input_dir or ROOT / "outputs/runs"
         output_dir = resolve_aggregate_output_dir(args.experiment, args.output_dir)
-        if args.experiment == "E1_R2":
-            input_text = str(input_dir).replace("\\", "/").lower()
-            if "e1_balanced" in input_text and "e1_r2" not in input_text:
-                raise RuntimeError("E1_R2 aggregation rejects R1 directory")
+        if args.experiment == "E1_R2" and is_r1_aggregate_directory(input_dir):
+            raise RuntimeError("E1_R2 aggregation rejects R1 directory")
     try:
         frame = aggregate(
             input_dir, output_dir, mode=args.mode, experiment=args.experiment,

@@ -14,6 +14,8 @@
   directories remain compatible with run-dir identity bookkeeping.
 - Rebuilt `E1_R2_FROZEN_CONFIG_MANIFEST.json` file hashes from clean LF checkout
   bytes so exact-head verification is not poisoned by Windows CRLF working trees.
+- Detect R1 aggregate directories by path suffix so worktrees named `*e1_r2*` do not
+  bypass the E1_balanced rejection guard.
 
 ## E1-R2-FORMAL-FREEZE-SEAL-R1
 
