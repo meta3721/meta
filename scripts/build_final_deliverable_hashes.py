@@ -41,11 +41,14 @@ def build_hashes(
     formal_execution_commit: str = FORMAL_COMMIT,
     results_evidence_seal_commit: str = EVIDENCE_COMMIT,
     final_package_presentation_commit: str = "UNKNOWN",
+    final_report_synchronization_commit: str | None = None,
+    package_fix_commit: str | None = None,
+    artifact_names: list[str] | None = None,
     no_self_reference: bool = True,
     exclude_self: bool = True,
 ) -> dict[str, Any]:
     deliverables = Path(deliverables).resolve()
-    allowed = allowed_names(package)
+    allowed = set(artifact_names) if artifact_names else allowed_names(package)
     artifacts: dict[str, Any] = {}
     for path in sorted(deliverables.iterdir()):
         if not path.is_file():
@@ -61,12 +64,17 @@ def build_hashes(
     payload = {
         "package": package,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "hash_algorithm": "sha256",
         "formal_execution_commit": formal_execution_commit,
         "results_evidence_seal_commit": results_evidence_seal_commit,
         "final_package_presentation_commit": final_package_presentation_commit,
         "no_self_reference": True,
         "artifacts": artifacts,
     }
+    if final_report_synchronization_commit is not None:
+        payload["final_report_synchronization_commit"] = final_report_synchronization_commit
+    if package_fix_commit is not None:
+        payload["package_fix_commit"] = package_fix_commit
     json_path = deliverables / "FINAL_DELIVERABLE_HASHES.json"
     txt_path = deliverables / "FINAL_DELIVERABLE_HASHES.txt"
     json_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -91,6 +99,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--package", default=DEFAULT_PACKAGE)
     parser.add_argument("--results-evidence-seal-commit", default=EVIDENCE_COMMIT)
     parser.add_argument("--final-package-presentation-commit", default="UNKNOWN")
+    parser.add_argument("--final-report-synchronization-commit", default=None)
+    parser.add_argument("--package-fix-commit", default=None)
+    parser.add_argument("--artifacts", nargs="*", default=None)
     parser.add_argument("--no-self-reference", action="store_true", default=True)
     parser.add_argument("--exclude-self", action="store_true", default=True)
     args = parser.parse_args(argv)
@@ -99,6 +110,9 @@ def main(argv: list[str] | None = None) -> int:
         package=args.package,
         results_evidence_seal_commit=args.results_evidence_seal_commit,
         final_package_presentation_commit=args.final_package_presentation_commit,
+        final_report_synchronization_commit=args.final_report_synchronization_commit,
+        package_fix_commit=args.package_fix_commit,
+        artifact_names=args.artifacts,
         no_self_reference=args.no_self_reference,
         exclude_self=args.exclude_self,
     )
