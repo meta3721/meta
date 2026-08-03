@@ -28,6 +28,7 @@ outputs/validation/
 outputs/aggregate/
 outputs/preflight/
 outputs/regression/
+outputs/replay/
 logs/
 deliverables/
 evidence/**/*.tmp
