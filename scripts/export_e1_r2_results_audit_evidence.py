@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,6 +18,7 @@ README_NAME = f"{PACKAGE}_SUBMISSION_README.txt"
 ZIP_NAME = f"RAVEN_MCS_{PACKAGE}_EVIDENCE.zip"
 HASH_JSON_NAME = "FINAL_DELIVERABLE_HASHES.json"
 HASH_TEXT_NAME = "FINAL_DELIVERABLE_HASHES.txt"
+FORMAL_EXECUTION_COMMIT = "e8bd1fc777431c2609def257a04fba093f0daf24"
 
 REQUIRED_EVIDENCE: Mapping[str, tuple[str, ...]] = {
     "frozen_manifest": ("outputs/audits/E1_R2_25_RUNS_FROZEN_HASH_MANIFEST.json",),
@@ -40,8 +42,13 @@ REQUIRED_EVIDENCE: Mapping[str, tuple[str, ...]] = {
         "outputs/audits/E1_R2_COMMUNICATION_METRIC_SEMANTICS.json",
         "docs/reports/E1_R2_COMMUNICATION_METRIC_NOTE.md",
     ),
-    "paper_tables": ("outputs/paper/E1_R2/tables/table_e1_main_metrics.csv",),
-    "paper_figures": ("outputs/paper/E1_R2/figures/fig_e1_rmse_mu_by_method.pdf",),
+    "issues": ("ISSUES.md",),
+    "paper_tables": ("outputs/paper/E1_R2/tables/table_e1_*.csv", "outputs/paper/E1_R2/tables/table_e1_*.tex"),
+    "paper_figures": (
+        "outputs/paper/E1_R2/figures/fig_e1_*.pdf",
+        "outputs/paper/E1_R2/figures/fig_e1_*.png",
+        "outputs/paper/E1_R2/figures/fig_e1_*_source_data.csv",
+    ),
     "paper_text": (
         "outputs/paper/E1_R2/E1_R2_RESULTS_TEXT.tex",
         "outputs/paper/E1_R2/E1_R2_RESULTS_TEXT_ZH.md",
@@ -54,6 +61,18 @@ REQUIRED_EVIDENCE: Mapping[str, tuple[str, ...]] = {
         "scripts/audit_e1_r2_communication_metric.py",
     ),
 }
+
+
+def _git_head(root: Path) -> str:
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            cwd=root,
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (OSError, subprocess.CalledProcessError):
+        return "UNKNOWN"
 
 OPTIONAL_EVIDENCE: Mapping[str, tuple[str, ...]] = {
     "junit": ("logs/e1_r2_results_audit_full.xml", "logs/e1_r2_results_audit_unit.xml"),
@@ -116,7 +135,8 @@ def export_evidence(root: Path, deliverables: Path) -> dict[str, Any]:
     hash_payload = {
         "package": PACKAGE,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "formal_execution_commit": "e8bd1fc777431c2609def257a04fba093f0daf24",
+        "formal_execution_commit": FORMAL_EXECUTION_COMMIT,
+        "results_audit_commit": _git_head(root),
         "artifacts": artifacts,
     }
     hash_json = deliverables / HASH_JSON_NAME
