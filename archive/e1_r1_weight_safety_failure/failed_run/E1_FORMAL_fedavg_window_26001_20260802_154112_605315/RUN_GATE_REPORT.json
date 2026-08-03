@@ -1,0 +1,51 @@
+{
+  "all_pass": false,
+  "gates": [
+    {
+      "detail": "formal manifest identity",
+      "gate": "E1-RUN-G1",
+      "status": "PASS"
+    },
+    {
+      "detail": "frozen 100-window protocol",
+      "gate": "E1-RUN-G2",
+      "status": "PASS"
+    },
+    {
+      "detail": "q attempt population",
+      "gate": "E1-RUN-G3",
+      "status": "PASS"
+    },
+    {
+      "detail": "support-masked arrival weights",
+      "gate": "E1-RUN-G4",
+      "status": "PASS"
+    },
+    {
+      "detail": "solver acceptance",
+      "gate": "E1-RUN-G5",
+      "status": "PASS"
+    },
+    {
+      "detail": "clip rates <=5% and median n_eff >=2",
+      "gate": "E1-RUN-G6",
+      "status": "FAIL"
+    },
+    {
+      "detail": "metric identity",
+      "gate": "E1-RUN-G7",
+      "status": "PASS"
+    },
+    {
+      "detail": "method and baseline identity",
+      "gate": "E1-RUN-G8",
+      "status": "PASS"
+    },
+    {
+      "detail": "required evidence artifacts",
+      "gate": "E1-RUN-G9",
+      "status": "PASS"
+    }
+  ],
+  "run_dir": "outputs\\runs\\E1_FORMAL_fedavg_window_26001_20260802_154112_605315"
+}

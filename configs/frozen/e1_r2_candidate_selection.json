@@ -1,0 +1,19 @@
+{
+  "eligible_candidates": [
+    "C2",
+    "C3"
+  ],
+  "formal_seed_read_count": 0,
+  "selected_candidate": "C2",
+  "selected_parameters": {
+    "a_max": 40.0,
+    "d_max": 10.0,
+    "opportunity_forgetting": 0.95,
+    "p_min": 0.05,
+    "pi_min": 1e-06,
+    "q_min": 0.05
+  },
+  "selected_validation_baseline": "flamf_timealign_adapted",
+  "selection_split": "validation",
+  "test_read_count": 0
+}

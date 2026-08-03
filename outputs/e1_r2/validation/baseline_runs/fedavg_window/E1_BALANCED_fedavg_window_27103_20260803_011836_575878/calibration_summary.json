@@ -1,0 +1,11 @@
+{
+  "Delta_cal": 0.25564198658603676,
+  "bias_centering_split": null,
+  "client_mapping_file_hash": "804dd0fdb9f9f8865f70e42e4fba57926314d85205642e86972b98d560b3a64c",
+  "client_stratum_target_mass_hash": "0c6a606c5b33d119efc0b59fe3e40544b37d72d0d2f68e07de3f5d4add806016",
+  "mapped_client_count": 8,
+  "support_source": "station_client_mapping",
+  "target_split": "test_weights_only_no_bias_centering",
+  "target_weight_sum": 0.9999999999999999,
+  "test_split_used_for_bias_centering": false
+}

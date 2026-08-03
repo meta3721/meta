@@ -1,0 +1,22 @@
+{
+  "gates": {
+    "DIAG-G1": "PASS",
+    "DIAG-G2": "FAIL",
+    "DIAG-G3": "FAIL",
+    "DIAG-G4": "FAIL",
+    "DIAG-G5": "PASS",
+    "DIAG-G6": "PASS",
+    "DIAG-G7": "PASS",
+    "DIAG-G8": "PASS",
+    "DIAG-G9": "PASS",
+    "DIAG-G10": "PASS"
+  },
+  "all_pass": false,
+  "decision_branch": "C",
+  "decision_reason": "The original documents freeze a threshold but leave population, aggregation, equality, and formal horizon materially ambiguous. Additionally true-exceed risk and observed micro rates exceed 5%.",
+  "formal_runs_completed": 1,
+  "formal_runs_admitted": 0,
+  "E2_E9": "NOT_STARTED",
+  "retuning_occurred": false,
+  "limitation": "The persisted method diagnostics contain p/zeta only for attempted E_r clients (9801 rows), while EventTrace contains 10285 all-client risk rows. A no-training replay of nonattempted client state is required before declaring global risk/observed micro rates complete."
+}

@@ -1,0 +1,58 @@
+{
+  "all_candidates_evaluated": true,
+  "calibration_complete": true,
+  "calibration_seeds": [
+    27001,
+    27002,
+    27003,
+    27004,
+    27005
+  ],
+  "candidate_registry_hash": "e5b372c6831ba8406e320afbf81b622bcab399ed97fed3986b3ff684a744123a",
+  "candidate_status": {
+    "C0": "REJECTED",
+    "C1": "PASSED",
+    "C2": "PASSED",
+    "C3": "PASSED"
+  },
+  "formal_authorized": false,
+  "formal_seed_read_count": 0,
+  "passed_candidates": [
+    "C1",
+    "C2",
+    "C3"
+  ],
+  "protocol": {
+    "dataset": "sensorscope",
+    "formal_seeds": [
+      28001,
+      28002,
+      28003,
+      28004,
+      28005
+    ],
+    "local_steps": 2,
+    "methods": [
+      "fedavg_window",
+      "fedasync_window",
+      "flamf_timealign_adapted",
+      "twostage_hajek",
+      "raven"
+    ],
+    "num_windows": 100,
+    "protocol_version": "E1-R2",
+    "scenario": "balanced"
+  },
+  "reject_any_seed": true,
+  "seeds": [
+    27001,
+    27002,
+    27003,
+    27004,
+    27005
+  ],
+  "selection_split": "calibration",
+  "status": "PASS",
+  "test_read_count": 0,
+  "validation_authorized": true
+}

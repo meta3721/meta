@@ -1,0 +1,26 @@
+{
+  "client_stratum_target_mass_hash": {
+    "object_definition": "ordered client \u00d7 opportunity-stratum pi_k_s_tar records",
+    "source_file": "configs/frozen/e1_pi_target_client_stratum.parquet",
+    "columns": [
+      "client_id",
+      "opportunity_stratum",
+      "pi_k_s_tar"
+    ],
+    "row_count": 440,
+    "payload_hash": "037a933ded779a99812dd7b8b2c973716c0769ed44005aa6dfc76d0fe82cca24",
+    "file_hash": "04f6aa0b485b3ea431f304368eb4cb6f72b412b274c5e0ca5cfec69eeee8d254"
+  },
+  "atomic_target_weight_hash": {
+    "object_definition": "atomic test-unit target weights produced by TargetBuilder",
+    "source_file": "derived during configs/frozen/e1_pi_target_manifest.json creation",
+    "columns": [
+      "unit_id",
+      "target_weight"
+    ],
+    "row_count": null,
+    "payload_hash": "413ad5dab72149c4753668e32a4675a1fab00bb286adb9a9e1e58978a1cc81c5",
+    "file_hash": null
+  },
+  "field_names_are_distinct": true
+}

@@ -1,0 +1,7 @@
+{
+  "feature_code_hash": "115aad44a07d146f679d5ef4fdf3ad904ee60f084546a6f810972c200bd40cfc",
+  "target_group_timezone": "UTC",
+  "timezone": "UTC",
+  "unix_epoch_weekday_offset": 3,
+  "weekday_convention": "Monday=0"
+}

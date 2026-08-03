@@ -1,0 +1,16 @@
+candidate,seed,VAL-G1,VAL-G2,VAL-G3,VAL-G4,VAL-G5,VAL-G6,VAL-G7,all_gates_pass
+C1,27101,True,True,True,True,True,True,True,True
+C1,27102,True,True,True,True,True,True,True,True
+C1,27103,False,True,True,True,True,True,True,False
+C1,27104,True,True,True,True,True,True,True,True
+C1,27105,True,True,True,True,True,True,True,True
+C2,27101,True,True,True,True,True,True,True,True
+C2,27102,True,True,True,True,True,True,True,True
+C2,27103,True,True,True,True,True,True,True,True
+C2,27104,True,True,True,True,True,True,True,True
+C2,27105,True,True,True,True,True,True,True,True
+C3,27101,True,True,True,True,True,True,True,True
+C3,27102,True,True,True,True,True,True,True,True
+C3,27103,True,True,True,True,True,True,True,True
+C3,27104,True,True,True,True,True,True,True,True
+C3,27105,True,True,True,True,True,True,True,True

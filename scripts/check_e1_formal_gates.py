@@ -26,12 +26,37 @@ def main(argv: list[str] | None = None) -> int:
     holm = pd.read_csv(args.statistics_dir / "holm_results.csv")
     checks = {
         "E1-G1": len(metrics) == 25 and aggregate.get("aggregate_status") == "PASS",
-        "E1-G2": metrics["formal"].eq(True).all() and metrics["hard_gate_status"].eq("PASS").all(),
-        "E1-G3": metrics["num_windows"].eq(100).all() and metrics["local_steps"].eq(2).all(),
+        "E1-G2": (
+            metrics["formal"].eq(True).all()
+            and metrics["hard_gate_status"].eq("PASS").all()
+            and metrics["protocol_version"].eq("E1-R2").all()
+            and metrics["seed_role"].eq("formal").all()
+            and metrics["smoke"].eq(False).all()
+        ),
+        "E1-G3": (
+            metrics["num_windows"].eq(100).all()
+            and metrics["local_steps"].eq(2).all()
+            and set(metrics["seed"].astype(int)) == set(range(28001, 28006))
+            and metrics["selected_candidate"].eq("C2").all()
+            and metrics["a_max"].eq(40.0).all()
+            and metrics["opportunity_forgetting"].eq(0.95).all()
+            and metrics["selected_baseline"].eq(
+                "flamf_timealign_adapted"
+            ).all()
+        ),
         "E1-G4": audit.get("all_hard_gates_pass") is True and len(audit.get("execution_commits", [])) == 1,
         "E1-G5": len(wilcoxon) == 20 and len(holm) == 20,
         "E1-G6": no_harm.get("formal_no_harm_conclusion") is True
-                 and "raven" in no_harm.get("no_harm_tests", {}),
+                 and "raven" in no_harm.get("no_harm_tests", {})
+                 and metrics["c_clip_obs"].notna().all()
+                 and metrics["c_clip_obs"].astype(float).le(0.05).all()
+                 and metrics["clip_population"].eq("observed_records").all()
+                 and metrics["clip_aggregation"].eq(
+                     "global_micro_per_seed"
+                 ).all()
+                 and metrics["clip_comparison"].eq(
+                     "u > a_max + 1e-12"
+                 ).all(),
     }
     report = {"gates": {key: "PASS" if value else "FAIL" for key, value in checks.items()},
               "all_pass": all(checks.values())}

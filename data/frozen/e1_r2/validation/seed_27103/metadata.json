@@ -1,0 +1,12 @@
+{
+  "dataset": "sensorscope",
+  "generator": "official-e1-balanced-real-ids-v1",
+  "notes": [
+    "real SensorScope train unit IDs",
+    "stable station-cluster client identity independent of seed"
+  ],
+  "num_clients": 8,
+  "num_windows": 100,
+  "s_max": 5,
+  "seed": 27103
+}

@@ -1,0 +1,26 @@
+protocol_version: E1-R2
+calibration_seeds:
+- 27001
+- 27002
+- 27003
+- 27004
+- 27005
+validation_seeds:
+- 27101
+- 27102
+- 27103
+- 27104
+- 27105
+formal_seeds:
+- 28001
+- 28002
+- 28003
+- 28004
+- 28005
+r1_seeds_excluded:
+- 26001
+- 26002
+- 26003
+- 26004
+- 26005
+roles_disjoint: true

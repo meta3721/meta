@@ -1,0 +1,97 @@
+{
+  "active_selection_rules": [
+    "validation_lexicographic"
+  ],
+  "authorization_status": "READY_FOR_FINAL_EXECUTION_AUTHORIZATION",
+  "authorized_algorithm_commit": "53e277c53b01695330652b8e1bc8a234909d56e5",
+  "execution_commit_policy": "runtime_clean_head",
+  "execution_status": "NOT_STARTED",
+  "files": {
+    "configs/frozen/e1_r2_analysis.yaml": {
+      "semantic_role": "analysis",
+      "sha256": "2046dd329353b84f0ad6ba07ff6d8c8a525a61c69fe4e84f9f55173643f3b521",
+      "size_bytes": 638
+    },
+    "configs/frozen/e1_r2_candidate_selection.json": {
+      "semantic_role": "candidate_selection",
+      "sha256": "dd7945a123ee0002429668a5692ced6384f13870c95c65aa8cfdadefea9dfd1f",
+      "size_bytes": 418
+    },
+    "configs/frozen/e1_r2_eventtrace_manifest.json": {
+      "semantic_role": "eventtrace_manifest",
+      "sha256": "f6ab8f6ebda529662e7f274cd9eb14c204f6038873e19a68dd58af869b8571c7",
+      "size_bytes": 27084
+    },
+    "configs/frozen/e1_r2_protocol.yaml": {
+      "semantic_role": "protocol",
+      "sha256": "ba7bfffad05e7444de8de7c8bd4d98c800f0a17935cee6272926c5a53970fd6a",
+      "size_bytes": 3903
+    },
+    "configs/frozen/e1_r2_scheduler.yaml": {
+      "semantic_role": "scheduler",
+      "sha256": "87ce9fe400987d8de9f156fff52552e1c9acad217156f8205e2d073286c0e1e9",
+      "size_bytes": 297
+    },
+    "configs/frozen/e1_r2_seed_registry.yaml": {
+      "semantic_role": "seed_registry",
+      "sha256": "84a942dcdcc92cb4beedab4802d98d0c031197ab4eb5b3f995d53e83d62f463b",
+      "size_bytes": 301
+    },
+    "configs/frozen/e1_r2_selected_baseline.yaml": {
+      "semantic_role": "selected_baseline",
+      "sha256": "5df8e9b45665e00b29e779873b5cea71e4593be15eb38950457e4068c7e27a89",
+      "size_bytes": 184
+    },
+    "configs/frozen/e1_r2_weight_safety.yaml": {
+      "semantic_role": "weight_safety",
+      "sha256": "921ad39c4eba99a55d4b8d921d2217dcb9f6dc78d33fc170d813665d7c1a01a7",
+      "size_bytes": 485
+    }
+  },
+  "formal_experiments_run": 0,
+  "formal_seeds": [
+    28001,
+    28002,
+    28003,
+    28004,
+    28005
+  ],
+  "manifest_schema_version": 2,
+  "methods": [
+    "fedavg_window",
+    "fedasync_window",
+    "flamf_timealign_adapted",
+    "twostage_hajek",
+    "raven"
+  ],
+  "num_windows": 100,
+  "postselection": {
+    "file_count": 8,
+    "roles": [
+      "analysis",
+      "candidate_selection",
+      "eventtrace_manifest",
+      "protocol",
+      "scheduler",
+      "seed_registry",
+      "selected_baseline",
+      "weight_safety"
+    ],
+    "sha256": "7032450778e92e9d498bfa3dc74c20051ca6ba6811ee12743c9c354009f28fb5"
+  },
+  "postselection_hash": "7032450778e92e9d498bfa3dc74c20051ca6ba6811ee12743c9c354009f28fb5",
+  "preselection": {
+    "file_count": 4,
+    "roles": [
+      "analysis",
+      "eventtrace_manifest",
+      "scheduler",
+      "seed_registry"
+    ],
+    "sha256": "1ac91d72293d188104504c74edd2a4825fd345220b29bc77e8e198afd27e733e"
+  },
+  "preselection_hash": "1ac91d72293d188104504c74edd2a4825fd345220b29bc77e8e198afd27e733e",
+  "protocol_parent_commit": "c077cfb742a1f25d612228dd6881e4866ca36e04",
+  "seal": "E1_R2_FORMAL_FREEZE_SEAL_R1",
+  "status": "FROZEN_POST_SELECTION"
+}

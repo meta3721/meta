@@ -1,5 +1,45 @@
 # Changelog
 
+## E1-R2-FORMAL-FREEZE-SEAL-R1
+
+- Sealed the R2 protocol, provenance, pre/postselection hashes, formal runner,
+  run gates, aggregate rejection rules, tests, and evidence exporter into one
+  independently checkoutable execution candidate.
+- Made `first_stage_clip_observed_micro_true_exceed` the only R2 first-stage
+  hard gate and retained `first_stage_clip_rate_legacy_macro` as diagnostic.
+- Ran a real two-window, non-formal compatibility smoke on calibration seed
+  27001 only; formal aggregation rejected the smoke as required.
+- Bound all 15 structural traces to clean-equivalent source identity, retained
+  zero formal-seed training/metrics/predictions, and passed R2FS-G1–G10.
+  E1-R2 formal execution remains 0/25 pending final teacher authorization.
+
+## E1-R2-PROTOCOL-CALIBRATION-R1
+
+- Permanently archived the E1-R1 weight-safety failure and froze a unique R2
+  observed-record global-micro strict true-exceed clip definition.
+- Generated disjoint 100-window calibration/validation/formal structural
+  traces; formal seeds were not trained, evaluated, or inspected.
+- Pre-registered four `a_max` candidates. C0 failed calibration; C1–C3 passed.
+  Validation selected FLAMF-TimeAlign-Adapted as baseline, rejected C1 on
+  per-seed safety, and selected C2 (`a_max=40`, EMA forgetting unchanged at
+  0.95) over C3 by the frozen validation RMSE rule.
+- Frozen the R2 protocol, seed registry, baseline, selection, scheduler, and
+  trace identities. R2P-G1–G10 pass; R2 formal execution remains 0/25 pending
+  teacher review.
+
+## E1-FORMAL-WEIGHT-SAFETY-DIAG-R1
+
+- Reconstructed frozen pre-update stage-1 weights read-only from the retained
+  failed formal run and reproduced the reported 6.3714285714% rate exactly.
+- Added attempted-client true-exceed, exact-boundary, and at-or-above diagnostics, source
+  decompositions, validation/formal trajectory comparison, hash semantics, and
+  DIAG-G1..G10 evidence.
+- Found no exact boundary hits and concluded the original 5% gate is
+  materially ambiguous; branch C requires protocol clarification. The
+  all-client micro diagnostic remains incomplete because nonattempted p/zeta
+  vectors were not persisted. No rerun, retuning, other formal seed, or E2–E9
+  work occurred.
+
 ## E1-FORMAL-EXECUTION-R1
 
 - Sealed a single formal execution harness: `run_e1_formal.py`, per-run
@@ -7,6 +47,9 @@
 - Formal manifests require `formal=true`, 100 windows, `local_steps=2`,
   and separated protocol file/payload hashes.
 - Wilcoxon and Holm outputs are written as nonempty pairwise tables.
+- Phase B fail-fast stopped at 1/25: `fedavg_window` seed 26001 failed
+  E1-RUN-G6 (`first_stage_clip_rate≈6.37%`). PARTIAL evidence packaged;
+  no retuning and no remaining runs started.
 
 ## E1-FORMAL-FREEZE-R1.1
 

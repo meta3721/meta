@@ -6,6 +6,34 @@ Do **not** change paper datasets, metrics, or test protocols without teacher app
 
 ## Open
 
+### E1-R2 protocol calibration
+
+- **ISSUE-068 — E1-R2 formal execution requires teacher authorization.**
+  R2 protocol calibration is complete with C2 (`a_max=40`) and
+  `flamf_timealign_adapted` selected using validation only. R2P-G1–G10 pass,
+  R2FS-G1–G10 also pass under the unique clean freeze-seal candidate, but all
+  formal seeds remain structurally inspected only and formal runs are 0/25.
+  Do not start formal execution without final teacher authorization.
+
+### E1-FORMAL-EXECUTION-R1
+
+- **ISSUE-066 — Formal 100-window first-stage clip exceeds 5%.**
+  `fedavg_window` seed 26001 under
+  `formal_execution_commit=c077cfb7...` reported
+  `first_stage_clip_rate≈0.0637` (median_n_eff≈3.0, second-stage clip=0).
+  E1-RUN-G6 FAIL triggered fail-fast; 24 runs not started. Validation-selected
+  weight safety (`a_max=20`, etc.) does not keep formal 100-window FedAvg
+  under the frozen 5% clip gate. Teacher decision required; no retuning in
+  this round.
+
+- **ISSUE-067 — 5% clip gate definition requires formal protocol
+  clarification.** DIAG-R1 reproduced the historic 6.3714% client/window
+  macro `>=` result and found no exact-boundary hits; risk/observed
+  true-exceed micro rates are 7.10%/6.78%. The original frozen sources do not
+  independently define population, aggregation, equality, or 100-window
+  horizon. Branch C is required; retain R1 and do not resume formal execution
+  without a newly frozen clarification.
+
 ### E1-ENTRY-R1 semantic blockers
 
 - **ISSUE-026 — G=4 mapping incompatible with temporal split.** Closed by

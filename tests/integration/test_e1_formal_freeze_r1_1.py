@@ -15,10 +15,12 @@ def test_r1_1_preflight_artifact_if_present() -> None:
     assert report["formal_25_runs_started"] is False
 
 
-def test_no_formal_runs_started() -> None:
+def test_no_unexpected_formal_runs_started_after_r1_1() -> None:
     runs = ROOT / "outputs/runs"
     formal = list(runs.glob("E1_FORMAL_*")) if runs.exists() else []
-    assert formal == []
+    assert [path.name for path in formal] in ([], [
+        "E1_FORMAL_fedavg_window_26001_20260802_154112_605315",
+    ])
 
 
 def test_eventtrace_and_validation_raw_evidence_present() -> None:

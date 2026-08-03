@@ -1,0 +1,56 @@
+{
+  "all_pass": true,
+  "gates": [
+    {
+      "detail": "R2 formal/smoke identity",
+      "gate": "R2-RUN-G1",
+      "status": "PASS"
+    },
+    {
+      "detail": "frozen method, seed role, horizon, and selection",
+      "gate": "R2-RUN-G2",
+      "status": "PASS"
+    },
+    {
+      "detail": "q attempt semantics",
+      "gate": "R2-RUN-G3",
+      "status": "PASS"
+    },
+    {
+      "detail": "support and opportunity semantics",
+      "gate": "R2-RUN-G4",
+      "status": "PASS"
+    },
+    {
+      "detail": "observed-record global-micro strict exceed <=5%",
+      "gate": "R2-RUN-G5",
+      "status": "PASS"
+    },
+    {
+      "detail": "second-stage clip rate <=5%",
+      "gate": "R2-RUN-G6",
+      "status": "PASS"
+    },
+    {
+      "detail": "median n_eff >=2",
+      "gate": "R2-RUN-G7",
+      "status": "PASS"
+    },
+    {
+      "detail": "solver and metric identities",
+      "gate": "R2-RUN-G8",
+      "status": "PASS"
+    },
+    {
+      "detail": "required artifacts and hashes",
+      "gate": "R2-RUN-G9",
+      "status": "PASS"
+    },
+    {
+      "detail": "legacy macro is reported but cannot control status",
+      "gate": "R2-RUN-G10",
+      "status": "PASS"
+    }
+  ],
+  "run_dir": "outputs\\smoke\\e1_r2_formal_runner_compatibility\\E1_BALANCED_fedavg_window_27001_20260803_025122_287383"
+}

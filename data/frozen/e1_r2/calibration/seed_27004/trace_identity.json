@@ -1,0 +1,17 @@
+{
+  "events_sha256": "8dcfc55dfad12b278299763f3321cc4de9c1e644ab7bd05a4c9164343598de2e",
+  "metadata": {
+    "dataset": "sensorscope",
+    "generator": "official-e1-balanced-real-ids-v1",
+    "notes": [
+      "real SensorScope train unit IDs",
+      "stable station-cluster client identity independent of seed"
+    ],
+    "num_clients": 8,
+    "num_windows": 100,
+    "s_max": 5,
+    "seed": 27004
+  },
+  "metadata_sha256": "c4f0303a718b9d992329847b73c2587406f53d0171257ab5dd082aef842c80f0",
+  "trace_hash": "be7210d61f660721dabf14e7d3a14c84e5e760b160f21dd82d23d13dff46f40a"
+}

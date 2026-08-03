@@ -1,0 +1,112 @@
+dataset: sensorscope
+formal_seeds:
+- 28001
+- 28002
+- 28003
+- 28004
+- 28005
+local_steps: 2
+methods:
+- fedavg_window
+- fedasync_window
+- flamf_timealign_adapted
+- twostage_hajek
+- raven
+num_windows: 100
+protocol_version: E1-R2
+scenario: balanced
+parent_failure: E1-R1-WEIGHT-SAFETY
+authorized_algorithm_commit: 53e277c53b01695330652b8e1bc8a234909d56e5
+protocol_parent_commit: c077cfb742a1f25d612228dd6881e4866ca36e04
+execution_commit_policy: runtime_clean_head
+calibration_source_identity:
+  mode: C1
+  generation_commit: c077cfb742a1f25d612228dd6881e4866ca36e04
+  generation_tree: 0f621588b8bbacc7860f5d926736ac4170a095ae
+  generation_git_clean_recorded: false
+  eventual_clean_tree_required: true
+  source_identity_artifact: outputs/audits/e1_r2_source_identity/E1_R2_C1_SOURCE_IDENTITY.json
+  formal_outcomes_accessed: false
+main_clip_population: observed_records
+main_clip_aggregation: global_micro_per_seed
+main_clip_comparison: raw_weight > a_max + 1e-12
+main_clip_threshold: 0.05
+validation_horizon: 100
+formal_horizon: 100
+num_clients: 8
+S_max: 5
+calibration_seeds:
+- 27001
+- 27002
+- 27003
+- 27004
+- 27005
+validation_seeds:
+- 27101
+- 27102
+- 27103
+- 27104
+- 27105
+no_harm_threshold: 0.03
+execution_status: NOT_STARTED
+protocol_status: FROZEN_POST_SELECTION
+authorization_status: READY_FOR_FINAL_EXECUTION_AUTHORIZATION
+selected_candidate: C2
+selected_a_max: 40.0
+selected_opportunity_forgetting: 0.95
+selected_baseline: flamf_timealign_adapted
+selected_validation_baseline: flamf_timealign_adapted
+screening_split: calibration
+final_selection_split: validation
+selection_splits:
+- calibration
+- validation
+formal_test_split: formal
+test_read_count: 0
+formal_seed_inspection_count: 0
+legacy_selection_rule: deprecated
+active_selection_rule: validation_lexicographic
+selection_provenance:
+  screening_split: calibration
+  final_selection_split: validation
+  artifact: outputs/audits/E1_R2_SELECTION_PROVENANCE.json
+  artifact_sha256: 6a511c956aba442cb166951754d93d0652d5a00a7fcc5ac5d6cf98375bc6f2ba
+  source_groups:
+    screening_calibration:
+      selection_split: calibration
+      files:
+        configs/e1_r2/candidate_registry.yaml:
+          sha256: 08c1a9ff743228ad1f4a76a37346676d084f695e27f4a45ed44cbbed2efbaafc
+          size_bytes: 514
+        outputs/e1_r2/calibration/calibration_summary.json:
+          sha256: c0f94835e006f106a1c9d0efc75445d668f74f200b833fc04e33171ee2787f41
+          size_bytes: 1087
+        outputs/e1_r2/calibration/candidate_gate_matrix.csv:
+          sha256: d58e88feaf846dab4352f8fbeb9b54768023e5357751def4a4fdbe5958bafcad
+          size_bytes: 1412
+        outputs/e1_r2/calibration/passed_candidates.json:
+          sha256: 0c8e056d50817e19b165ed510791580d572d65a0f62fb6e187373323b4e88280
+          size_bytes: 94
+    final_validation:
+      selection_split: validation
+      files:
+        outputs/e1_r2/validation/baseline_selection.json:
+          sha256: 7b947eafd6074d71a8a83cecdd2b26e7e33d6e666aa22251478e69095ef971b6
+          size_bytes: 1150
+        outputs/e1_r2/validation/baseline_selection.parquet:
+          sha256: 6a71a92ec283e00f2b3afe69dcdfd3fb11dbc7ba74c8acd010e238f4f042c40f
+          size_bytes: 6387
+        outputs/e1_r2/validation/candidate_seed_metrics.parquet:
+          sha256: 698583b3ae347f7f2bde2bef19704a72d59ca37e9a609de041c23ae5884dddd4
+          size_bytes: 17884
+        outputs/e1_r2/validation/candidate_gate_matrix.csv:
+          sha256: 837b9a009a5cd4791c37db231767a05e740fc8000b4bf06deb983160a17518b8
+          size_bytes: 832
+        outputs/e1_r2/validation/final_candidate_selection.json:
+          sha256: b4460599531a6337cf008bf38ed40b5855548a38bea721566075c5dc66a6dff3
+          size_bytes: 1038
+        outputs/e1_r2/validation/validation_summary.json:
+          sha256: ae4fa28c414c76c933d52a7a57ad3bf7b634c242532c868c39d06bca4d9e148b
+          size_bytes: 1925
+  formal_seed_read_count: 0
+  test_read_count: 0

@@ -1,0 +1,19 @@
+{
+  "audit_hash": "f6a40742e2782b33ef9e332538b48881c9b106bcf16c3de7479c97871cc69a66",
+  "audit_path": "D:\\Cursor\\raven.mcs\\data\\frozen\\e1_r2\\validation\\seed_27102\\audit.json",
+  "performance_values_modified": false,
+  "role": "validation",
+  "seed": 27102,
+  "source": "role_local_r2_trace_audit",
+  "summary": {
+    "eventtrace_pair_not_in_frozen_mapping": 0,
+    "hard_gate_pass": true,
+    "invalid_stratum": 0,
+    "role": "validation",
+    "seed": 27102,
+    "station_client_mismatch": 0,
+    "support_reference_scope": "role_local_r2_trace_audit",
+    "unsupported_positive_target_pairs": 0
+  },
+  "trace_hash": "441cf7870d487ae45e6172f11aac9253c89737ea1375089ee9fcf941eb0b5b13"
+}

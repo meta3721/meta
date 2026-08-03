@@ -1,0 +1,11 @@
+{
+  "E1_R1_harness": "PASS",
+  "E1_R1_performance": "NOT_EVALUATED",
+  "E1_R1_weight_safety": "FAIL",
+  "failure_reason": "first_stage_clip_rate_exceeds_5_percent",
+  "formal_runs_admitted": 0,
+  "formal_runs_completed": 1,
+  "remaining_runs": "PERMANENTLY_STOPPED",
+  "retuning_on_R1": false,
+  "superseded_by": "E1-R2-PROTOCOL-CALIBRATION-R1"
+}

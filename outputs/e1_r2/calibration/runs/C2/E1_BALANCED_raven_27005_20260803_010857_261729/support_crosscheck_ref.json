@@ -1,0 +1,19 @@
+{
+  "audit_hash": "ada15c1dff245c4cfc9b7e86641185f5841ebcf79ef052cfc1fa9400822e95fd",
+  "audit_path": "D:\\Cursor\\raven.mcs\\data\\frozen\\e1_r2\\calibration\\seed_27005\\audit.json",
+  "performance_values_modified": false,
+  "role": "calibration",
+  "seed": 27005,
+  "source": "role_local_r2_trace_audit",
+  "summary": {
+    "eventtrace_pair_not_in_frozen_mapping": 0,
+    "hard_gate_pass": true,
+    "invalid_stratum": 0,
+    "role": "calibration",
+    "seed": 27005,
+    "station_client_mismatch": 0,
+    "support_reference_scope": "role_local_r2_trace_audit",
+    "unsupported_positive_target_pairs": 0
+  },
+  "trace_hash": "7307aa2d09d06e09a35188f352860cdd1f4631118f8e96286922d04099fa5c13"
+}

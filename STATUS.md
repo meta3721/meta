@@ -1,10 +1,10 @@
 # STATUS — RAVEN-MCS V2.3
 
-**Updated:** 2026-08-02
+**Updated:** 2026-08-03
 **Workspace root:** `D:\Cursor\raven.mcs`  
 **Source docs:** paper PDF + Cursor instruction TXT + design DOCX (`docs/SOURCES.md`)  
-**Current phase:** E1-FORMAL-EXECUTION-R1 Phase A harness seal / Phase B pending
-**Main experiments:** Formal E1 authorized; execution harness in progress
+**Current phase:** E1-R2-FORMAL-FREEZE-SEAL-R1 PASS
+**Main experiments:** E1-R2 sealed; awaiting final formal execution authorization
 
 ---
 ## P10 Status (2026-08-01)
@@ -41,19 +41,43 @@
 - `E1-FORMAL-FREEZE-R1.1 = PASS`
 - `E1-FORMAL-FREEZE-R1.1-DIFF-AUDIT = PASS`
 - `E1-FORMAL-FREEZE-R1.1-CORE-EQUIVALENCE = PASS`
-- `E1-FORMAL-RUNNER = IN PROGRESS`
-- `E1-FORMAL-STATISTICS = IN PROGRESS`
-- `E1-FORMAL-EXECUTION-R1 = IN PROGRESS`
-- `E1 = AUTHORIZED_FOR_FROZEN_EXECUTION / NOT EXECUTED`
+- `E1-FORMAL-RUNNER = PASS`
+- `E1-FORMAL-STATISTICS = READY (not executed; matrix incomplete)`
+- `E1-FORMAL-EXECUTION-R1 = PARTIAL`
+- `E1-FORMAL-WEIGHT-SAFETY-DIAG-R1 = PARTIAL`
+- `E1-R1 = PERMANENTLY_STOPPED / PERFORMANCE NOT EVALUATED`
+- `E1-R2-PROTOCOL-CALIBRATION-R1 = PASS`
+- `E1-R2-FORMAL-FREEZE-SEAL-R1 = PASS`
+- `E1-R2 = READY_FOR_FINAL_FORMAL_EXECUTION_AUTHORIZATION / FORMAL 0/25`
 - `E2-E9 = NOT STARTED`
 
-FLAMF-TimeAlign-Adapted now uses the teacher-frozen temporal-coverage formula
-and differs from FedAsync in controlled and official-entry diagnostics.
-Arrival-risk, record-level p history, eight-client identity and post-commit
-EventTrace regeneration are sealed. Historical BLOCKED formal preflight
-evidence is retained. Formal 25-run E1 has not started.
-`execution_candidate_commit` remains `bb597a10...`; R1.1 evidence seal is a
-separate commit that packages diffs/raw evidence only.
+Phase A sealed `formal_execution_commit=c077cfb7...` with HARNESS-G1..G10
+PASS. Phase B fail-fast stopped on
+`E1_FORMAL_fedavg_window_26001_*` when
+`first_stage_clip_rate≈0.0637 > 0.05` (E1-RUN-G6). Failed run retained;
+24 remaining formal runs not started; no retuning. DIAG-R1 reproduced that
+macro `>=` rate exactly, found zero exact-boundary hits and risk/observed
+true-exceed rates above 5% within persisted attempted-client rows, and
+determined the original gate definition is materially incomplete (branch C
+protocol clarification). Full all-client micro reconstruction remains pending
+because nonattempted p/zeta vectors were not persisted. Evidence under
+`deliverables/RAVEN_MCS_E1_WEIGHT_SAFETY_DIAG_R1_EVIDENCE.zip`.
+
+E1-R2 now uses a unique observed-record global-micro true-exceed gate
+(`u > a_max + 1e-12`, threshold 5%) with disjoint 100-window calibration,
+validation, and formal seed roles. C0 (`a_max=20`) failed calibration; C1–C3
+passed. Validation rejected C1 on per-seed safety and selected C2
+(`a_max=40`, opportunity forgetting unchanged at 0.95) over C3 by the
+pre-registered RMSE rule. The validation baseline is
+`flamf_timealign_adapted`; no-harm upper 95% is about 0.00146 < 0.03.
+R2P-G1–G10 PASS. Formal seeds 28001–28005 have structural traces only:
+zero training, prediction, RMSE, clip, or ESS outputs.
+
+R2 freeze-seal binds the protocol, runner, observed-record global-micro
+strict-exceed gate, aggregate rejection rules, and all 15 traces to one clean
+execution candidate. The real runner compatibility smoke used calibration
+seed 27001 for two non-formal windows only; formal aggregation rejected it.
+R2FS-G1–G10 PASS; formal execution remains 0/25.
 
 ## P10-E Smoke Results (2026-08-01)
 

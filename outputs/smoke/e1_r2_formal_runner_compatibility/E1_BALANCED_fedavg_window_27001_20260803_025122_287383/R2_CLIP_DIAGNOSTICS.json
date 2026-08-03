@@ -1,0 +1,30 @@
+{
+  "at_or_above_rate": 0.0,
+  "block_observed_clip": {
+    "block_1_20": 0.0,
+    "block_21_40": null,
+    "block_41_60": null,
+    "block_61_80": null,
+    "block_81_100": null
+  },
+  "c_clip_attempt_obs": 0.0,
+  "c_clip_attempt_risk": 0.0,
+  "c_clip_nested_window_client": 0.0,
+  "c_clip_obs": 0.0,
+  "c_clip_pooled_client_window": 0.0,
+  "c_clip_risk_persisted_e_r": 0.0,
+  "clip_aggregation": "global_micro_per_seed",
+  "clip_comparison": "u > a_max + 1e-12",
+  "clip_population": "observed_records",
+  "eps_clip": 1e-12,
+  "exact_boundary_rate": 0.0,
+  "observed_exceed_count": 0,
+  "observed_record_count": 56,
+  "raw_weight": {
+    "max_u": 5.161290322580645,
+    "median_u": 3.4488080586075296,
+    "p90_u": 5.161290322580645,
+    "p95_u": 5.161290322580645,
+    "p99_u": 5.161290322580645
+  }
+}

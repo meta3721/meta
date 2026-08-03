@@ -1,0 +1,17 @@
+methods:
+- fedavg_window
+- fedasync_window
+- flamf_timealign_adapted
+- twostage_hajek
+- raven
+formal_seeds:
+- 28001
+- 28002
+- 28003
+- 28004
+- 28005
+num_windows: 100
+order: seed_major
+matrix_size: 25
+dry_run_only_during_protocol_calibration: true
+formal_execution_performed: false

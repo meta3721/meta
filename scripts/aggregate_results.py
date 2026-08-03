@@ -13,11 +13,15 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
+SCRIPTS = ROOT / "scripts"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
 
 from raven_mcs.experiments.e1_entry import E1_METHODS, E1_SEEDS
 from raven_mcs.utils.serialization import dump_json, load_json
+from e1_r2_common import FORMAL_SEEDS
 
 PER_SEED_COLUMNS = (
     "seed", "method", "RMSE_mu", "RMSE_rho", "Gap_mis", "Head_RMSE",
@@ -32,7 +36,17 @@ PER_SEED_COLUMNS = (
     "pi_target_hash", "event_trace_hash", "initial_model_hash",
     "environment_hash", "git_commit", "formal", "hard_gate_status",
     "execution_commit", "num_windows", "local_steps", "selected_baseline_hash",
+    "protocol_version", "seed_role", "smoke", "selected_candidate",
+    "selected_baseline", "a_max", "opportunity_forgetting", "c_clip_obs",
+    "first_stage_clip_observed_micro_true_exceed", "clip_population",
+    "clip_aggregation", "clip_comparison",
     "status",
+)
+R2_FORMAL_COLUMNS = (
+    "protocol_version", "seed_role", "smoke", "selected_candidate",
+    "selected_baseline", "a_max", "opportunity_forgetting", "c_clip_obs",
+    "first_stage_clip_observed_micro_true_exceed", "clip_population",
+    "clip_aggregation", "clip_comparison",
 )
 
 
@@ -83,6 +97,20 @@ def collect_run(run_dir: Path) -> dict[str, Any]:
         "num_windows": manifest.get("num_windows"),
         "local_steps": manifest.get("local_steps"),
         "selected_baseline_hash": manifest.get("selected_baseline_hash"),
+        "protocol_version": manifest.get("protocol_version"),
+        "seed_role": manifest.get("seed_role"),
+        "smoke": manifest.get("smoke"),
+        "selected_candidate": manifest.get("selected_candidate"),
+        "selected_baseline": manifest.get("selected_baseline"),
+        "a_max": manifest.get("a_max"),
+        "opportunity_forgetting": manifest.get("opportunity_forgetting"),
+        "c_clip_obs": metrics.get("c_clip_obs"),
+        "first_stage_clip_observed_micro_true_exceed": metrics.get(
+            "first_stage_clip_observed_micro_true_exceed"
+        ),
+        "clip_population": metrics.get("clip_population"),
+        "clip_aggregation": metrics.get("clip_aggregation"),
+        "clip_comparison": metrics.get("clip_comparison"),
         "status": metrics["status"],
         "target_group_hash": manifest["target_group_hash"],
         "run_dir": str(run_dir),
@@ -90,7 +118,16 @@ def collect_run(run_dir: Path) -> dict[str, Any]:
 
 
 def validate_rows(frame: pd.DataFrame, *, mode: str) -> None:
+    r2_formal = mode == "formal" and "protocol_version" in frame.columns
     if mode == "formal":
+        if (
+            not frame.empty
+            and "smoke" in frame.columns
+            and frame["smoke"].eq(True).any()
+            and frame["formal"].eq(False).any()
+            and frame["num_windows"].eq(2).any()
+        ):
+            raise RuntimeError("nonformal two-window smoke rejected")
         if len(frame) != 25:
             raise RuntimeError("formal aggregation requires exactly 25 rows")
         if not frame["formal"].eq(True).all():
@@ -101,13 +138,51 @@ def validate_rows(frame: pd.DataFrame, *, mode: str) -> None:
             raise RuntimeError("formal aggregation requires 100 windows and two local steps")
         if frame["selected_baseline_hash"].isna().any():
             raise RuntimeError("formal aggregation requires selected baseline identity")
+    if r2_formal:
+        if not frame["protocol_version"].eq("E1-R2").all():
+            raise RuntimeError("formal aggregation rejects R1/wrong protocol version")
+        if not frame["seed_role"].eq("formal").all():
+            raise RuntimeError("formal aggregation rejects calibration/validation role")
+        if frame["smoke"].ne(False).any():
+            raise RuntimeError("formal aggregation rejects smoke run")
+        if not frame["selected_candidate"].eq("C2").all():
+            raise RuntimeError("formal aggregation requires selected candidate C2")
+        if not frame["a_max"].eq(40.0).all():
+            raise RuntimeError("formal aggregation requires frozen a_max=40")
+        if not frame["opportunity_forgetting"].eq(0.95).all():
+            raise RuntimeError(
+                "formal aggregation requires opportunity_forgetting=0.95"
+            )
+        if not frame["selected_baseline"].eq("flamf_timealign_adapted").all():
+            raise RuntimeError("formal aggregation requires frozen R2 baseline")
+        if frame["c_clip_obs"].isna().any() or frame[
+            "first_stage_clip_observed_micro_true_exceed"
+        ].isna().any():
+            raise RuntimeError(
+                "formal aggregation rejects legacy-only clip metric"
+            )
+        if not np.allclose(
+            frame["c_clip_obs"].astype(float),
+            frame["first_stage_clip_observed_micro_true_exceed"].astype(float),
+            rtol=0.0,
+            atol=0.0,
+        ):
+            raise RuntimeError("formal aggregation observed clip fields disagree")
+        if not frame["clip_population"].eq("observed_records").all():
+            raise RuntimeError("formal aggregation requires observed clip population")
+        if not frame["clip_aggregation"].eq("global_micro_per_seed").all():
+            raise RuntimeError("formal aggregation requires global-micro clip metric")
+        if not frame["clip_comparison"].eq("u > a_max + 1e-12").all():
+            raise RuntimeError("formal aggregation requires strict-exceed clip metric")
+        if frame["c_clip_obs"].astype(float).gt(0.05).any():
+            raise RuntimeError("formal aggregation observed clip hard gate failed")
     required_seeds = (
         {26001}
         if mode in {
             "entry-smoke", "entry-r1-smoke", "entry-r2-smoke",
             "entry-r3-smoke", "entry-r4-smoke",
         }
-        else set(E1_SEEDS)
+        else set(FORMAL_SEEDS if r2_formal else E1_SEEDS)
     )
     if set(frame["seed"]) != required_seeds:
         raise RuntimeError(
@@ -131,7 +206,15 @@ def validate_rows(frame: pd.DataFrame, *, mode: str) -> None:
         raise RuntimeError(
             "config_hash must equal resolved_run_config_hash",
         )
-    if frame[list(PER_SEED_COLUMNS)].isna().any().any():
+    required_columns = (
+        PER_SEED_COLUMNS
+        if r2_formal
+        else tuple(
+            column for column in PER_SEED_COLUMNS
+            if column not in R2_FORMAL_COLUMNS
+        )
+    )
+    if frame[list(required_columns)].isna().any().any():
         raise RuntimeError("missing metric in per-seed aggregation")
     if frame.duplicated(["run_id"]).any():
         raise RuntimeError("duplicate run_id")
@@ -155,8 +238,18 @@ def aggregate(input_root: Path, output_dir: Path, *, mode: str) -> pd.DataFrame:
     failures = []
     for manifest_path in sorted(input_root.rglob("manifest.json")):
         run_dir = manifest_path.parent
-        if mode == "formal" and any(token in str(run_dir).lower() for token in ("entry_smoke", "validation", "dry")):
-            raise RuntimeError(f"formal aggregation rejects smoke/validation path: {run_dir}")
+        if mode == "formal" and any(
+            token in str(run_dir).lower()
+            for token in (
+                "entry_smoke", "smoke", "calibration", "validation",
+                "e1_r1", "r1_", "dry",
+            )
+        ):
+            if "smoke" in str(run_dir).lower():
+                raise RuntimeError("nonformal two-window smoke rejected")
+            raise RuntimeError(
+                f"formal aggregation rejects R1/non-formal path: {run_dir}"
+            )
         try:
             successes.append(collect_run(run_dir))
         except Exception as exc:  # noqa: BLE001
@@ -182,7 +275,11 @@ def aggregate(input_root: Path, output_dir: Path, *, mode: str) -> pd.DataFrame:
         "event_trace_hash", "target_group_hash", "client_mapping_hash",
         "pi_target_hash", "initial_model_hash", "environment_hash", "formal",
         "hard_gate_status", "execution_commit", "num_windows", "local_steps",
-        "selected_baseline_hash",
+        "selected_baseline_hash", "protocol_version", "seed_role", "smoke",
+        "selected_candidate", "selected_baseline", "a_max",
+        "opportunity_forgetting", "c_clip_obs",
+        "first_stage_clip_observed_micro_true_exceed", "clip_population",
+        "clip_aggregation", "clip_comparison",
     ]].to_parquet(output_dir / "run_index.parquet", index=False)
     pd.DataFrame(failures, columns=["run_dir", "error"]).to_csv(
         output_dir / "failed_runs.csv", index=False,
@@ -196,7 +293,8 @@ def aggregate(input_root: Path, output_dir: Path, *, mode: str) -> pd.DataFrame:
     }
     dump_json(identity_audit, output_dir / "identity_audit.json")
     frame.pivot(index="seed", columns="method", values="run_id").reindex(
-        index=sorted(E1_SEEDS), columns=list(E1_METHODS)
+        index=sorted(FORMAL_SEEDS if mode == "formal" else E1_SEEDS),
+        columns=list(E1_METHODS),
     ).to_csv(output_dir / "completeness_matrix.csv")
     dump_json({
         "experiment": "E1_balanced",
@@ -230,10 +328,17 @@ def main(argv: list[str] | None = None) -> int:
         default="formal",
     )
     parser.add_argument("--input-dir", type=Path)
+    parser.add_argument("--input-root", type=Path)
     parser.add_argument("--output-dir", type=Path)
     args = parser.parse_args(argv)
-    if args.experiment != "E1_balanced":
-        raise ValueError("strict aggregation currently supports E1_balanced")
+    if args.experiment not in {"E1_balanced", "E1_R2"}:
+        raise ValueError("strict aggregation supports E1_balanced or E1_R2")
+    if args.experiment == "E1_R2" and args.mode != "formal":
+        raise ValueError("E1_R2 aggregation is formal-mode only")
+    if args.input_dir and args.input_root:
+        raise ValueError("use only one of --input-dir and --input-root")
+    if args.input_root:
+        args.input_dir = args.input_root
     if args.mode == "entry-smoke":
         input_dir = args.input_dir or ROOT / "outputs/entry_smoke/E1_ENTRY_SMOKE_seed26001/runs"
         output_dir = args.output_dir or ROOT / "outputs/entry_smoke/E1_ENTRY_SMOKE_seed26001/aggregate"

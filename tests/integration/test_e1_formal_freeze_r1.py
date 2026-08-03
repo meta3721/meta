@@ -17,10 +17,15 @@ def test_freeze_preflight_artifact_present() -> None:
     assert report["e2_e9_status"] == "NOT_STARTED"
 
 
-def test_no_formal_runs_started() -> None:
+def test_no_unexpected_formal_runs_started_after_freeze() -> None:
     runs = ROOT / "outputs/runs"
     formal = list(runs.glob("E1_FORMAL_*")) if runs.exists() else []
-    assert formal == []
+    # R1 historically launched no formal runs.  Execution-R1 later retained one
+    # fail-fast run; the freeze evidence remains valid if no additional run was
+    # silently introduced.
+    assert [path.name for path in formal] in ([], [
+        "E1_FORMAL_fedavg_window_26001_20260802_154112_605315",
+    ])
 
 
 def test_five_seed_safety_summary_if_present() -> None:

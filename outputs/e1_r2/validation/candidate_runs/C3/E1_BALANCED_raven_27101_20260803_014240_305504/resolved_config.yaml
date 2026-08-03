@@ -1,0 +1,20 @@
+experiment: E1_balanced
+dataset: sensorscope
+method: raven
+scenario: balanced
+seed: 27101
+num_windows: 100
+local_steps: 2
+num_clients: 8
+s_max: 5
+main_groups: 4
+device: cpu
+weight_safety:
+  p_min: 0.05
+  pi_min: 1.0e-06
+  d_max: 10.0
+  q_min: 0.05
+  a_max: 60.0
+authorized_algorithm_commit: 53e277c53b01695330652b8e1bc8a234909d56e5
+protocol_parent_commit: 53e277c53b01695330652b8e1bc8a234909d56e5
+execution_commit_policy: runtime_clean_head

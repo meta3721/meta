@@ -1,0 +1,17 @@
+selected_candidate: C2
+selected_parameters:
+  p_min: 0.05
+  pi_min: 1.0e-06
+  a_max: 40.0
+  q_min: 0.05
+  d_max: 10.0
+  opportunity_forgetting: 0.95
+gates:
+  first_stage_observed_micro_true_exceed_max: 0.05
+  second_stage_clip_rate_max: 0.05
+  median_n_eff_min: 2.0
+selection_data: calibration_only
+confirmation_data: validation_only
+validation_pass: true
+formal_seed_inspection_count: 0
+source_sha256: c0f94835e006f106a1c9d0efc75445d668f74f200b833fc04e33171ee2787f41

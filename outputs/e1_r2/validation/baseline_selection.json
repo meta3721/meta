@@ -1,0 +1,46 @@
+{
+  "formal_seed_read_count": 0,
+  "method_summaries": [
+    {
+      "mean_RMSE_mu": 3.3576561589817238,
+      "mean_Tail_RMSE": 3.211572882271097,
+      "mean_runtime": 49.71718368000147,
+      "median_RMSE_mu": 3.3483323397686116,
+      "method": "flamf_timealign_adapted",
+      "priority": 2
+    },
+    {
+      "mean_RMSE_mu": 3.3623113430609655,
+      "mean_Tail_RMSE": 3.218183357191549,
+      "mean_runtime": 48.71172764000075,
+      "median_RMSE_mu": 3.3532708544473135,
+      "method": "fedasync_window",
+      "priority": 1
+    },
+    {
+      "mean_RMSE_mu": 3.3623893891569225,
+      "mean_Tail_RMSE": 3.2182917475017967,
+      "mean_runtime": 51.80804146000082,
+      "median_RMSE_mu": 3.3536467523936317,
+      "method": "fedavg_window",
+      "priority": 0
+    }
+  ],
+  "selected_baseline": "flamf_timealign_adapted",
+  "selection_rule": [
+    "lowest mean validation RMSE_mu",
+    "lower median validation RMSE_mu",
+    "lower mean Tail_RMSE",
+    "lower mean runtime"
+  ],
+  "selection_split": "validation",
+  "test_read_count": 0,
+  "validation_seeds": [
+    27101,
+    27102,
+    27103,
+    27104,
+    27105
+  ],
+  "windows": 100
+}

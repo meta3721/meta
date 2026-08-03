@@ -1,0 +1,17 @@
+{
+  "seed": 26001,
+  "formal_first20_clip_rate": 0.05,
+  "formal_windows21_100_clip_rate": 0.06714285714285714,
+  "validation_first20_clip_rate": 0.05,
+  "event_trace_hash_match": true,
+  "initial_model_hash_match": true,
+  "client_mapping_hash_match": true,
+  "pi_target_file_hash_match": true,
+  "target_group_hash_match": true,
+  "identity_status": "PASS: same-method FedAvg validation matches every first-20 clip value and model trajectory; later 80 windows raise the full-horizon macro average",
+  "note": "The direct comparison uses the frozen FedAvg validation run, not the RAVEN safety-copy.",
+  "validation_reference_run": "outputs/validation/e1_formal_freeze_r1_baseline_runs/E1_BALANCED_fedavg_window_26001_20260802_120607_734815",
+  "validation_reference_method": "fedavg_window",
+  "first20_per_window_clip_vector_match": true,
+  "first20_model_hash_after_match": true
+}

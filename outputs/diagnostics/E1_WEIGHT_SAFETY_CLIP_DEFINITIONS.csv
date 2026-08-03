@@ -1,0 +1,22 @@
+metric_name,population,aggregation,comparison_operator,numerator,denominator,value,threshold,pass_under_5_percent,intended_use
+c_risk_micro_true_exceed,risk_micro,record micro,true_exceed,696.0,9801,0.07101316192225283,0.05,False,diagnostic; production gate remains unchanged
+c_observed_micro_true_exceed,observed_micro,record micro,true_exceed,141.0,2079,0.06782106782106782,0.05,False,diagnostic; production gate remains unchanged
+c_attempt_risk_micro_true_exceed,attempt_risk_micro,record micro,true_exceed,696.0,9801,0.07101316192225283,0.05,False,diagnostic; production gate remains unchanged
+c_attempt_observed_micro_true_exceed,attempt_observed_micro,record micro,true_exceed,141.0,2079,0.06782106782106782,0.05,False,diagnostic; production gate remains unchanged
+c_client_window_macro_true_exceed,client_window_macro,client-window macro over attempted clients,true_exceed,47.0,722,0.06509695290858726,0.05,False,diagnostic; production gate remains unchanged
+c_window_risk_macro_true_exceed,window_risk_macro,active-window macro,true_exceed,6.5979335130278525,100,0.06597933513027852,0.05,False,diagnostic; production gate remains unchanged
+c_window_observed_macro_true_exceed,window_observed_macro,active-window macro,true_exceed,6.621710526315789,100,0.0662171052631579,0.05,False,diagnostic; production gate remains unchanged
+c_risk_micro_exact_boundary,risk_micro,record micro,exact_boundary,0.0,9801,0.0,0.05,True,diagnostic; production gate remains unchanged
+c_observed_micro_exact_boundary,observed_micro,record micro,exact_boundary,0.0,2079,0.0,0.05,True,diagnostic; production gate remains unchanged
+c_attempt_risk_micro_exact_boundary,attempt_risk_micro,record micro,exact_boundary,0.0,9801,0.0,0.05,True,diagnostic; production gate remains unchanged
+c_attempt_observed_micro_exact_boundary,attempt_observed_micro,record micro,exact_boundary,0.0,2079,0.0,0.05,True,diagnostic; production gate remains unchanged
+c_client_window_macro_exact_boundary,client_window_macro,client-window macro over attempted clients,exact_boundary,0.0,722,0.0,0.05,True,diagnostic; production gate remains unchanged
+c_window_risk_macro_exact_boundary,window_risk_macro,active-window macro,exact_boundary,0.0,100,0.0,0.05,True,diagnostic; production gate remains unchanged
+c_window_observed_macro_exact_boundary,window_observed_macro,active-window macro,exact_boundary,0.0,100,0.0,0.05,True,diagnostic; production gate remains unchanged
+c_risk_micro_at_or_above,risk_micro,record micro,at_or_above,696.0,9801,0.07101316192225283,0.05,False,diagnostic; production gate remains unchanged
+c_observed_micro_at_or_above,observed_micro,record micro,at_or_above,141.0,2079,0.06782106782106782,0.05,False,diagnostic; production gate remains unchanged
+c_attempt_risk_micro_at_or_above,attempt_risk_micro,record micro,at_or_above,696.0,9801,0.07101316192225283,0.05,False,diagnostic; production gate remains unchanged
+c_attempt_observed_micro_at_or_above,attempt_observed_micro,record micro,at_or_above,141.0,2079,0.06782106782106782,0.05,False,diagnostic; production gate remains unchanged
+c_client_window_macro_at_or_above,client_window_macro,client-window macro over attempted clients,at_or_above,47.0,722,0.06509695290858726,0.05,False,diagnostic; production gate remains unchanged
+c_window_risk_macro_at_or_above,window_risk_macro,active-window macro,at_or_above,6.5979335130278525,100,0.06597933513027852,0.05,False,diagnostic; production gate remains unchanged
+c_window_observed_macro_at_or_above,window_observed_macro,active-window macro,at_or_above,6.621710526315789,100,0.0662171052631579,0.05,False,diagnostic; production gate remains unchanged

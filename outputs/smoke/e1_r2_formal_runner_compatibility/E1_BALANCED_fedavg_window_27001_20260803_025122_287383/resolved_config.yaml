@@ -1,0 +1,27 @@
+experiment: E1_balanced
+dataset: sensorscope
+method: fedavg_window
+scenario: balanced
+seed: 27001
+num_windows: 2
+local_steps: 2
+num_clients: 8
+s_max: 5
+main_groups: 4
+device: cpu
+weight_safety:
+  a_max: 40.0
+  d_max: 10.0
+  opportunity_forgetting: 0.95
+  p_min: 0.05
+  pi_min: 1.0e-06
+  q_min: 0.05
+authorized_algorithm_commit: 53e277c53b01695330652b8e1bc8a234909d56e5
+protocol_parent_commit: c077cfb742a1f25d612228dd6881e4866ca36e04
+execution_commit_policy: runtime_clean_head
+protocol_version: E1-R2
+seed_role: calibration
+selected_candidate: C2
+selected_baseline: flamf_timealign_adapted
+opportunity_forgetting: 0.95
+smoke: true

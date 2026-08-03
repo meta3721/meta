@@ -1,0 +1,18 @@
+clip_population: observed_records
+clip_aggregation: global_micro_per_seed
+clip_comparison: u > a_max + 1e-12
+candidate_rule: reject candidate if any calibration seed fails
+screening_rule: calibration reject-any-seed then lowest passing a_max
+active_selection_rules:
+- validation_lexicographic
+validation_lexicographic:
+- lowest mean validation RMSE_mu
+- lower median validation RMSE_mu
+- smaller a_max
+- lower mean c_clip_obs
+- higher median n_eff
+validation_rule: all validation seeds must pass
+no_harm_threshold: 0.03
+frozen_before_formal_execution: true
+formal_seed_inspection_count: 0
+test_outcome_adaptation: false
