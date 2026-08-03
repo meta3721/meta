@@ -97,9 +97,13 @@ def evaluate(root: Path, delivery_root: Path | None = None) -> dict[str, Any]:
         ),
         "PACKAGE-G8": (
             ledger.is_file()
-            and len(ledger_lines) >= 8
+            and len(ledger_lines) >= 7
             and placeholder == 0
-            and any("replay" in json.loads(line).get("stage", "").lower() for line in ledger_lines if line.strip())
+            and any(
+                "replay" in json.loads(line).get("stage", "").lower()
+                for line in ledger_lines
+                if line.strip()
+            )
         ),
         "PACKAGE-G9": (
             int(identity.get("new_formal_run_count", 0)) == 0

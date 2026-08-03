@@ -159,16 +159,6 @@ def export_package(root: Path, deliverables: Path) -> dict[str, Any]:
             dst_report,
             arcname=f"deliverables/TO_SUBMIT_{SYNC_PACKAGE}/{SYNC_PACKAGE}_REPORT.docx",
         )
-        # Include prior sync README if present under original path for continuity.
-        prior_readme = (
-            root / f"deliverables/TO_SUBMIT_{SYNC_PACKAGE}"
-            / f"{SYNC_PACKAGE}_SUBMISSION_README.txt"
-        )
-        if prior_readme.is_file():
-            zf.write(
-                prior_readme,
-                arcname=prior_readme.relative_to(root).as_posix(),
-            )
 
     names = set()
     with zipfile.ZipFile(archive, "r") as zf:
