@@ -9,6 +9,7 @@ from raven_mcs.e2.identity import (
 )
 from raven_mcs.e2.methods import resolve_method
 from raven_mcs.e2.scenario_generator import generate_e2_numeric_scenario
+from raven_mcs.e2.tail_score import lookup_tail_score
 
 __all__ = [
     "load_e1_target_identity",
@@ -18,4 +19,5 @@ __all__ = [
     "generate_e2_numeric_scenario",
     "resolve_method",
     "compute_e2_mass_diagnostics",
+    "lookup_tail_score",
 ]

@@ -7,3 +7,23 @@ entries:
     symbol: FullWindowRunner._process_window
     reason: Update norms are method diagnostics only; U labels update q after close and neither field is a q predictor.
     allowed_role: diagnostics_and_lagged_label
+  - file: scripts/build_e2_usable_topology_fixture.py
+    symbol: main
+    reason: Synthetic E2 topology fixture builder; "arrival" refers to expected arrival mass diagnostics, not q-model features.
+    allowed_role: scenario_generator_tooling
+  - file: scripts/export_e2_usable_arrival_evidence.py
+    symbol: main
+    reason: Evidence packaging for E2 usable-arrival repair; narrative text only, not q-model inputs.
+    allowed_role: packaging_tooling
+  - file: scripts/prepare_e2_usable_arrival_repair.py
+    symbol: main
+    reason: Identity/topology materialization and report text; does not construct q features from outcomes.
+    allowed_role: scenario_generator_tooling
+  - file: scripts/run_e2_usable_arrival_repair.py
+    symbol: main
+    reason: Orchestration wrapper for E2 usable-arrival repair; no q-model feature construction.
+    allowed_role: orchestration_tooling
+  - file: scripts/check_e2_usable_arrival_gates.py
+    symbol: main
+    reason: Gate evaluation for E2 usable-arrival repair; audit-only references to arrival mass.
+    allowed_role: gate_tooling

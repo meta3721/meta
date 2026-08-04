@@ -1,0 +1,12 @@
+{
+  "coverage_head_count": 20,
+  "coverage_neutral_count": 36,
+  "coverage_tail_count": 14,
+  "fixture_hash": "87e3fbae0f38a875ef0e9ecf8be422f8e1b6f182f3f9fa5c8cd43e7f8ffa0e8b",
+  "head_heavy_count": 2,
+  "mixed_count": 2,
+  "neutral_count": 2,
+  "tail_heavy_count": 2,
+  "unit_count": 3410,
+  "window_count": 78
+}

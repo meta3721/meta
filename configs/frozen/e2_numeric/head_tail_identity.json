@@ -1,0 +1,23 @@
+{
+  "baseline_checkpoint": "outputs/e1_r2/validation/baseline_runs/flamf_timealign_adapted/E1_BALANCED_flamf_timealign_adapted_27101_20260803_012609_197794/checkpoints/final.pt",
+  "baseline_checkpoint_hash": "cdfc1e56531458cd2bcedf706496803c4514e12db7a7fd4ca4370def7ad73dde",
+  "baseline_method": "flamf_timealign_adapted",
+  "baseline_seed_identity": 27101,
+  "calibration_split": "validation",
+  "calibration_split_hash": "e0fe0229adf6753839232ae84b53fc4dce4aac57ce96826aea3c11b2840bc5b4",
+  "e1_frozen_head_tail_available": false,
+  "forbidden_metric": "train_label_variance",
+  "group_calibration_difficulty_file": "configs/frozen/e2_numeric/group_calibration_difficulty.parquet",
+  "group_calibration_difficulty_hash": "b9ca45c3f7f6a18ebef041f4fe28ab5907b0819d400372cd523ad199d0b6d7b3",
+  "head_group": "0",
+  "head_tail_identity_source": "E2_CALIBRATION_FROZEN",
+  "head_tail_mapping_file": "configs/frozen/e2_numeric/head_tail_mapping.parquet",
+  "head_tail_mapping_hash": "3729cce5a731f22093d6ecd177e6c3a7e70c7fd1f1a2fec512c5930644da901d",
+  "head_unit_count": 990,
+  "metric": "mean((prediction-target)^2)",
+  "prediction_payload_hash": "ad6ce71be00ab7610cfbf86a5f82713d5b00570a2aa249ec70f619f43bb28633",
+  "tail_group": "3",
+  "tail_unit_count": 660,
+  "uses_formal_outcomes": false,
+  "uses_test_split": false
+}

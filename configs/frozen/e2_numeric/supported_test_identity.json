@@ -1,0 +1,12 @@
+{
+  "E1_reference_hash": "413ad5dab72149c4753668e32a4675a1fab00bb286adb9a9e1e58978a1cc81c5",
+  "E2_reconstructed_hash": "d67e5c9e3aa132c9aac214d0977fce3499935446e29672116e7c9d38dccccf0f",
+  "extra_unit_count": 0,
+  "missing_unit_count": 0,
+  "set_symmetric_difference_count": 0,
+  "source_file": "data/processed/sensorscope/atomic_units.parquet",
+  "source_rule": "TargetBuilder(group_mapper=target_group_main).build(split='test') with support_flag==True; unit set equals E1 atomic target weights",
+  "source_type": "e1_targetbuilder_test_support",
+  "status": "PASS",
+  "support_flag_symmetric_difference_count": 0
+}

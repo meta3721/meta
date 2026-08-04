@@ -6,7 +6,6 @@ from typing import Any
 
 import yaml
 
-from raven_mcs.experiments.e1_entry import E1_METHODS
 from raven_mcs.utils.hashing import sha256_file
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -17,6 +16,13 @@ EXECUTABLE_METHODS = {
     "flamf_timealign_adapted",
     "local_hajek",
     "twostage_hajek",
+}
+
+# Mirror of E1 strict methods without importing the heavy e1_entry module.
+E1_STRICT_METHODS = {
+    "fedavg_window",
+    "fedasync_window",
+    "flamf_timealign_adapted",
 }
 
 
@@ -36,9 +42,6 @@ def resolve_method(name: str, root: Path | None = None) -> str:
         executable = str(name)
     if executable not in EXECUTABLE_METHODS:
         raise KeyError(f"unknown executable method: {executable}")
-    if executable in {"fedavg_window", "fedasync_window", "flamf_timealign_adapted"}:
-        if executable not in E1_METHODS:
-            raise RuntimeError(f"strict method missing from E1_METHODS: {executable}")
     return executable
 
 
@@ -50,7 +53,6 @@ def method_implementation_identity(
     module_path = root / "src/raven_mcs/aggregation/methods.py"
     config_path = root / f"configs/method/{executable}.yaml"
     if not config_path.is_file() and executable == "flamf_timealign_adapted":
-        # Fall back to timealign config if present under either name.
         alt = root / "configs/method/timealign_agg.yaml"
         config_path = alt if alt.is_file() else config_path
     return {
@@ -60,5 +62,5 @@ def method_implementation_identity(
         "source_blob_hash": sha256_file(module_path) if module_path.is_file() else None,
         "config_path": config_path.relative_to(root).as_posix() if config_path.is_file() else None,
         "config_hash": sha256_file(config_path) if config_path.is_file() else None,
-        "in_e1_methods": executable in E1_METHODS,
+        "in_e1_methods": executable in E1_STRICT_METHODS,
     }
