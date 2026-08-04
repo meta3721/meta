@@ -1,5 +1,6 @@
 {
   "formal_execution_prohibited": true,
+  "numeric_target_identity": "configs/frozen/e2_numeric/e1_target_identity.json",
   "protocol_status": "CANDIDATE_PENDING_TEACHER_AUTHORIZATION",
   "scenarios": [
     {
@@ -41,6 +42,8 @@
         "target_positive_support": true
       },
       "target_distribution": "fixed_atomic_uniform_over_supported_groups",
+      "target_distribution_deprecated": true,
+      "target_distribution_note": "runtime must load E1 atomic target weights via e2.identity",
       "usable_rate_target": 0.6
     },
     {
@@ -84,6 +87,8 @@
         "target_positive_support": true
       },
       "target_distribution": "fixed_atomic_uniform_over_supported_groups",
+      "target_distribution_deprecated": true,
+      "target_distribution_note": "runtime must load E1 atomic target weights via e2.identity",
       "usable_rate_target": 0.6
     },
     {
@@ -127,6 +132,8 @@
         "target_positive_support": true
       },
       "target_distribution": "fixed_atomic_uniform_over_supported_groups",
+      "target_distribution_deprecated": true,
+      "target_distribution_note": "runtime must load E1 atomic target weights via e2.identity",
       "usable_rate_target": 0.6
     },
     {
@@ -170,6 +177,8 @@
         "target_positive_support": true
       },
       "target_distribution": "fixed_atomic_uniform_over_supported_groups",
+      "target_distribution_deprecated": true,
+      "target_distribution_note": "runtime must load E1 atomic target weights via e2.identity",
       "usable_rate_target": 0.6
     },
     {
@@ -215,6 +224,8 @@
         "target_positive_support": true
       },
       "target_distribution": "fixed_atomic_uniform_over_supported_groups",
+      "target_distribution_deprecated": true,
+      "target_distribution_note": "runtime must load E1 atomic target weights via e2.identity",
       "usable_rate_target": 0.6
     },
     {
@@ -260,7 +271,11 @@
         "target_positive_support": true
       },
       "target_distribution": "fixed_atomic_uniform_over_supported_groups",
+      "target_distribution_deprecated": true,
+      "target_distribution_note": "runtime must load E1 atomic target weights via e2.identity",
       "usable_rate_target": 0.6
     }
-  ]
+  ],
+  "target_distribution_runtime": "FORBIDDEN",
+  "target_distribution_status": "DEPRECATED_PLACEHOLDER"
 }

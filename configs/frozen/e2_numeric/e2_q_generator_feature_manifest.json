@@ -1,0 +1,19 @@
+{
+  "allowed_features": [
+    "pre_outcome_tail_composition_z"
+  ],
+  "forbidden_features": [
+    "local_loss",
+    "update_norm",
+    "model_delta",
+    "training_completion",
+    "arrival_result",
+    "future_information",
+    "test_error",
+    "label"
+  ],
+  "level": "client_window",
+  "q_gen_max": 0.95,
+  "q_gen_min": 0.05,
+  "rate_target_default": 0.6
+}

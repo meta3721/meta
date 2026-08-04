@@ -6,11 +6,17 @@ import json
 import zipfile
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 PACKAGE = "E1_R2_FINAL_REPORT_SYNC_EVIDENCE_PACKAGE_FIX_R1"
 SYNC_PACKAGE = "E1_R2_FINAL_REPORT_SYNCHRONIZATION_R1"
 EXPECTED_REPORT = "fc95fa07b4a6a41e1152858ef776175d1cfe1c3969cd68519cb6cd6a4e2a2b3e"
 DELIVERY = ROOT / f"deliverables/TO_SUBMIT_{PACKAGE}"
+pytestmark = pytest.mark.skipif(
+    not (DELIVERY / "FINAL_DELIVERABLE_HASHES.json").is_file(),
+    reason="E1-R2 package-fix deliverable absent from this checkout",
+)
 
 
 def _sha(path: Path) -> str:

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "E2ScenarioMassDiagnostics",
+  "type": "object",
+  "required": [
+    "D_TV_opp",
+    "D_TV_obs",
+    "D_TV_arr_expected",
+    "head_mass_target",
+    "tail_mass_target",
+    "expected_observation_rate",
+    "expected_usable_rate",
+    "finite_status",
+    "support_status"
+  ],
+  "properties": {
+    "D_TV_opp": {
+      "type": "number"
+    },
+    "D_TV_obs": {
+      "type": "number"
+    },
+    "D_TV_arr_expected": {
+      "type": "number"
+    },
+    "head_mass_target": {
+      "type": "number"
+    },
+    "tail_mass_target": {
+      "type": "number"
+    },
+    "head_mass_opp": {
+      "type": "number"
+    },
+    "tail_mass_opp": {
+      "type": "number"
+    },
+    "head_mass_obs": {
+      "type": "number"
+    },
+    "tail_mass_obs": {
+      "type": "number"
+    },
+    "expected_observation_rate": {
+      "type": "number"
+    },
+    "expected_usable_rate": {
+      "type": "number"
+    },
+    "min_supported_mass": {
+      "type": "number"
+    },
+    "max_supported_mass": {
+      "type": "number"
+    },
+    "finite_status": {
+      "enum": [
+        "PASS",
+        "FAIL"
+      ]
+    },
+    "support_status": {
+      "enum": [
+        "PASS",
+        "FAIL"
+      ]
+    }
+  },
+  "additionalProperties": true
+}

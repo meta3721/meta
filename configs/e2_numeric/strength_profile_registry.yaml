@@ -1,0 +1,28 @@
+protocol: E2-NUMERIC-GENERATOR-IMPLEMENTATION-R1
+status: FROZEN_BEFORE_VALIDATION
+selection_status: NOT_STARTED
+profiles:
+  PROFILE-S1:
+    kappa_opp: 0.5
+    kappa_p: 0.5
+    kappa_q: 0.5
+  PROFILE-S2:
+    kappa_opp: 1.0
+    kappa_p: 1.0
+    kappa_q: 1.0
+  PROFILE-S3:
+    kappa_opp: 1.5
+    kappa_p: 1.5
+    kappa_q: 1.5
+  PROFILE-S4:
+    kappa_opp: 1.0
+    kappa_p: 1.0
+    kappa_q: 1.5
+  PROFILE-S5:
+    kappa_opp: 1.0
+    kappa_p: 1.0
+    kappa_q: 2.0
+  PROFILE-S6:
+    kappa_opp: 1.5
+    kappa_p: 1.5
+    kappa_q: 2.0

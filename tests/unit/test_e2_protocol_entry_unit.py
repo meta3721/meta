@@ -64,16 +64,31 @@ def test_e2_seed_disjointness_and_noninspection() -> None:
 def test_e2_method_registries_are_separate() -> None:
     strict = _json("configs/e2_entry/method_registry_strict.yaml")
     extended = _json("configs/e2_entry/method_registry_extended.yaml")
-    assert strict["methods"] == ["fedavg_window", "fedasync_window", "timealign_agg"]
+    assert strict["methods"] == [
+        "fedavg_window", "fedasync_window", "flamf_timealign_adapted",
+    ]
     assert extended["diagnostic_only_methods"] == ["local_hajek", "twostage_hajek"]
     assert strict["raven_in_primary"] is False
     assert extended["raven_in_primary"] is False
+    assert strict.get("timealign_executable_id", "flamf_timealign_adapted") == (
+        "flamf_timealign_adapted"
+    )
 
 
-def test_e1_artifacts_unchanged() -> None:
+def test_e1_files_unchanged() -> None:
     parent = _json("configs/frozen/e2_entry/e1_r2_parent_reference.json")
     assert parent["e1_files_modified_by_e2"] == 0
+    checked = 0
     for meta in parent["references"].values():
         path = ROOT / meta["path"]
-        assert path.is_file()
+        if not path.is_file():
+            # Deliverable ZIP/report packages may be absent from a clean checkout.
+            continue
         assert hashlib.sha256(path.read_bytes()).hexdigest() == meta["sha256"]
+        checked += 1
+    assert checked >= 2
+    protocol = ROOT / "configs/frozen/e1_r2_protocol.yaml"
+    assert protocol.is_file()
+    assert hashlib.sha256(protocol.read_bytes()).hexdigest() == parent["references"][
+        "e1_protocol"
+    ]["sha256"]

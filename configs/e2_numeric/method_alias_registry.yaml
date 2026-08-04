@@ -1,0 +1,23 @@
+display_name_by_executable:
+  flamf_timealign_adapted: TimeAlign
+  fedavg_window: FedAvg-Window
+  fedasync_window: FedAsync-Window
+strict_primary:
+- fedavg_window
+- fedasync_window
+- flamf_timealign_adapted
+extended_diagnostic:
+- fedavg_window
+- fedasync_window
+- flamf_timealign_adapted
+- local_hajek
+- twostage_hajek
+aliases:
+  timealign_agg:
+    alias: timealign_agg
+    executable_id: flamf_timealign_adapted
+    status: deprecated_alias_only
+    implementation_module: raven_mcs.aggregation.methods
+    function_or_class: TimeAlign / flamf_timealign_adapted
+    source_blob_hash: 925bc88958a01dcf3f820c960eed3b96ad9bc3ae229aec9ebf7bd26f0d17e6a2
+    config_hash: 4b3a56c77c04ddc52c35cde42d7f3573f3bf2222e784550f6a406a566a7f2a5f

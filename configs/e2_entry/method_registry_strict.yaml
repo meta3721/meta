@@ -1,10 +1,14 @@
 {
   "claim_boundary": "arrival-risk versus target-risk misalignment only",
+  "deprecated_aliases": [
+    "timealign_agg"
+  ],
   "methods": [
     "fedavg_window",
     "fedasync_window",
-    "timealign_agg"
+    "flamf_timealign_adapted"
   ],
   "name": "E2-A STRICT PRIMARY",
-  "raven_in_primary": false
+  "raven_in_primary": false,
+  "timealign_executable_id": "flamf_timealign_adapted"
 }

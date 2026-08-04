@@ -1,0 +1,85 @@
+protocol: E2-NUMERIC-GENERATOR-IMPLEMENTATION-R1
+status: FROZEN_CANDIDATE
+scenarios:
+  balanced:
+    scenario_id: balanced
+    display_name: Balanced
+    d_opp: 0
+    d_p: 0
+    d_q: 0
+    enabled_stages: []
+    expected_direction: near_target
+    permitted_claims:
+    - reference_no_intentional_misalignment
+    forbidden_claims:
+    - arrival_substitutes_target
+    - raven_superiority
+  opportunity_only:
+    scenario_id: opportunity_only
+    display_name: Opportunity-only
+    d_opp: -1
+    d_p: 0
+    d_q: 0
+    enabled_stages:
+    - opportunity
+    expected_direction: underrepresent_tail_via_opportunity
+    permitted_claims:
+    - single_stage_opportunity_shift
+    forbidden_claims:
+    - single_stage_correction_worsening
+  observation_only:
+    scenario_id: observation_only
+    display_name: Observation-only
+    d_opp: 0
+    d_p: -1
+    d_q: 0
+    enabled_stages:
+    - observation
+    expected_direction: underrepresent_tail_via_observation
+    permitted_claims:
+    - single_stage_observation_shift
+    forbidden_claims:
+    - single_stage_correction_worsening
+  usable_only:
+    scenario_id: usable_only
+    display_name: Usable-only
+    d_opp: 0
+    d_p: 0
+    d_q: -1
+    enabled_stages:
+    - usable
+    expected_direction: underrepresent_tail_via_usable
+    permitted_claims:
+    - single_stage_usable_shift
+    forbidden_claims:
+    - single_stage_correction_worsening
+  complete_aligned:
+    scenario_id: complete_aligned
+    display_name: Complete-aligned
+    d_opp: -1
+    d_p: -1
+    d_q: -1
+    enabled_stages:
+    - opportunity
+    - observation
+    - usable
+    expected_direction: aligned_underrepresent_tail
+    permitted_claims:
+    - multi_stage_aligned_misalignment
+    forbidden_claims:
+    - raven_superiority
+  complete_counteracting:
+    scenario_id: complete_counteracting
+    display_name: Complete-counteracting
+    d_opp: -1
+    d_p: -1
+    d_q: 1
+    enabled_stages:
+    - opportunity
+    - observation
+    - usable
+    expected_direction: usable_opposes_opportunity_observation
+    permitted_claims:
+    - multi_stage_cancellation_complexity
+    forbidden_claims:
+    - single_stage_correction_worsening_without_extended_diagnostic

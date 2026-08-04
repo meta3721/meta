@@ -1,5 +1,7 @@
 {
-  "claim_boundary": "single-stage correction mechanism only in complete-counteracting diagnostic",
+  "deprecated_aliases": [
+    "timealign_agg"
+  ],
   "diagnostic_only_methods": [
     "local_hajek",
     "twostage_hajek"
@@ -8,7 +10,8 @@
   "primary_methods": [
     "fedavg_window",
     "fedasync_window",
-    "timealign_agg"
+    "flamf_timealign_adapted"
   ],
-  "raven_in_primary": false
+  "raven_in_primary": false,
+  "timealign_executable_id": "flamf_timealign_adapted"
 }

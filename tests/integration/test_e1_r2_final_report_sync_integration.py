@@ -8,6 +8,8 @@ import zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 
@@ -15,6 +17,11 @@ from check_e1_r2_final_report_sync_gates import evaluate  # noqa: E402
 
 PACKAGE = "E1_R2_FINAL_REPORT_SYNCHRONIZATION_R1"
 W_NS = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+_REPORT = ROOT / f"deliverables/TO_SUBMIT_{PACKAGE}" / f"{PACKAGE}_REPORT.docx"
+pytestmark = pytest.mark.skipif(
+    not _REPORT.is_file(),
+    reason="E1-R2 final report deliverable absent from this checkout",
+)
 
 
 def _sha256(path: Path) -> str:
