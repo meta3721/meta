@@ -1,0 +1,22 @@
+{
+  "arrival_support_mass": 1.0,
+  "dataset": "sensorscope",
+  "eventtrace_id": "83437f34e807b649595d87dc2b5b3ddd26d776aeaa3e47947e6d9a859b9383ba",
+  "eventtrace_shared_across_methods": true,
+  "formal": false,
+  "formal_seed_access_count": 0,
+  "gap_identity_error": 0.0,
+  "gap_mis": 0.0,
+  "head_support_mass": 0.5,
+  "leakage_count": 0,
+  "method": "fedasync_window",
+  "performance_claim": false,
+  "rmse_mu": 0.0,
+  "rmse_rho": 0.0,
+  "scenario": "observation_only",
+  "schema_status": "PASS",
+  "seed": 29001,
+  "tail_support_mass": 0.5,
+  "target_support_mass": 1.0,
+  "windows": 10
+}

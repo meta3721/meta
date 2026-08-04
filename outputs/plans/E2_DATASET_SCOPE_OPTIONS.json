@@ -1,0 +1,64 @@
+{
+  "options": [
+    {
+      "datasets": [
+        "SensorScope"
+      ],
+      "estimated_cpu_hours": "TBD: derive from non-performance canary resource telemetry; no source-backed numeric estimate",
+      "estimated_disk": "TBD: derive from artifact schema; no source-backed numeric estimate",
+      "formal_seeds_candidate": 20,
+      "methods": 3,
+      "missing_prerequisites": [
+        "teacher protocol authorization"
+      ],
+      "option": "OPTION-D1",
+      "risks": "lowest scope; source E2 stub only",
+      "scenarios": 6,
+      "scientific_coverage": "primary",
+      "total_run_count": 360,
+      "windows_candidate": 300
+    },
+    {
+      "datasets": [
+        "SensorScope",
+        "U-Air"
+      ],
+      "estimated_cpu_hours": "TBD: derive from non-performance canary resource telemetry; no source-backed numeric estimate",
+      "estimated_disk": "TBD: derive from artifact schema; no source-backed numeric estimate",
+      "formal_seeds_candidate": 20,
+      "methods": 3,
+      "missing_prerequisites": [
+        "teacher protocol authorization"
+      ],
+      "option": "OPTION-D2",
+      "risks": "additional provenance and preprocessing review",
+      "scenarios": 6,
+      "scientific_coverage": "cross-dataset extension",
+      "total_run_count": 720,
+      "windows_candidate": 300
+    },
+    {
+      "datasets": [
+        "SensorScope",
+        "U-Air",
+        "NSW Traffic Volume"
+      ],
+      "estimated_cpu_hours": "TBD: derive from non-performance canary resource telemetry; no source-backed numeric estimate",
+      "estimated_disk": "TBD: derive from artifact schema; no source-backed numeric estimate",
+      "formal_seeds_candidate": 20,
+      "methods": 3,
+      "missing_prerequisites": [
+        "teacher protocol authorization"
+      ],
+      "option": "OPTION-D3",
+      "risks": "Traffic quality gate required; no silent replacement",
+      "scenarios": 6,
+      "scientific_coverage": "cross-dataset extension",
+      "total_run_count": 1080,
+      "windows_candidate": 300
+    }
+  ],
+  "recommendation": "SensorScope primary; D2/D3 extension pending authorization.",
+  "recommended_option": "OPTION-D1",
+  "status": "PASS"
+}
