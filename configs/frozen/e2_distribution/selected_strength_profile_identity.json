@@ -1,0 +1,25 @@
+{
+  "all_gate_status": "PASS",
+  "formal": false,
+  "frozen_at_commit": "af226e9623cd82ff0b9c1a25d7e70ffe7948ab7b",
+  "kappa_opp": 1.0,
+  "kappa_p": 1.0,
+  "kappa_q": 1.0,
+  "profile_registry_hash": "471c418ccd60e2daa059e0edec1c5de81a4d49db5fa001be35190a04dcad3dcc",
+  "selected_payload_hash": "94f70f76b9f41940f5d1adb3296f95303bb3c5f9bf551807abf05fe35503a24a",
+  "selected_profile_id": "PROFILE-S2",
+  "selection_rule": [
+    "min max_seed D_TV_arr_emp(complete_aligned)",
+    "min kappa_opp+kappa_p+kappa_q",
+    "min std_seed cancellation_TV(complete_counteracting)",
+    "profile_id lexicographic"
+  ],
+  "selection_status": "FROZEN",
+  "validation_seed_list": [
+    29101,
+    29102,
+    29103,
+    29104,
+    29105
+  ]
+}

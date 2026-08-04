@@ -1,0 +1,20 @@
+{
+  "atomic_tail_score_hash": "c392e2fb2873a2641b44374a7fc7b696a69db72c2eebd8b3ec0e8cb5b6fac5b9",
+  "atomic_target_weight_hash": "413ad5dab72149c4753668e32a4675a1fab00bb286adb9a9e1e58978a1cc81c5",
+  "e1_formal_commit": "e8bd1fc777431c2609def257a04fba093f0daf24",
+  "frozen_at_utc": "2026-08-04T08:30:28.110016+00:00",
+  "head_tail_mapping_hash": "3729cce5a731f22093d6ecd177e6c3a7e70c7fd1f1a2fec512c5930644da901d",
+  "parent_implementation_commit": "af226e9623cd82ff0b9c1a25d7e70ffe7948ab7b",
+  "protocol": "E2_DISTRIBUTION_PROFILE_AND_WINDOW_FREEZE_R1",
+  "scenario_direction_registry_hash": "1ec7b8d04181afefd8918b72fc1d285d314c292e9000ac57645bada6fb8feea9",
+  "strength_profile_registry_hash": "471c418ccd60e2daa059e0edec1c5de81a4d49db5fa001be35190a04dcad3dcc",
+  "supported_test_unit_hash": "d67e5c9e3aa132c9aac214d0977fce3499935446e29672116e7c9d38dccccf0f",
+  "usable_arrival_integration_audit_hash": "4cf46ccd965dd8672ebd6a6fd5da859e735a3060299f254d009b9ec48aa372bb",
+  "validation_seeds": [
+    29101,
+    29102,
+    29103,
+    29104,
+    29105
+  ]
+}

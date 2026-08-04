@@ -47,8 +47,13 @@ def main(argv: list[str] | None = None) -> int:
     stderr_log = args.stderr_log or (
         ROOT / f"logs/e2ua_cmd_{args.label}.stderr.log"
     )
+    if not stdout_log.is_absolute():
+        stdout_log = ROOT / stdout_log
+    if not stderr_log.is_absolute():
+        stderr_log = ROOT / stderr_log
+    ledger_path = args.ledger if args.ledger.is_absolute() else ROOT / args.ledger
     stdout_log.parent.mkdir(parents=True, exist_ok=True)
-    args.ledger.parent.mkdir(parents=True, exist_ok=True)
+    ledger_path.parent.mkdir(parents=True, exist_ok=True)
 
     start = datetime.now(timezone.utc)
     t0 = time.perf_counter()
@@ -79,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
         "runtime_commit": _commit(),
         "placeholder": False,
     }
-    with args.ledger.open("a", encoding="utf-8") as fh:
+    with ledger_path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(record, ensure_ascii=False) + "\n")
     sys.stdout.write(proc.stdout or "")
     sys.stderr.write(proc.stderr or "")

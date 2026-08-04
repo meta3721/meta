@@ -1,0 +1,16 @@
+selected_profile_id: PROFILE-S2
+kappa_opp: 1.0
+kappa_p: 1.0
+kappa_q: 1.0
+selection_rule:
+- min max_seed D_TV_arr_emp(complete_aligned)
+- min kappa_opp+kappa_p+kappa_q
+- min std_seed cancellation_TV(complete_counteracting)
+- profile_id lexicographic
+validation_seed_list:
+- 29101
+- 29102
+- 29103
+- 29104
+- 29105
+formal: false

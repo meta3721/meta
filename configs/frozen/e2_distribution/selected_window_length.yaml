@@ -1,0 +1,12 @@
+selected_windows: 200
+candidate_status_100: FAIL
+candidate_status_200: PASS
+candidate_status_300: PASS
+validation_seed_list:
+- 29101
+- 29102
+- 29103
+- 29104
+- 29105
+selected_profile_id: PROFILE-S2
+formal: false

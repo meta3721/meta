@@ -44,6 +44,10 @@ def validate_client_window_record(
     if missing:
         raise E2ClientWindowError(f"client-window missing fields: {missing}")
     unit_ids = [str(u) for u in record["unit_ids"]]
+    if len(unit_ids) != len(set(unit_ids)):
+        raise E2ClientWindowError(
+            "duplicate unit_ids within one client-window risk set"
+        )
     weights = np.asarray(record["opportunity_weights"], dtype=np.float64).reshape(-1)
     if len(unit_ids) != weights.size:
         raise E2ClientWindowError("unit_ids/opportunity_weights length mismatch")
