@@ -1,0 +1,30 @@
+"""E2-TRAFFIC formal 20-seed runs (30001–30020)."""
+from __future__ import annotations
+
+from raven_mcs.e2.traffic_profiles import SCENARIO_ORDER
+from raven_mcs.e2.traffic_real_runner import METHOD_DISPLAY, METHODS, SELECTED_STRENGTH
+
+FORMAL_SEEDS = tuple(range(30001, 30021))
+SCENARIOS = [sid for _, sid in SCENARIO_ORDER]
+SCENARIO_LABELS = {sid: lab for lab, sid in SCENARIO_ORDER}
+EXPECTED_RUNS = len(FORMAL_SEEDS) * len(SCENARIOS) * len(METHODS)  # 600
+EXPECTED_TRACES = len(FORMAL_SEEDS) * len(SCENARIOS)  # 120
+REGISTRY_SHA256_EXPECTED = (
+    "7d9b8292522b6fbcc15d83ebb065fc8a73b79787ed643aea49c48f30596acbc7"
+)
+FORBIDDEN_CANARY_SEED = 29001
+VALIDATION_SEEDS = tuple(range(29101, 29106))
+
+__all__ = [
+    "FORMAL_SEEDS",
+    "SCENARIOS",
+    "SCENARIO_LABELS",
+    "METHODS",
+    "METHOD_DISPLAY",
+    "SELECTED_STRENGTH",
+    "EXPECTED_RUNS",
+    "EXPECTED_TRACES",
+    "REGISTRY_SHA256_EXPECTED",
+    "FORBIDDEN_CANARY_SEED",
+    "VALIDATION_SEEDS",
+]
