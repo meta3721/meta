@@ -1,0 +1,32 @@
+{
+  "verdict": "G6_RECORDED_NEGATIVE",
+  "family_success": false,
+  "g_star": {
+    "sensorscope": 2,
+    "uair": 3
+  },
+  "datasets": {
+    "sensorscope": {
+      "dataset": "sensorscope",
+      "win": false,
+      "no_harm": true,
+      "vs_fedau_pct": 0.05247937242310567,
+      "vs_obsuse_pct": 0.15050459259634918
+    },
+    "uair": {
+      "dataset": "uair",
+      "win": false,
+      "no_harm": true,
+      "vs_fedau_pct": -0.4435916347614891,
+      "vs_obsuse_pct": -0.27229076012907105
+    }
+  },
+  "mpid": 0.5,
+  "n_val": 10,
+  "finite_all_methods": true,
+  "test_opened": false,
+  "informed_copy_trained": false,
+  "s2_s3_computed": false,
+  "rule": "win: mean paired d_m <= -0.5% vs fedau AND obsuse; no-harm: <= +0.5%; family: win one and no-harm the other",
+  "source": "GSTAR.json + post_review/G2_external_baselines/tables/per_seed.csv RMSE_block{g*}"
+}

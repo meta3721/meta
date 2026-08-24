@@ -1,0 +1,82 @@
+{
+  "gate": "G6",
+  "protocol": "post_review/G6_cannot_copy_endpoint/PROTOCOL.md",
+  "scored": true,
+  "val_scored": true,
+  "test_opened": false,
+  "datasets": {
+    "sensorscope": {
+      "dataset": "sensorscope",
+      "g_star": 2,
+      "mu_4": {
+        "block0": 0.29032258064516114,
+        "block1": 0.29032258064516114,
+        "block2": 0.22580645161290355,
+        "block3": 0.19354838709677413
+      },
+      "pi_opp_4": {
+        "block0": 0.38864993058734554,
+        "block1": 0.38864993058734554,
+        "block2": 0.11135006941265448,
+        "block3": 0.11135006941265448
+      },
+      "gap_mu_minus_piopp": {
+        "block0": -0.0983273499421844,
+        "block1": -0.0983273499421844,
+        "block2": 0.11445638220024908,
+        "block3": 0.08219831768411966
+      },
+      "mu_source": "frozen_target_artifact_marginalized_by_parse_time_block",
+      "mu_note": "P2 public target (TEST-support construction in the sealed artifact), not G3 EventTrace mu_test",
+      "pi_opp_source": "build_joint_pi_opp on train-split client-stratum support",
+      "pi_opp_meta": {
+        "n_clients": 8,
+        "n_joint_pairs": 440,
+        "theta_align": 1.25,
+        "tail_blocks": [2, 3],
+        "split": "train",
+        "constructor": "build_joint_pi_opp"
+      },
+      "artifact_path": "artifacts/e3_semantic_alignment_and_runner_integration_closure_r1/E3_SENSORSCOPE_TARGET_SEMANTICS_R2.json",
+      "artifact_sha256": "c6194f2aebffe38ee0feed7d83bbebf318e901d5aa788bfb102d01915b159ef6",
+      "tie_break": "lowest_g"
+    },
+    "uair": {
+      "dataset": "uair",
+      "g_star": 3,
+      "mu_4": {
+        "block0": 0.26415094339622636,
+        "block1": 0.22641509433962267,
+        "block2": 0.22641509433962267,
+        "block3": 0.28301886792452835
+      },
+      "pi_opp_4": {
+        "block0": 0.3886499305873456,
+        "block1": 0.3886499305873456,
+        "block2": 0.11135006941265442,
+        "block3": 0.11135006941265442
+      },
+      "gap_mu_minus_piopp": {
+        "block0": -0.12449898719111924,
+        "block1": -0.16223483624772292,
+        "block2": 0.11506502492696825,
+        "block3": 0.17166879851187394
+      },
+      "mu_source": "frozen_target_artifact_marginalized_by_parse_time_block",
+      "mu_note": "P2 public target (TEST-support construction in the sealed artifact), not G3 EventTrace mu_test",
+      "pi_opp_source": "build_joint_pi_opp on train-split client-stratum support",
+      "pi_opp_meta": {
+        "n_clients": 8,
+        "n_joint_pairs": 288,
+        "theta_align": 1.25,
+        "tail_blocks": [2, 3],
+        "split": "train",
+        "constructor": "build_joint_pi_opp"
+      },
+      "artifact_path": "artifacts/e3_semantic_alignment_and_runner_integration_closure_r1/E3_UAIR_TARGET_SEMANTICS_R2.json",
+      "artifact_sha256": "c158ec34582e1124e3b7f72e6ac55dd1b2130a5cf9f030a5ac231e81e8ac39b8",
+      "tie_break": "lowest_g"
+    }
+  },
+  "compute_gstar_sha256": "faa6d363e7f851a16cc3e5a63bcfaa9dcef10f7b0dab189e78ad21625cf04807"
+}
