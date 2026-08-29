@@ -25,6 +25,9 @@ class MethodPolicy:
     uses_staleness_penalty: bool = False
     uses_oracle_propensity: bool = False
     is_external_baseline: bool = False
+    # policy: follow uses_design_ratio; always_on/off: Mode D/0; sag: SAG certificates.
+    # Never encode dataset identity here.
+    gate_mode: str = "policy"
 
 
 # Method policy registry
@@ -36,6 +39,13 @@ POLICY_MAP: dict[str, MethodPolicy] = {
         uses_central_training=True,
     ),
     "fedavg_window": MethodPolicy(),
+    "fedau_window": MethodPolicy(
+        uses_usable_ipw=True,
+    ),
+    "obsuse_window": MethodPolicy(
+        uses_observation_ipw=True,
+        uses_usable_ipw=True,
+    ),
     "fedasync_window": MethodPolicy(
         uses_staleness_penalty=True,
     ),
@@ -81,6 +91,48 @@ POLICY_MAP: dict[str, MethodPolicy] = {
         uses_reference_penalty=True,
         uses_variance_penalty=True,
         uses_staleness_penalty=True,
+        gate_mode="always_on",
+    ),
+    # E4 one-factor-at-a-time RAVEN ablations.  Keep every non-ablated RAVEN
+    # component identical; do not substitute a historical partial method.
+    "raven_wo_design": MethodPolicy(
+        uses_observation_ipw=True, uses_usable_ipw=True, uses_hajek_local_loss=True,
+        uses_instant_calibration=True, uses_debt=True, uses_reference_penalty=True,
+        uses_variance_penalty=True, uses_staleness_penalty=True,
+        gate_mode="always_off",
+    ),
+    "raven_sag": MethodPolicy(
+        uses_design_ratio=True,
+        uses_observation_ipw=True,
+        uses_usable_ipw=True,
+        uses_hajek_local_loss=True,
+        uses_instant_calibration=True,
+        uses_debt=True,
+        uses_reference_penalty=True,
+        uses_variance_penalty=True,
+        uses_staleness_penalty=True,
+        gate_mode="sag",
+    ),
+    "raven_wo_obs": MethodPolicy(
+        uses_design_ratio=True, uses_usable_ipw=True, uses_hajek_local_loss=True,
+        uses_instant_calibration=True, uses_debt=True, uses_reference_penalty=True,
+        uses_variance_penalty=True, uses_staleness_penalty=True,
+    ),
+    "raven_wo_use": MethodPolicy(
+        uses_design_ratio=True, uses_observation_ipw=True, uses_hajek_local_loss=True,
+        uses_instant_calibration=True, uses_debt=True, uses_reference_penalty=True,
+        uses_variance_penalty=True, uses_staleness_penalty=True,
+    ),
+    "raven_wo_inst": MethodPolicy(
+        uses_design_ratio=True, uses_observation_ipw=True, uses_usable_ipw=True,
+        uses_hajek_local_loss=True, uses_debt=True, uses_reference_penalty=True,
+        uses_variance_penalty=True, uses_staleness_penalty=True,
+    ),
+    "raven_wo_debt": MethodPolicy(
+        uses_design_ratio=True, uses_observation_ipw=True, uses_usable_ipw=True,
+        uses_hajek_local_loss=True, uses_instant_calibration=True,
+        uses_reference_penalty=True, uses_variance_penalty=True,
+        uses_staleness_penalty=True,
     ),
     "raven_simoracle": MethodPolicy(
         uses_design_ratio=True,
@@ -107,6 +159,10 @@ def get_method_policy(method: str) -> MethodPolicy:
         "centralall": "central_all",
         "centraldelivered": "central_delivered",
         "fedavg": "fedavg_window",
+        "fedau": "fedau_window",
+        "fedau_window": "fedau_window",
+        "obsuse": "obsuse_window",
+        "obsuse_window": "obsuse_window",
         "fedasync": "fedasync_window",
         "timealign": "timealign_agg",
         "time_align": "timealign_agg",
@@ -122,6 +178,9 @@ def get_method_policy(method: str) -> MethodPolicy:
         "raven_mcs": "raven",
         "raven_simoracle": "raven_simoracle",
         "simoracle": "raven_simoracle",
+        "raven_sag": "raven_sag",
+        "sag": "raven_sag",
+        "sag_raven": "raven_sag",
     }
     canonical = aliases.get(normalized, normalized)
     if canonical in POLICY_MAP:

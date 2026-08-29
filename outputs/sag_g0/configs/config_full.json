@@ -1,0 +1,23 @@
+{
+  "datasets": [
+    "sensorscope",
+    "uair"
+  ],
+  "git_commit": "b4af7a9dacf7c47243c67ad71b1ed4f0f51cf6b4",
+  "local_steps": 2,
+  "max_windows": null,
+  "methods": [
+    "raven",
+    "raven_wo_design",
+    "raven_sag"
+  ],
+  "mode": "full",
+  "note": "G0 implementation audit. Dataset identity is not a Gate feature.",
+  "seeds": [
+    30001,
+    30002,
+    30003
+  ],
+  "threshold_hash": "526343535887e2f1094916be22d0403032fab0b905e74ac588f2b1bc6613510e",
+  "timestamp": "2026-08-29T03:28:49.222827+00:00"
+}

@@ -95,6 +95,94 @@ class FedAvgWindowAggregator(Aggregator):
 
 
 # ---------------------------------------------------------------------------
+# 3b. FedAU-Window — inverse lagged participation (usable-layer only)
+# ---------------------------------------------------------------------------
+
+class FedAUWindowAggregator(Aggregator):
+    """FedAU-Window: inverse-participation (usable-layer) client reweighting only.
+
+    This is the windowed adaptation of FedAU (wang2024lightweight), NOT an
+    official reproduction. It reweights each client by the inverse of its
+    lagged, pre-outcome participation rate; it does NOT correct the
+    opportunity/design or observation layers and does NOT run (P2) or debt.
+    """
+
+    name = "fedau_window"
+
+    def __init__(self, epsilon: float = 1e-6) -> None:
+        self.epsilon = float(epsilon)
+
+    def compute_server_weights(self, payload: WindowAggregateInput) -> np.ndarray:
+        rates = payload.extras.get("participation_rate")
+        if rates is None:
+            raise ValueError(
+                "FedAU-Window requires extras['participation_rate'] "
+                "(lagged pre-outcome participation rates aligned to client_ids)"
+            )
+        if isinstance(rates, dict):
+            p = np.asarray(
+                [float(rates[cid]) for cid in payload.client_ids],
+                dtype=np.float64,
+            )
+        else:
+            p = np.asarray(rates, dtype=np.float64)
+        if p.shape != np.asarray(payload.raw_counts).shape:
+            raise ValueError("participation_rate must align with raw_counts")
+        p = np.maximum(p, self.epsilon)
+        return _normalize(payload.raw_counts * (1.0 / p))
+
+
+# ---------------------------------------------------------------------------
+# 3c. ObsUse-Window — observation + usable inverse weighting (no design)
+# ---------------------------------------------------------------------------
+
+def _rate_vector(rates, client_ids, raw_counts, epsilon: float, name: str) -> np.ndarray:
+    if rates is None:
+        raise ValueError(f"{name} is required and must align with client_ids")
+    if isinstance(rates, dict):
+        p = np.asarray(
+            [float(rates[cid]) for cid in client_ids],
+            dtype=np.float64,
+        )
+    else:
+        p = np.asarray(rates, dtype=np.float64)
+    if p.shape != np.asarray(raw_counts).shape:
+        raise ValueError(f"{name} must align with raw_counts")
+    return np.maximum(p, float(epsilon))
+
+
+class ObsUseWindowAggregator(Aggregator):
+    """ObsUse-Window: observation + usable-update inverse weighting (no design ratio).
+
+    Windowed adaptation, not an official reproduction. Server weights are
+    proportional to raw_counts / (p_obs * q_use) using lagged pre-outcome
+    rates; no design ratio, Hajek local loss, (P2), or debt.
+    """
+
+    name = "obsuse_window"
+
+    def __init__(self, epsilon: float = 1e-6) -> None:
+        self.epsilon = float(epsilon)
+
+    def compute_server_weights(self, payload: WindowAggregateInput) -> np.ndarray:
+        obs = _rate_vector(
+            payload.extras.get("observation_rate"),
+            payload.client_ids,
+            payload.raw_counts,
+            self.epsilon,
+            "extras['observation_rate']",
+        )
+        use = _rate_vector(
+            payload.extras.get("participation_rate"),
+            payload.client_ids,
+            payload.raw_counts,
+            self.epsilon,
+            "extras['participation_rate']",
+        )
+        return _normalize(payload.raw_counts * (1.0 / obs) * (1.0 / use))
+
+
+# ---------------------------------------------------------------------------
 # 4. FedAsync-Window — staleness-decayed sample-size proportional
 # ---------------------------------------------------------------------------
 
@@ -364,7 +452,9 @@ class DebtCalAggregator(Aggregator):
             variance,
             staleness,
             lambda_group=self.lambda_group,
-            lambda_beta=0.0,  # No reference penalty
+            # P2 uniqueness requires lambda_beta > 0; keep negligible so Debt-Cal
+            # has no meaningful beta-reference pull (beta used only as technical anchor).
+            lambda_beta=1e-8,
             lambda_variance=self.lambda_variance,
             lambda_staleness=self.lambda_staleness,
             alpha_max=self.alpha_max,
@@ -391,6 +481,7 @@ class RavenAggregator(Aggregator):
         alpha_max: float = 0.5,
         e_min: float = 3.0,
         max_server_learning_rate: float = 1.0,
+        instant_calibration: bool = True,
     ) -> None:
         self.lambda_group = lambda_group
         self.lambda_beta = lambda_beta
@@ -399,6 +490,7 @@ class RavenAggregator(Aggregator):
         self.alpha_max = alpha_max
         self.e_min = e_min
         self.max_server_learning_rate = max_server_learning_rate
+        self.instant_calibration = bool(instant_calibration)
         self.solve_results = []
 
     def compute_server_weights(self, payload: WindowAggregateInput) -> np.ndarray:
@@ -432,9 +524,80 @@ class RavenAggregator(Aggregator):
             alpha_max=self.alpha_max,
             e_min=min(self.e_min, n_active),
             max_server_learning_rate=self.max_server_learning_rate,
+            instant_calibration=self.instant_calibration,
         )
-        self.solve_results.append(result)
+        # Retain a JSON-serializable provenance record for E4 and future
+        # audits without changing the public P2Result contract.
+        warning = (
+            "inaccurate" in str(result.status).lower()
+            or "inaccurate" in str(result.primary_status).lower()
+            or bool(result.fallback_used)
+            or bool(result.feasibility_repair_used)
+        )
+        self.solve_results.append({
+            "solver": result.backend,
+            "status": result.status,
+            "primary_status": result.primary_status,
+            "objective": float(result.objective_value),
+            "alpha": result.alpha.tolist(),
+            "M": np.asarray(payload.compositions, dtype=np.float64).tolist(),
+            "mu": np.asarray(payload.mu, dtype=np.float64).tolist(),
+            "beta": np.asarray(payload.beta_hat, dtype=np.float64).tolist(),
+            "debt": np.asarray(payload.debt, dtype=np.float64).tolist(),
+            "variance": np.asarray(variance, dtype=np.float64).tolist(),
+            "staleness": np.asarray(staleness, dtype=np.float64).tolist(),
+            "lambdas": {
+                "group": self.lambda_group, "beta": self.lambda_beta,
+                "variance": self.lambda_variance, "staleness": self.lambda_staleness,
+            },
+            "instant_calibration": self.instant_calibration,
+            "residuals": {
+                "primal": float(result.primal_residual),
+                "constraint": float(result.constraint_violation),
+                "simplex": float(result.simplex_residual),
+                "nonnegative": float(result.nonnegative_violation),
+                "upper_bound": float(result.upper_bound_violation),
+                "ess_l2": float(result.ess_l2_violation),
+            },
+            "warning": warning,
+            "fallback_used": bool(result.fallback_used),
+            "feasibility_repair_used": bool(result.feasibility_repair_used),
+        })
         return _normalize(result.alpha)
+
+
+class RavenWoInstAggregator(RavenAggregator):
+    """RAVEN without instantaneous group calibration (E4 raven_wo_inst).
+
+    Still calls solve_p2 every active window. Debt, variance, staleness,
+    λ_β / λ_v / λ_s, and constraints match full RavenAggregator defaults;
+    only instantaneous group calibration is removed (λ_g=0,
+    instant_calibration=False). λ_β remains the matched E3 full-RAVEN
+    reference-penalty coefficient (default 1.0), not a uniqueness-only stub.
+    """
+
+    name = "raven_wo_inst"
+
+    def __init__(
+        self,
+        *,
+        lambda_beta: float = 1.0,
+        lambda_variance: float = 0.1,
+        lambda_staleness: float = 0.1,
+        alpha_max: float = 0.5,
+        e_min: float = 3.0,
+        max_server_learning_rate: float = 1.0,
+    ) -> None:
+        super().__init__(
+            lambda_group=0.0,
+            lambda_beta=lambda_beta,
+            lambda_variance=lambda_variance,
+            lambda_staleness=lambda_staleness,
+            alpha_max=alpha_max,
+            e_min=e_min,
+            max_server_learning_rate=max_server_learning_rate,
+            instant_calibration=False,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -519,6 +682,12 @@ def get_aggregator(name: str) -> Aggregator:
         # 3. FedAvg-Window
         "fedavg": FedAvgWindowAggregator,
         "fedavg_window": FedAvgWindowAggregator,
+        # 3b. FedAU-Window (windowed adaptation, not official reproduction)
+        "fedau": FedAUWindowAggregator,
+        "fedau_window": FedAUWindowAggregator,
+        # 3c. ObsUse-Window (observation + usable; no design)
+        "obsuse": ObsUseWindowAggregator,
+        "obsuse_window": ObsUseWindowAggregator,
         # 4. FedAsync-Window
         "fedasync": FedAsyncWindowAggregator,
         "fedasync_window": FedAsyncWindowAggregator,
@@ -545,6 +714,14 @@ def get_aggregator(name: str) -> Aggregator:
         # 11. RAVEN-MCS
         "raven": RavenAggregator,
         "raven_mcs": RavenAggregator,
+        "raven_sag": RavenAggregator,
+        "sag": RavenAggregator,
+        "sag_raven": RavenAggregator,
+        "raven_wo_design": RavenAggregator,
+        "raven_wo_obs": RavenAggregator,
+        "raven_wo_use": RavenAggregator,
+        "raven_wo_inst": RavenWoInstAggregator,
+        "raven_wo_debt": RavenAggregator,
         # 12. RAVEN-SimOracle
         "raven_simoracle": RavenSimOracleAggregator,
         "simoracle": RavenSimOracleAggregator,

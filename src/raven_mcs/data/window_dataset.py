@@ -35,6 +35,9 @@ class WindowRecords:
     usable: int
     attempt_failure: int
     non_attempt: int
+    oracle_p: float = 0.5
+    oracle_q: float = 0.5
+    p_obs_true_by_unit: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass
@@ -44,7 +47,7 @@ class WindowDataSlice:
     window_id: int
     records: list[WindowRecords] = field(default_factory=list)
     active_client_ids: list[str] = field(default_factory=list)
-    all_client_ids: list[str] = field(default_factory=list)  # E_r — all with m>0
+    all_client_ids: list[str] = field(default_factory=list)  # registered clients in the window
 
     @property
     def num_active(self) -> int:
@@ -132,6 +135,16 @@ def extract_window_slice(
         if U_val == 1:
             active_client_ids.append(client_id)
 
+        feats = row["opportunity_features"] if "opportunity_features" in row else {}
+        if isinstance(feats, str):
+            import json
+
+            feats = json.loads(feats)
+        if not isinstance(feats, dict):
+            feats = {}
+        p_obs_map = feats.get("p_obs_true_by_unit", {})
+        if not isinstance(p_obs_map, dict):
+            p_obs_map = {}
         records.append(WindowRecords(
             window_id=window_id,
             client_id=client_id,
@@ -159,6 +172,9 @@ def extract_window_slice(
                 len(obs_ids) > 0 and int(row["U"]) == 0,
             )),
             non_attempt=int(row.get("non_attempt", len(obs_ids) == 0)),
+            oracle_p=float(row.get("oracle_p", feats.get("p_obs_true", 0.5))),
+            oracle_q=float(row.get("oracle_q", feats.get("q_use_true", 0.5))),
+            p_obs_true_by_unit={str(k): float(v) for k, v in p_obs_map.items()},
         ))
 
     return WindowDataSlice(
