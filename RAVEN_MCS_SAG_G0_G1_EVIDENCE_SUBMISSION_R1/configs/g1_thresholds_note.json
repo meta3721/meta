@@ -1,0 +1,4 @@
+{
+  "note": "G1 uses the same frozen G0 thresholds. Do not retune after seeing G1 outcomes.",
+  "source": "configs/sag_g0/thresholds.json"
+}

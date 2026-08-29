@@ -1,0 +1,64 @@
+{
+  "checks": {
+    "b_a_sets": {
+      "failures": [],
+      "n_failures": 0,
+      "pass": true
+    },
+    "counterfactual_audit_valid": {
+      "failures": [],
+      "pass": true
+    },
+    "no_dataset_name_gate": {
+      "failures": [],
+      "pass": true
+    },
+    "no_forbidden_gate_feature": {
+      "forbidden_hits": [],
+      "pass": true
+    },
+    "nodesign_semantics": {
+      "failures": [],
+      "pass": true
+    },
+    "p_obs_frozen_before_O": {
+      "failures": [],
+      "pass": true
+    },
+    "q_use_frozen_before_U": {
+      "failures": [],
+      "pass": true
+    },
+    "shared_eventtrace": {
+      "failures": [],
+      "pass": true
+    },
+    "timing_correct": {
+      "failures": [],
+      "n": 18,
+      "pass": true
+    }
+  },
+  "config": {
+    "config_hash": "054291dd91a1eb79525c3ff6ecc193e2114b7a788b43f2e9f2b07b60e9b3e059",
+    "datasets": [
+      "sensorscope"
+    ],
+    "git_commit": "b4af7a9dacf7c47243c67ad71b1ed4f0f51cf6b4",
+    "local_steps": 2,
+    "max_windows": 6,
+    "methods": [
+      "raven",
+      "raven_wo_design",
+      "raven_sag"
+    ],
+    "mode": "smoke",
+    "note": "G0 implementation audit. Dataset identity is not a Gate feature.",
+    "seeds": [
+      30001
+    ],
+    "threshold_hash": "526343535887e2f1094916be22d0403032fab0b905e74ac588f2b1bc6613510e",
+    "timestamp": "2026-08-29T03:27:35.038823+00:00"
+  },
+  "verdict": "PASS"
+}

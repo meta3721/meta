@@ -1,0 +1,2209 @@
+
+RAVEN-MCS v2.0
+Support-Aware Gate (SAG) Spec v1.2 Final Closure
+============================================================
+Version: v1.2
+Status: FINAL THEORY CLOSURE / READY FOR SECTIONS III--VI AND SAG-G0/G1
+Purpose:
+  Replace the dataset-name Design gate with a predictable, support-aware,
+  fail-closed gate that preserves RAVEN's sequential legal-information
+  boundary and admits explicit structural-safety analysis.
+
+This specification supersedes:
+  RAVEN_MCS_Support_Aware_Gate_Math_Algorithm1_v1.0
+  RAVEN_MCS_Support_Aware_Gate_Spec_v1.1_PostAudit.txt
+
+It incorporates the two mandatory P0 micro-patches and five P1
+scope/claim fixes from SAG v1.1 Second Formal Audit.
+
+It incorporates all required P0/P1 repairs from:
+  RAVEN_MCS_SAG_Formal_Theory_Audit_v1.0
+
+============================================================
+0. EXECUTIVE FREEZE
+============================================================
+
+The v1.1 scientific statement is:
+
+  A statistically valid Full-Design correction is not automatically safe in
+  a finite mobile window. SAG therefore decides before the current selection
+  process whether Full Design may be used. The decision is based only on
+  predictable support/correction-risk certificates. When SAG enables Design,
+  its structural perturbation relative to the No-Design RAVEN fallback is
+  explicitly bounded under the stated assumptions. When SAG disables Design,
+  the ideal corrected law has an exact opportunity-law interpretation rather
+  than an incorrectly claimed target-law interpretation.
+
+The operational flow is frozen as:
+
+  completed-window history
+  -> predictable safety certificates
+  -> freeze Gate
+  -> current R
+  -> current O
+  -> frozen Design/No-Design reconstruction
+  -> local training
+  -> current U
+  -> usable correction
+  -> P2
+  -> global update
+  -> post-window counterfactual audit for future Gate state
+
+The following are NOT allowed:
+  - current R/O/U realizations deciding the same-window Gate;
+  - current sensing values Z deciding the Gate;
+  - current prediction error/loss deciding the Gate;
+  - test labels deciding thresholds;
+  - dataset identity as a Gate feature;
+  - claiming theoretical prediction no-harm from the present SAG theory;
+  - invoking the old beta-only P2 non-expansion to compare Full Design with
+    No-Design when M or V changes.
+
+============================================================
+1. RELATION TO THE EXISTING RAVEN PIPELINE
+============================================================
+
+SAG controls only the opportunity/Design ratio.
+
+Let:
+  mode D = Full Design;
+  mode 0 = No-Design RAVEN fallback.
+
+The No-Design fallback is NOT ObsUse-Window.
+It keeps:
+  observation correction;
+  usable-update correction;
+  P2;
+  variance/staleness terms;
+  the existing global update;
+  optional debt accounting.
+
+It changes only:
+  zeta^o -> 1.
+
+For the operational binary gate G_r in {0,1},
+
+  \widetilde{\zeta}^{o}_{k,r,i}
+  =
+  1+
+  G_r
+  (
+    \widehat{\zeta}^{o}_{k,r,i}
+    -
+    1
+  ).
+
+Thus:
+  G_r=1 -> Full-Design RAVEN;
+  G_r=0 -> No-Design RAVEN.
+
+The theory below also permits g_r in [0,1] to expose a future continuous
+shrinkage extension, but v1.2 Algorithm 1 is binary.
+
+============================================================
+2. SUPPORT GRANULARITY
+============================================================
+
+The general theoretical support is atomic:
+
+  S_tar^atom
+  =
+  {(k,i): pi^tar_{k,i}>0}.
+
+Under the main protocol's within-stratum exchangeability,
+the implemented Design ratio is client-stratum level:
+
+  \hat zeta^o_{k,r,s}
+  =
+  pi^tar_{k,s}
+  /
+  max{
+    \hat pi^opp_{k,s,r},
+    pi_min
+  }.
+
+Therefore the operational SAG uses:
+
+  S_tar
+  =
+  {(k,s): pi^tar_{k,s}>0}.
+
+All operational support statistics in v1.1 are client-stratum quantities.
+The atomic version is recovered by replacing (k,s) with (k,i) when the
+within-stratum exchangeability simplification is not used.
+
+This convention prevents mixing:
+  atomic risk units;
+  client-stratum target support;
+  deployment groups.
+
+============================================================
+3. PRE-WINDOW FILTRATION AND PREDICTABILITY
+============================================================
+
+Let F_{r-} denote the information available immediately before the current
+window's opportunity indicators R_{k,r,i} are realized.
+
+F_{r-} contains:
+  - the public/frozen deployment target;
+  - frozen target mappings h(i), s(i);
+  - all completed-window R/O/U metadata;
+  - all completed-window counterfactual Full/No-Design audit statistics;
+  - lagged opportunity and propensity estimator states;
+  - lagged variance states;
+  - frozen Gate thresholds and calibration models;
+  - optional exogenous context measured before current R is realized.
+
+F_{r-} excludes:
+  - current R_{k,r,i};
+  - current O_{k,r,i};
+  - current U_{k,r};
+  - current observed values Z_{k,r,i};
+  - current loss or prediction residual;
+  - current update coordinates, norms, or directions;
+  - future events;
+  - test outcomes/labels.
+
+Assumption A6 (Gate predictability):
+  The operational Gate G_r and all quantities used to compute it are
+  F_{r-}-measurable.
+
+This is a hard theoretical requirement.
+
+============================================================
+4. SHARED COUNTERFACTUAL SELECTION TRACE
+============================================================
+
+The Gate audit compares two reconstruction modes on the same exogenous
+selection realization:
+
+  D: Full Design;
+  0: No Design.
+
+Assumption A7 (Shared exogenous selection trace):
+Conditional on the pre-window system state and legal stage histories,
+the current R/O/registration/U realization is the same counterfactual
+selection trace for modes D and 0. Design changes statistical weights and
+the resulting local objective, but it does not alter:
+  the realized opportunity event;
+  whether a record is observed;
+  whether a nonempty observed buffer registers an attempt;
+  the computation/network/deadline/staleness event U.
+
+This is consistent with the current RAVEN windowed-asynchronous protocol,
+where exogenous mobile/update events are shared across compared methods.
+
+A7 is needed only for the Full-vs-No-Design support/safety comparison.
+It does not assert that arbitrary system implementations must satisfy it.
+
+============================================================
+5. REALIZED POST-WINDOW AUDIT QUANTITIES
+============================================================
+
+After window r has completed, the server may reconstruct both modes D and 0
+on the same recorded selection trace without using sensing-value labels for
+the Gate audit.
+
+For m in {D,0}, define:
+
+  a^m_{k,r,i}
+  =
+  min{
+    a_max,
+    zeta^m_{k,r,i}
+    /
+    max{
+      \hat p^obs_{k,r,i},
+      p_min
+    }
+  },
+
+with:
+  zeta^D = \hat zeta^o;
+  zeta^0 = 1.
+
+The corrected mass is:
+
+  m^m_{k,r}
+  =
+  sum_i
+  R_{k,r,i}
+  O_{k,r,i}
+  a^m_{k,r,i}.
+
+The usable active set is:
+
+  A_r^m
+  =
+  {
+    k in U_r:
+    m^m_{k,r}>0
+  }.
+
+Define the realized active-set-change indicator:
+
+  D^A_r
+  =
+  1{
+    A_r^D != A_r^0
+  }.
+
+When A_r^D=A_r^0=A_r, construct on the common client coordinates:
+
+  beta_r^D, beta_r^0;
+  M_r^D,    M_r^0;
+  V_r^D,    V_r^0.
+
+Define realized common-support perturbations:
+
+  Delta_beta,r
+  =
+  ||beta_r^D-beta_r^0||_2,
+
+  Delta_M,r
+  =
+  ||M_r^D-M_r^0||_2,
+
+  Delta_V,r
+  =
+  ||V_r^D-V_r^0||_2.
+
+These are audit outcomes for training/calibrating the NEXT windows' Gate
+certificate. They cannot change G_r retrospectively.
+
+============================================================
+6. INTERPRETABLE SUPPORT/STABILITY DIAGNOSTICS
+============================================================
+
+The following quantities remain part of SAG, but v1.1 distinguishes:
+  (i) realized post-window audit versions; and
+  (ii) predictable pre-window lower/upper certificates.
+
+------------------------------------------------------------
+6.1 Target-Support Coverage
+------------------------------------------------------------
+
+Ideal support condition:
+for target-positive (k,s), the true opportunity law should not approach zero.
+
+Operationally maintain a one-sided lower safety bound:
+
+  \underline P^{opp}_{k,s,r}
+  <=
+  P^{opp}_{k,s,r}
+
+at the stated calibration/confidence level.
+
+Define:
+
+  \underline C^{cov}_r
+  =
+  sum_{k,s}
+  pi^tar_{k,s}
+  1{
+    \underline P^{opp}_{k,s,r}
+    >=
+    pi_safe
+  }.
+
+Range:
+  0 <= \underline C^{cov}_r <= 1.
+
+Important:
+A smoothed positive point estimate by itself is NOT a positivity certificate.
+If a valid lower bound cannot be formed for a required component, the Gate
+fails closed.
+
+------------------------------------------------------------
+6.2 Opportunity-Mass Retention inside Target Support
+------------------------------------------------------------
+
+Let:
+  \bar pi^{opp}_{k,s,r-}
+be the predictable lagged opportunity law.
+
+Define the predictable retained-opportunity mass:
+
+  C^{ret}_{r-}
+  =
+  sum_{k,s}
+  \bar pi^{opp}_{k,s,r-}
+  1{
+    pi^tar_{k,s}>0
+  }.
+
+Operational SAG uses a conservative lower certificate:
+
+  \underline C^{ret}_r
+  <=
+  C^{ret}_{r}.
+
+Interpretation:
+it estimates how much near-term opportunity mass remains inside target-positive
+support. Low retention warns that Full Design is likely to zero substantial
+available support.
+
+------------------------------------------------------------
+6.3 ESS-Retention Certificate
+------------------------------------------------------------
+
+For completed matched-support windows define:
+
+  ESS^D_{k,t}
+  =
+  [sum_i R O a^D]^2
+  /
+  [sum_i (R O a^D)^2 + EPS_ZERO],
+
+  ESS^0_{k,t}
+  analogously,
+
+and:
+  e_{k,t}
+  =
+  min{
+    1,
+    ESS^D_{k,t}
+    /
+    max{ESS^0_{k,t},1}
+  }.
+
+A realized window-level ESS-retention statistic can be the frozen weighted
+median across eligible clients.
+
+The online Gate does NOT use current-window e_{k,r}.
+It uses a predictable lower certificate:
+
+  \underline C^{ESS}_r.
+
+------------------------------------------------------------
+6.4 Design-Induced Clipping Certificate
+------------------------------------------------------------
+
+For completed windows define:
+
+  \tilde a^D
+  =
+  \hat zeta^o
+  /
+  max{\hat p^obs,p_min},
+
+  \tilde a^0
+  =
+  1
+  /
+  max{\hat p^obs,p_min}.
+
+A clipping event is Design-induced when:
+
+  \tilde a^D>a_max
+  and
+  \tilde a^0<=a_max.
+
+The realized Design-induced clipping burden is the fraction of observed
+candidate records satisfying that condition.
+
+The online Gate uses a predictable upper certificate:
+
+  \overline C^{clip}_r.
+
+Observation-layer clipping that occurs in both modes is not counted as
+Design-induced clipping.
+
+============================================================
+7. DIRECT SAFETY CERTIFICATES
+============================================================
+
+The interpretable diagnostics above are not, by themselves, a theorem-level
+certificate. v1.2 therefore adds two direct predictable safety quantities.
+
+------------------------------------------------------------
+7.1 Active-Set-Change Risk
+------------------------------------------------------------
+
+Define the true conditional mismatch risk:
+
+  delta_{A,r}
+  =
+  Pr(
+    A_r^D != A_r^0
+    |
+    F_{r-}
+  ).
+
+The operational Gate uses an F_{r-}-measurable calibrated upper bound:
+
+  \overline delta_{A,r}
+
+such that, on the certificate-validity event,
+
+  delta_{A,r}
+  <=
+  \overline delta_{A,r}.
+
+The bound is learned/calibrated from completed-window
+D^A_t indicators and pre-window support features using a frozen,
+low-dimensional calibration rule.
+
+No neural/black-box Gate is required or recommended in v1.1.
+
+------------------------------------------------------------
+7.2 Common-Support Calibration Perturbation
+------------------------------------------------------------
+
+On completed windows with A_t^D=A_t^0, record:
+
+  Delta_beta,t,
+  Delta_M,t,
+  Delta_V,t.
+
+The pre-window certificate module outputs F_{r-}-measurable upper bounds:
+
+  \overline Delta_beta,r,
+  \overline Delta_M,r,
+  \overline Delta_V,r.
+
+These bounds are calibrated only on completed development windows and are
+interpreted conditionally on the common-active-set event.
+
+Let:
+
+  B_M,r
+
+be an F_{r-}-measurable upper bound on:
+
+  max{
+    ||M_r^D||_2,
+    ||M_r^0||_2
+  }.
+
+The online certificate MUST NOT use the realized current K_r.
+A universal deterministic choice is:
+
+  B_M,r = sqrt(K),
+
+where K is the fixed client universe.
+
+A tighter pre-window value is allowed only if it is itself F_{r-}-measurable,
+for example sqrt(K^{max}_{r-}) for a valid pre-window upper bound on the
+number of clients that may become active.
+
+Let:
+
+  B_Q,r = ||Q_r||_2,
+
+which is known before the current window.
+
+Define:
+
+  \overline D^{alpha}_r
+  =
+  \overline Delta_beta,r
+  +
+  [
+    B_Q,r
+    +
+    lambda_g(
+      2B_M,r+1
+    )
+  ]
+  /
+  lambda_beta
+  *
+  \overline Delta_M,r
+  +
+  lambda_v
+  /
+  lambda_beta
+  *
+  \overline Delta_V,r.
+
+Define the common-support service-composition certificate:
+
+  \overline B^{srv}_r
+  =
+  sqrt(|G|)
+  [
+    \overline Delta_M,r
+    +
+    B_M,r
+    \overline D^{alpha}_r
+  ].
+
+Let:
+
+  delta_cal,r
+
+be the predeclared/F_{r-}-measurable conditional failure level of the
+common-support perturbation certificate in Assumption A8b.
+
+The FINAL total structural-safety certificate is:
+
+  \overline B^{tot}_r
+  =
+  \overline B^{srv}_r
+  +
+  2
+  \overline delta_{A,r}
+  +
+  2
+  delta_cal,r.
+
+Theorem 4 below gives the exact meaning of this corrected quantity.
+
+============================================================
+8. CERTIFICATE VALIDITY AND GATED-SUPPORT IDENTIFICATION
+============================================================
+
+Assumption A8a (Active-set-risk upper validity).
+The active-set-risk upper certificate:
+
+  \overline delta_{A,r}
+
+is F_{r-}-measurable. On the frozen Gate applicability region it satisfies:
+
+  delta_{A,r}
+  =
+  Pr(
+    A_r^D != A_r^0
+    |
+    F_{r-}
+  )
+  <=
+  \overline delta_{A,r}.
+
+The operational calibration procedure and its held-out coverage are frozen
+before unseen test environments are opened.
+
+Assumption A8b (Common-support perturbation coverage).
+Conditional on:
+
+  F_{r-}
+
+and on the common-active-set event:
+
+  E_r
+  =
+  {
+    A_r^D=A_r^0
+  },
+
+the F_{r-}-measurable perturbation upper certificates satisfy:
+
+  Pr(
+    Delta_beta,r <= \overline Delta_beta,r,
+    Delta_M,r    <= \overline Delta_M,r,
+    Delta_V,r    <= \overline Delta_V,r
+    |
+    F_{r-}, E_r
+  )
+  >=
+  1-delta_cal,r,
+
+where:
+
+  delta_cal,r in [0,1]
+
+is a frozen/predeclared F_{r-}-measurable certificate-failure level.
+
+The support/stability diagnostic lower/upper certificates:
+
+  \underline C^{cov}_r,
+  \underline C^{ret}_r,
+  \underline C^{ESS}_r,
+  \overline C^{clip}_r
+
+are also F_{r-}-measurable and are calibrated on development data only.
+They remain interpretable Gate preconditions; Theorem 4's direct structural
+certificate is supplied by A8a--A8b and Theorem 3.
+
+A8a--A8b are calibration/safety-bound assumptions, not target-identification
+claims.
+
+------------------------------------------------------------
+8.1 A9 — Gated-Support Sequential Positivity and Ignorability
+------------------------------------------------------------
+
+Assumption A9 (Gated-support sequential positivity and ignorability).
+
+For a predictable gate value g_r in [0,1], define the gated-identification
+support:
+
+  S_r^{gate}
+  =
+  {
+    (k,i):
+    g_r pi^tar_{k,i}
+    +
+    (1-g_r)P_r^{opp}(k,i)
+    >
+    0
+  }.
+
+On S_r^{gate}, require:
+
+1. Opportunity support:
+   whenever the gated ratio must be evaluated,
+
+     P_r^{opp}(k,i)>0.
+
+2. Observation positivity:
+   on realized opportunities to which observation inverse correction is
+   applied,
+
+     p^{obs}_{k,r,i}>0.
+
+3. Usable-update positivity:
+   on registered attempts to which usable-update inverse correction is
+   applied,
+
+     q^{use}_{k,r}>0.
+
+4. Sequential mean ignorability:
+   the legal-history conditional identities used in A2 hold for the bounded
+   moment being reconstructed on S_r^{gate}.
+
+Interpretation:
+
+- If g_r=1, S_r^{gate} reduces to the Full-Design target-supported
+  identification region and A9 reduces to the existing target-support
+  requirements.
+
+- If g_r=0, the fallback law retains opportunity-positive marks even when
+  pi^tar_{k,i}=0; A9 therefore requires O/U identifiability on that retained
+  opportunity support.
+
+- For 0<g_r<1, A9 applies on the union of the target-positive and
+  opportunity-positive mass receiving positive gated weight.
+
+The operational support object used by the client-stratum implementation is
+the corresponding stratum-level version under the frozen within-stratum
+exchangeability assumption.
+
+============================================================
+9. FINAL OPERATIONAL SAG DEFINITION
+============================================================
+
+The frozen Gate threshold vector is:
+
+  tau
+  =
+  (
+    tau_cov,
+    tau_ret,
+    tau_ESS,
+    tau_clip,
+    tau_A,
+    tau_safe
+  ).
+
+The certificate failure level delta_cal (or its frozen rule delta_cal,r) is
+NOT tuned online and is frozen together with tau, H, the propensity models,
+and the certificate models before unseen evaluation.
+
+The binary Gate is:
+
+  G_r
+  =
+  1{
+    \underline C^{cov}_r
+    >=
+    tau_cov,
+
+    \underline C^{ret}_r
+    >=
+    tau_ret,
+
+    \underline C^{ESS}_r
+    >=
+    tau_ESS,
+
+    \overline C^{clip}_r
+    <=
+    tau_clip,
+
+    \overline delta_{A,r}
+    <=
+    tau_A,
+
+    \overline B^{tot}_r
+    <=
+    tau_safe
+  }.
+
+Fail-closed rule:
+If any required certificate is missing, invalid, non-finite, or outside its
+calibrated applicability region,
+
+  G_r=0.
+
+Then freeze G_r before the current R/O/U realization.
+
+The Design ratio used throughout current window r is:
+
+  \widetilde zeta^o_{k,r,i}
+  =
+  1+
+  G_r
+  (
+    \widehat zeta^o_{k,r,i}
+    -
+    1
+  ).
+
+============================================================
+10. THEOREM 2 — PREDICTABLE GATED RECONSTRUCTION LAW
+============================================================
+
+Theorem 2 (Predictable gated reconstruction law).
+
+Fix window r. Let:
+
+  g_r in [0,1]
+
+be F_{r-}-measurable.
+
+For every mark (k,i) with P_r^{opp}(k,i)>0, define the ideal gated
+opportunity ratio:
+
+  zeta^{(g)}_{k,r,i}
+  =
+  1
+  +
+  g_r
+  [
+    pi^tar_{k,i}
+    /
+    P_r^{opp}(k,i)
+    -
+    1
+  ].
+
+Marks with:
+
+  pi^tar_{k,i}=P_r^{opp}(k,i)=0
+
+are never realized and need no ratio evaluation.
+Opportunity-positive but target-zero marks are included; for those marks:
+
+  zeta^{(g)}_{k,r,i}
+  =
+  1-g_r.
+
+Assume A1--A3, A6, and A9.
+
+For each mark, define the one-window conditional ideal corrected measure:
+
+  Gamma_r^{(g)}(k,i)
+  =
+  E[
+    R_{k,r,i}
+    O_{k,r,i}
+    U_{k,r}
+    zeta^{(g)}_{k,r,i}
+    /
+    (
+      p^{obs}_{k,r,i}
+      q^{use}_{k,r}
+    )
+    |
+    F_{r-}
+  ],
+
+with the understood registered-attempt conditioning for q^{use} and with
+zero contribution from marks not realized in the opportunity process.
+
+Then:
+
+  Gamma_r^{(g)}(k,i)
+  =
+  g_r
+  pi^tar_{k,i}
+  +
+  (
+    1-g_r
+  )
+  P_r^{opp}(k,i).                                  (T2-a)
+
+Moreover:
+
+  sum_{k,i}
+  Gamma_r^{(g)}(k,i)
+  =
+  1.                                                (T2-b)
+
+Hence for any bounded phi(k,i):
+
+  Phi_r^{(g)}
+  =
+  sum_{k,i}
+  Gamma_r^{(g)}(k,i)
+  phi(k,i)
+
+  =
+  g_r
+  Phi^{tar}
+  +
+  (
+    1-g_r
+  )
+  Phi_r^{opp},                                      (T2-c)
+
+where:
+
+  Phi^{tar}
+  =
+  sum_{k,i}
+  pi^tar_{k,i}
+  phi(k,i),
+
+and:
+
+  Phi_r^{opp}
+  =
+  sum_{k,i}
+  P_r^{opp}(k,i)
+  phi(k,i).
+
+In particular, for:
+
+  phi(k,i)=1{h(i)=g},
+
+the deployment-group conditional corrected measure is:
+
+  mu_r^{(g)}
+  =
+  g_r mu
+  +
+  (
+    1-g_r
+  )
+  mu_r^{opp},                                       (T2-d)
+
+and:
+
+  ||
+    mu_r^{(g)}
+    -
+    mu
+  ||_1
+  =
+  (
+    1-g_r
+  )
+  ||
+    mu_r^{opp}
+    -
+    mu
+  ||_1.                                             (T2-e)
+
+Proof.
+Because g_r is F_{r-}-measurable, it is fixed with respect to the current
+R/O/U selection realization. By A9, the O and U inverse factors are positive
+and the sequential mean-ignorability identities hold on every mark receiving
+positive gated mass. Therefore conditional ideal inverse correction cancels
+the O/U selection factors and leaves:
+
+  P_r^{opp}(k,i)
+  zeta^{(g)}_{k,r,i}.
+
+Algebra gives:
+
+  P_r^{opp}
+  zeta^{(g)}
+
+  =
+  P_r^{opp}
+  +
+  g_r(
+    pi^tar
+    -
+    P_r^{opp}
+  )
+
+  =
+  g_r pi^tar
+  +
+  (
+    1-g_r
+  )
+  P_r^{opp}.
+
+This proves (T2-a).
+Both pi^tar and P_r^{opp} are normalized laws, so summing the right-hand side
+gives one, proving (T2-b). Taking its bounded moment gives (T2-c). The
+deployment-group choice gives (T2-d), and:
+
+  mu_r^{(g)}-mu
+  =
+  (
+    1-g_r
+  )
+  (
+    mu_r^{opp}-mu
+  )
+
+gives (T2-e).
+QED.
+
+Scope.
+
+1. Theorem 2 is an exact CONDITIONAL CORRECTED-MEASURE identity.
+   It does NOT assert that a finite realized clipped/Hajek-normalized window
+   equals Gamma_r^{(g)} exactly.
+
+2. If g_r=1, the ideal Full-Design target law is recovered.
+
+3. If g_r=0, the ideal O/U-corrected opportunity law is obtained; the fallback
+   is not claimed to recover the public target.
+
+4. Active clipping remains a finite-sample stabilization and is outside this
+   exact ideal identity.
+
+5. Under A3's cluster/window regularity, the pooled normalized ideal estimator
+   converges to the corresponding event/cluster-weighted average of the
+   window-level Gamma_r^{(g)} laws. That pooled limit equals pi^tar only when
+   the gating schedule makes the weighted average equal to pi^tar.
+
+============================================================
+11. THEOREM 3 — COMMON-SUPPORT CALIBRATION SENSITIVITY
+============================================================
+
+Theorem 3 (Common-support calibration sensitivity).
+
+Fix one window r and two reconstruction modes m in {1,0}.
+Assume:
+  - both modes have the same nonempty active client set A_r;
+  - hence both use the same feasible set C_r;
+  - Q_r, tau_r, lambda_g, lambda_beta, lambda_v, lambda_s are common;
+  - lambda_beta>0;
+  - M_m, V_m, beta_m may differ;
+  - V_m is positive semidefinite.
+
+For m in {1,0}, define:
+
+  J_m(alpha)
+  =
+  -
+  Q_r^T
+  M_m
+  alpha
+
+  +
+  lambda_g/2
+  ||
+    M_m alpha-mu
+  ||_2^2
+
+  +
+  lambda_beta/2
+  ||
+    alpha-beta_m
+  ||_2^2
+
+  +
+  lambda_v/2
+  alpha^T V_m alpha
+
+  +
+  lambda_s
+  tau_r^T
+  alpha.
+
+Let alpha_m be the unique minimizer over C_r.
+
+Define:
+
+  Delta_beta
+  =
+  ||beta_1-beta_0||_2,
+
+  Delta_M
+  =
+  ||M_1-M_0||_2,
+
+  Delta_V
+  =
+  ||V_1-V_0||_2,
+
+  B_M
+  =
+  max{
+    ||M_1||_2,
+    ||M_0||_2
+  },
+
+  B_Q
+  =
+  ||Q_r||_2.
+
+Then:
+
+  ||alpha_1-alpha_0||_2
+  <=
+  Delta_beta
+  +
+  [
+    B_Q
+    +
+    lambda_g(
+      2B_M+1
+    )
+  ]
+  /
+  lambda_beta
+  *
+  Delta_M
+  +
+  lambda_v
+  /
+  lambda_beta
+  *
+  Delta_V.                                           (T3-a)
+
+Moreover:
+
+  ||
+    M_1 alpha_1
+    -
+    M_0 alpha_0
+  ||_2
+  <=
+  Delta_M
+  +
+  B_M
+  ||
+    alpha_1-alpha_0
+  ||_2.                                              (T3-b)
+
+Proof.
+Because each J_m contains the term
+lambda_beta/2 ||alpha-beta_m||_2^2 and all other quadratic terms are convex,
+J_m is lambda_beta-strongly convex.
+
+Let:
+
+  d
+  =
+  alpha_1-alpha_0.
+
+The variational inequalities for the two constrained minimizers give:
+
+  <
+    grad J_1(alpha_1),
+    alpha_0-alpha_1
+  >
+  >=0,
+
+and:
+
+  <
+    grad J_0(alpha_0),
+    alpha_1-alpha_0
+  >
+  >=0.
+
+Hence:
+
+  <
+    grad J_1(alpha_1)
+    -
+    grad J_0(alpha_0),
+    d
+  >
+  <=0.
+
+Add and subtract grad J_1(alpha_0):
+
+  <
+    grad J_1(alpha_1)
+    -
+    grad J_1(alpha_0),
+    d
+  >
+
+  <=
+
+  <
+    grad J_0(alpha_0)
+    -
+    grad J_1(alpha_0),
+    d
+  >.
+
+By lambda_beta-strong monotonicity of grad J_1:
+
+  lambda_beta
+  ||d||_2^2
+
+  <=
+
+  ||
+    grad J_0(alpha_0)
+    -
+    grad J_1(alpha_0)
+  ||_2
+  ||d||_2.
+
+If d=0 the claim is immediate. Otherwise divide by ||d||_2.
+
+We now bound the gradient difference at alpha_0.
+
+Debt term:
+  ||
+    (M_1-M_0)^T Q_r
+  ||_2
+  <=
+  B_Q Delta_M.
+
+Group term:
+  M_1^T(M_1 alpha_0-mu)
+  -
+  M_0^T(M_0 alpha_0-mu)
+
+  =
+  (
+    M_1^T M_1
+    -
+    M_0^T M_0
+  )
+  alpha_0
+
+  -
+  (
+    M_1-M_0
+  )^T
+  mu.
+
+Because alpha_0 is a probability vector:
+  ||alpha_0||_2<=1.
+
+Because mu is a probability vector:
+  ||mu||_2<=1.
+
+Also:
+
+  ||
+    M_1^T M_1
+    -
+    M_0^T M_0
+  ||_2
+
+  <=
+
+  (
+    ||M_1||_2
+    +
+    ||M_0||_2
+  )
+  Delta_M
+
+  <=
+  2B_M Delta_M.
+
+Therefore the group-gradient difference is at most:
+
+  lambda_g
+  (
+    2B_M+1
+  )
+  Delta_M.
+
+Reference term:
+  lambda_beta
+  ||
+    beta_1-beta_0
+  ||_2
+  =
+  lambda_beta Delta_beta.
+
+Variance term:
+  lambda_v
+  ||
+    (V_1-V_0)alpha_0
+  ||_2
+  <=
+  lambda_v Delta_V.
+
+The staleness term cancels because tau_r is common.
+Combining these bounds and dividing by lambda_beta gives (T3-a).
+
+For (T3-b):
+
+  M_1 alpha_1
+  -
+  M_0 alpha_0
+
+  =
+  (
+    M_1-M_0
+  )
+  alpha_1
+
+  +
+  M_0
+  (
+    alpha_1-alpha_0
+  ).
+
+Since ||alpha_1||_2<=1:
+
+  ||
+    M_1 alpha_1
+    -
+    M_0 alpha_0
+  ||_2
+
+  <=
+  Delta_M
+  +
+  ||M_0||_2
+  ||alpha_1-alpha_0||_2
+
+  <=
+  Delta_M
+  +
+  B_M
+  ||alpha_1-alpha_0||_2.
+
+QED.
+
+Scope.
+Theorem 3 is a same-window common-support result comparing two modes from the
+SAME pre-window state: the same Q_r, model state, lagged states, staleness
+state, and shared exogenous selection trace. It is not a trajectory-level
+bound between two alternate histories that have run Full Design and No Design
+from time zero.
+
+It replaces the incorrect use of the older beta-only reference
+non-expansion when Full/No-Design also changes M or V.
+
+============================================================
+12. THEOREM 4 — ACTIVE-SET-RISK STRUCTURAL PERTURBATION BOUND
+============================================================
+
+Theorem 4 (Active-set-risk structural perturbation bound).
+
+Fix window r and condition on the pre-window filtration F_{r-}.
+Consider Full Design D and No-Design fallback 0 on the same A7 shared
+exogenous selection trace.
+
+Define the common-active-set event:
+
+  E_r
+  =
+  {
+    A_r^D
+    =
+    A_r^0
+  },
+
+and:
+
+  delta_{A,r}
+  =
+  Pr(
+    E_r^c
+    |
+    F_{r-}
+  ).
+
+For mode m in {D,0}, define the deployment-group service vector:
+
+  s_r^m
+  =
+  I_r^m
+  M_r^m
+  alpha_r^m,
+
+where:
+  I_r^m=1 if mode m has a nonempty active set;
+  s_r^m=0 otherwise.
+
+On E_r, let the common-support perturbation certificate event C_r satisfy:
+
+  Pr(
+    C_r
+    |
+    F_{r-}, E_r
+  )
+  >=
+  1-delta_cal,r,
+
+as in A8b.
+
+On E_r ∩ C_r, let:
+
+  \overline B_r^{srv}
+
+be the F_{r-}-measurable bound obtained from Theorem 3 and the certified
+upper bounds on Delta_beta,r, Delta_M,r, and Delta_V,r, such that:
+
+  ||
+    s_r^D
+    -
+    s_r^0
+  ||_1
+  <=
+  \overline B_r^{srv}.                              (T4-a)
+
+Assume A8a:
+
+  delta_{A,r}
+  <=
+  \overline delta_{A,r}.
+
+Then:
+
+  E[
+    ||
+      s_r^D
+      -
+      s_r^0
+    ||_1
+    |
+    F_{r-}
+  ]
+
+  <=
+
+  \overline B_r^{srv}
+  +
+  2
+  \overline delta_{A,r}
+  +
+  2
+  delta_cal,r
+
+  =
+  \overline B_r^{tot}.                              (T4-b)
+
+Consequently, for the actual binary SAG service vector:
+
+  s_r^{SAG}
+  =
+  G_r
+  s_r^D
+  +
+  (
+    1-G_r
+  )
+  s_r^0,
+
+if G_r=1 only when:
+
+  \overline B_r^{tot}
+  <=
+  tau_safe,
+
+then:
+
+  E[
+    ||
+      s_r^{SAG}
+      -
+      s_r^0
+    ||_1
+    |
+    F_{r-}
+  ]
+  <=
+  tau_safe.                                         (T4-c)
+
+If G_r=0, the SAG-vs-fallback service perturbation is exactly zero.
+
+Proof.
+Decompose the current window into three disjoint cases:
+
+1. E_r ∩ C_r:
+   the active support is common and the common-support certificate is valid.
+   By Theorem 3 and the definition of \overline B_r^{srv},
+
+     ||s_r^D-s_r^0||_1
+     <=
+     \overline B_r^{srv}.
+
+2. E_r^c:
+   the active sets differ.
+
+3. E_r ∩ C_r^c:
+   the active sets are common but the perturbation certificate fails.
+
+For any mode m, if active then M_r^m alpha_r^m is a deployment-group
+probability vector; if inactive, s_r^m=0. Hence:
+
+  ||s_r^m||_1 in {0,1},
+
+and for every realization:
+
+  ||s_r^D-s_r^0||_1 <= 2.
+
+Therefore:
+
+  E[
+    ||s_r^D-s_r^0||_1
+    |
+    F_{r-}
+  ]
+
+  <=
+
+  \overline B_r^{srv}
+
+  +
+  2
+  Pr(
+    E_r^c
+    |
+    F_{r-}
+  )
+
+  +
+  2
+  Pr(
+    E_r ∩ C_r^c
+    |
+    F_{r-}
+  ).
+
+By A8a:
+
+  Pr(E_r^c|F_{r-})
+  =
+  delta_{A,r}
+  <=
+  \overline delta_{A,r}.
+
+By A8b:
+
+  Pr(
+    C_r^c
+    |
+    F_{r-},E_r
+  )
+  <=
+  delta_cal,r,
+
+so:
+
+  Pr(
+    E_r ∩ C_r^c
+    |
+    F_{r-}
+  )
+  <=
+  delta_cal,r.
+
+Combining gives (T4-b).
+
+Because G_r is F_{r-}-measurable, an ON decision makes the SAG-vs-fallback
+difference equal to the Full-vs-fallback difference, while an OFF decision
+makes it exactly zero. Thresholding \overline B_r^{tot} at tau_safe gives
+(T4-c).
+QED.
+
+Instantiation from Theorem 3.
+On E_r ∩ C_r, define:
+
+  \overline D^{alpha}_r
+  =
+  \overline Delta_beta,r
+
+  +
+  [
+    B_Q,r
+    +
+    lambda_g(
+      2B_M,r+1
+    )
+  ]
+  /
+  lambda_beta
+  \overline Delta_M,r
+
+  +
+  lambda_v
+  /
+  lambda_beta
+  \overline Delta_V,r.
+
+Then:
+
+  \overline B_r^{srv}
+  =
+  sqrt(|G|)
+  [
+    \overline Delta_M,r
+    +
+    B_M,r
+    \overline D^{alpha}_r
+  ]
+
+is a valid L1 service-composition upper certificate whenever the certified
+common-support perturbation bounds hold.
+
+------------------------------------------------------------
+12.1 Corollary — Per-Window Structural-Harm Bound
+------------------------------------------------------------
+
+Define the per-window deployment-target discrepancy:
+
+  L_r^m
+  =
+  ||
+    s_r^m
+    -
+    mu
+  ||_1.
+
+By the reverse triangle inequality:
+
+  (
+    L_r^D
+    -
+    L_r^0
+  )_+
+  <=
+  ||
+    s_r^D
+    -
+    s_r^0
+  ||_1.
+
+Therefore:
+
+  E[
+    (
+      L_r^D
+      -
+      L_r^0
+    )_+
+    |
+    F_{r-}
+  ]
+
+  <=
+  \overline B_r^{tot}.                              (C4-a)
+
+For the actual SAG action:
+
+  E[
+    (
+      L_r^{SAG}
+      -
+      L_r^0
+    )_+
+    |
+    F_{r-}
+  ]
+
+  <=
+  G_r
+  \overline B_r^{tot}
+  <=
+  tau_safe
+  whenever G_r=1 under the Gate rule.               (C4-b)
+
+Interpretation.
+This is the precise meaning of "structural safety" in v1.2:
+SAG controls the EXPECTED PER-WINDOW excess deployment-target discrepancy
+relative to the No-Design fallback.
+
+Scope.
+Theorem 4 and Corollary 4 are NOT:
+  - prediction-RMSE guarantees;
+  - full-trajectory model-risk guarantees;
+  - direct prefix-level Delta_group guarantees.
+
+The paper's prefix Delta_group normalizes over mode-dependent active-window
+mass; no prefix theorem is claimed here. Prefix/global structural performance
+remains an empirical endpoint unless separately analyzed.
+
+============================================================
+13. PREDICTION NO-HARM BOUNDARY
+============================================================
+
+SAG changes the local record weights and therefore may change:
+
+  \hat F^H_{k,r},
+  u_{k,r},
+  and the global model trajectory.
+
+The current RAVEN assumptions do not contain sufficient learner-stability
+conditions to convert the Gate's structural perturbation bound into a general
+bound on:
+
+  R_mu(theta),
+  RMSE_mu,
+  WorstGroupRMSE.
+
+Therefore v1.2 freezes the following claim boundary:
+
+  Prediction no-harm is an empirical validation/test requirement,
+  not a theorem-level SAG guarantee.
+
+A future target-risk theorem is allowed only if explicit model-level
+stability assumptions are added and independently audited.
+
+============================================================
+14. THRESHOLD AND CERTIFICATE FREEZE PROTOCOL
+============================================================
+
+SensorScope and U-Air are now development/diagnostic environments because
+their Design behavior has already been inspected repeatedly.
+
+They may be used to:
+  - fit/calibrate Gate predictors;
+  - check whether SAG reproduces known safe/unsafe regimes;
+  - select thresholds on development validation.
+
+They are NOT sufficient as the sole unseen generalization test.
+
+------------------------------------------------------------
+14.1 Data roles
+------------------------------------------------------------
+
+D_train / E_train:
+  fit propensity/opportunity estimators;
+  fit low-dimensional certificate models;
+  generate candidate threshold grid from diagnostic distributions.
+
+D_val / E_val:
+  select Gate thresholds and look-back horizon;
+  enforce prediction no-harm;
+  enforce structural no-harm;
+  rank candidates by false-enable and NAG.
+
+E_test:
+  genuinely unseen environments;
+  no Gate threshold/model retuning.
+
+------------------------------------------------------------
+14.2 Candidate parameters
+------------------------------------------------------------
+
+Freeze a small candidate set for:
+
+  H:
+    look-back horizon;
+
+  tau_cov;
+  tau_ret;
+  tau_ESS;
+  tau_clip;
+  tau_A;
+  tau_safe;
+
+and the certificate coverage/failure specification:
+  delta_cal
+  (or the predeclared deterministic rule producing delta_cal,r).
+
+The candidate set is generated from training diagnostics only.
+No validation outcome is used to create new threshold values after the grid
+is locked.
+
+Record:
+  candidate-grid hash;
+  code commit;
+  timestamp;
+  target-map hash;
+  propensity-model hash;
+  certificate-model hash.
+
+------------------------------------------------------------
+14.3 Safe-first lexicographic selection
+------------------------------------------------------------
+
+Fallback:
+  M_0 = No-Design RAVEN.
+
+For each candidate Gate on validation environments:
+
+Layer 1 — Empirical prediction no-harm
+Require both:
+  target RMSE relative harm <= epsilon_pred;
+  worst-group RMSE relative harm <= epsilon_pred.
+
+Default development margin retained from the current post-review protocol:
+  epsilon_pred = 0.5%.
+
+The final experiment protocol should use the predeclared one-sided paired
+upper-confidence version when enough seeds are available.
+
+Layer 2 — Structural no-harm
+Require:
+  Delta_group(SAG)
+  <=
+  Delta_group(M_0)
+on the frozen validation rule.
+
+Layer 3 — Certificate calibration
+Require held-out development validity/coverage of:
+  \overline delta_A;
+  \overline Delta_beta;
+  \overline Delta_M;
+  \overline Delta_V
+to meet the PREDECLARED certificate targets.
+
+The certificate failure level delta_cal (or rule delta_cal,r), coverage
+metric, split, and confidence/calibration procedure are frozen here and may
+not be changed after unseen test environments are opened.
+
+Layer 4 — False-enable minimization
+Among surviving candidates, minimize false-enable on development environments
+where a support oracle/counterfactual support label is available.
+
+Layer 5 — Alignment utility
+Maximize median NAG, or median relative alignment gain if NAG is not yet
+available.
+
+Layer 6 — Conservative tie-break
+Prefer:
+  larger tau_cov;
+  larger tau_ret;
+  larger tau_ESS;
+  smaller tau_clip;
+  smaller tau_A;
+  smaller tau_safe.
+
+If no candidate survives Layers 1--3:
+  freeze G_r=0 for that development cycle.
+Do not relax thresholds after viewing held-out test outcomes.
+
+============================================================
+15. CERTIFICATE MODEL RESTRICTIONS
+============================================================
+
+The first implementation should remain auditable.
+
+Permitted:
+  - empirical-bin calibration;
+  - isotonic calibration;
+  - low-dimensional logistic model for active-set mismatch risk;
+  - low-dimensional quantile/ridge models for Delta_beta/M/V upper bounds;
+  - deterministic rolling upper/lower bounds;
+  - frozen monotone models.
+
+Not recommended for v1.2:
+  - deep neural Gate;
+  - high-dimensional learned policy;
+  - reinforcement-learning Gate;
+  - online threshold optimization using prediction feedback.
+
+The fitted model may update lagged sufficient statistics online only through a
+deterministic update rule frozen before held-out evaluation.
+Model parameters and thresholds are not retuned using test labels.
+
+============================================================
+16. ALGORITHM 1 — SAG-RAVEN
+============================================================
+
+Algorithm 1
+Support-Aware Gated Reconstruction for RAVEN-MCS (SAG-RAVEN)
+
+OFFLINE DEVELOPMENT / FREEZE
+Input:
+  development environments;
+  public target construction rule;
+  propensity/opportunity estimator classes;
+  certificate-model classes;
+  candidate threshold grid;
+  look-back horizons;
+  prediction no-harm margin;
+  existing RAVEN/P2 parameters.
+
+1. Fit opportunity/observation/usable propensity estimators on training data.
+2. Construct public/train-side targets using the frozen target rule.
+3. For completed development windows, reconstruct Full-Design and No-Design
+   counterfactual audit quantities on the same selection trace:
+     D^A_t,
+     Delta_beta,t,
+     Delta_M,t,
+     Delta_V,t,
+     realized C_cov/C_ret/C_ESS/C_clip.
+4. Fit/calibrate predictable one-sided Gate certificates.
+5. Lock candidate threshold grid before validation outcome inspection.
+6. Evaluate candidates on development validation.
+7. Select (H*,tau*) by the safe-first lexicographic rule.
+8. Freeze:
+     H*;
+     tau*;
+     propensity models;
+     certificate models;
+     certificate failure level/rule delta_cal;
+     target maps;
+     clipping constants;
+     P2 parameters;
+     code/data hashes.
+9. Only after Step 8 may genuinely unseen test environments be opened.
+
+ONLINE / HELD-OUT EXECUTION
+For each window r:
+
+1. From completed windows only, update lagged opportunity, propensity,
+   support, and counterfactual-audit states according to the frozen rules.
+
+2. Before current R is realized, compute from F_{r-}:
+
+     \underline C^{cov}_r,
+     \underline C^{ret}_r,
+     \underline C^{ESS}_r,
+     \overline C^{clip}_r,
+     \overline delta_{A,r},
+     \overline Delta_beta,r,
+     \overline Delta_M,r,
+     \overline Delta_V,r,
+     delta_cal,r,
+     \overline B^{srv}_r,
+     \overline B^{tot}_r
+       =
+       \overline B^{srv}_r
+       +
+       2\overline delta_{A,r}
+       +
+       2delta_cal,r.
+
+3. If any required certificate is invalid/unavailable:
+     G_r <- 0.
+   Else:
+     G_r <- 1{
+       \underline C^{cov}_r >= tau_cov,
+       \underline C^{ret}_r >= tau_ret,
+       \underline C^{ESS}_r >= tau_ESS,
+       \overline C^{clip}_r <= tau_clip,
+       \overline delta_{A,r} <= tau_A,
+       \overline B^{tot}_r <= tau_safe
+     }.
+
+4. Freeze G_r for the entire current window.
+
+5. Current opportunity R is realized.
+
+6. Current observation O is realized under its existing legal history.
+
+7. Construct the frozen gated Design ratio:
+
+     \widetilde zeta^o
+     =
+     1
+     +
+     G_r(
+       \widehat zeta^o
+       -
+       1
+     ).
+
+8. Construct first-stage weights:
+
+     a^{SAG}_{k,r,i}
+     =
+     min{
+       a_max,
+       \widetilde zeta^o_{k,r,i}
+       /
+       max{
+         \widehat p^{obs}_{k,r,i},
+         p_min
+       }
+     }.
+
+9. Perform the existing local Hajek-normalized completion update.
+   The Gate is not changed after seeing Z, loss, or the local update.
+
+10. Realize U_{k,r} using the existing exogenous usable-update process.
+
+11. Build:
+      A_r;
+      usable correction d_{k,r};
+      corrected reference beta_r;
+      M_r;
+      V_r;
+      feasible set C_r.
+
+12. If A_r is empty:
+      theta_{r+1} <- theta_r;
+      Q_{r+1} <- Q_r.
+
+13. Otherwise solve existing P2 for alpha_r and perform the global update.
+
+14. After window completion, reconstruct BOTH counterfactual modes D and 0
+    from the recorded shared selection trace solely for future Gate audit:
+      D^A_r;
+      Delta_beta,r;
+      Delta_M,r;
+      Delta_V,r;
+      realized support/ESS/clipping diagnostics.
+
+15. Append those audit quantities to the history buffer.
+    They may affect future windows only through the frozen lagged/certificate
+    update rules.
+
+Output:
+  theta_{r+1};
+  optional Q_{r+1};
+  G_r;
+  certificate log;
+  post-window counterfactual audit log.
+
+============================================================
+17. ALGORITHM 1 — LATEX PSEUDOCODE
+============================================================
+
+\begin{algorithm}[t]
+\caption{Support-Aware Gated Reconstruction (SAG-RAVEN)}
+\label{alg:sag_raven_v11}
+\begin{algorithmic}[1]
+\REQUIRE Frozen target maps, propensity models, certificate models,
+thresholds $\boldsymbol\tau^\star$, horizon $H^\star$, and RAVEN parameters.
+\FOR{window $r=0,1,\ldots$}
+  \STATE Update lagged states using completed windows only.
+  \STATE Before current $R$ is realized, compute
+  $\underline C_r^{\rm cov}$,
+  $\underline C_r^{\rm ret}$,
+  $\underline C_r^{\rm ESS}$,
+  $\overline C_r^{\rm clip}$,
+  $\overline\delta_{A,r}$, and
+  $\overline B_r^{\rm tot}$.
+  \IF{any required certificate is invalid}
+      \STATE $G_r\gets0$.
+  \ELSE
+      \STATE $G_r\gets
+      \mathbf 1\{
+      \underline C_r^{\rm cov}\ge\tau_{\rm cov},
+      \underline C_r^{\rm ret}\ge\tau_{\rm ret},
+      \underline C_r^{\rm ESS}\ge\tau_{\rm ESS},
+      \overline C_r^{\rm clip}\le\tau_{\rm clip},
+      \overline\delta_{A,r}\le\tau_A,
+      \overline B_r^{\rm tot}\le\tau_{\rm safe}
+      \}$.
+  \ENDIF
+  \STATE Freeze $G_r$ for the entire window.
+  \STATE Realize the current opportunity and observation processes.
+  \STATE
+  $\widetilde\zeta^o_{kri}
+  \gets
+  1+G_r(\widehat\zeta^o_{kri}-1)$.
+  \STATE Construct the stabilized first-stage weights with
+  $\widetilde\zeta^o_{kri}$ and run the existing local completion update.
+  \STATE Realize the usable-update process $U_{k,r}$.
+  \STATE Apply the existing usable correction and form
+  $\widehat{\boldsymbol\beta}_r$, $M_r$, $V_r$, and $\mathcal C_r$.
+  \IF{$\mathcal A_r=\emptyset$}
+      \STATE $\theta_{r+1}\gets\theta_r$ and $Q_{r+1}\gets Q_r$.
+  \ELSE
+      \STATE Solve (P2), aggregate, and update the optional target debt.
+  \ENDIF
+  \STATE After window closure, reconstruct Full-Design and No-Design
+  counterfactual audit statistics on the shared selection trace.
+  \STATE Append only those audit statistics to the future Gate state.
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+============================================================
+18. REQUIRED LOG FIELDS
+============================================================
+
+Per window save at minimum:
+
+Identity:
+  environment_id;
+  window_id;
+  seed;
+  Gate-spec version;
+  target-map hash;
+  threshold hash;
+  propensity-model hash;
+  certificate-model hash.
+
+Pre-window Gate certificates:
+  C_cov_LCB;
+  C_ret_LCB;
+  C_ESS_LCB;
+  C_clip_UCB;
+  delta_A_UCB;
+  delta_cal;
+  Delta_beta_UCB;
+  Delta_M_UCB;
+  Delta_V_UCB;
+  B_srv_UCB;
+  B_tot_UCB;
+  Gate ON/OFF;
+  fallback reason bitmask.
+
+Post-window audit:
+  actual active-set mismatch D^A_r;
+  actual Delta_beta if common support;
+  actual Delta_M if common support;
+  actual Delta_V if common support;
+  realized C_cov/C_ret/C_ESS/C_clip;
+  active-set sizes under D/0.
+
+Do NOT write into the Gate feature/log stream:
+  current raw Z values;
+  test labels;
+  current prediction residuals;
+  current update coordinates.
+
+============================================================
+19. FALLBACK REASON CODES
+============================================================
+
+OFF_COLD_START
+OFF_LOW_COVERAGE
+OFF_LOW_RETENTION
+OFF_LOW_ESS
+OFF_HIGH_CLIPPING
+OFF_ACTIVE_SET_RISK
+OFF_CALIBRATION_RISK
+OFF_INVALID_CERTIFICATE
+
+Multiple failures are stored as a bitmask.
+
+============================================================
+20. WHAT THEOREM 2--4 DO AND DO NOT CLAIM
+============================================================
+
+Theorem 2:
+DOES claim an exact ideal population-law interpretation for predictable
+binary/continuous gating.
+DOES NOT claim exact finite-sample clipped unbiasedness.
+
+Theorem 3:
+DOES bound P2 solution/composition sensitivity when active support is common
+but beta/M/V change.
+DOES NOT apply to active-set changes.
+
+Theorem 4:
+DOES extend to active-set uncertainty in conditional expected L1 structural
+service difference using BOTH an active-set mismatch-risk term and an explicit
+common-support certificate-failure term.
+The accompanying corollary bounds expected per-window excess structural
+target mismatch relative to the No-Design fallback.
+DOES NOT guarantee prediction RMSE or prefix-level Delta_group.
+
+Empirical validation:
+DOES test prediction no-harm and NAG.
+DOES NOT retroactively change the Gate theorem.
+
+============================================================
+21. MINIMUM EXPERIMENTAL PASS CONDITIONS BEFORE FULL V2.0
+============================================================
+
+A large v2.0 experiment campaign is allowed only if a small SAG-G0/G1 round
+shows:
+
+1. Predictability audit:
+   no same-window R/O/U/test information enters G_r.
+
+2. Certificate coverage:
+   held-out development coverage of delta_A and Delta_beta/M/V upper bounds
+   reaches the predeclared level.
+
+3. Known-regime recovery:
+   SAG recognizes U-Air-like support-risk windows as unsafe substantially more
+   often than SensorScope-like compatible windows, without dataset identity.
+
+4. False-enable reduction:
+   relative to Always-Design, SAG materially reduces active-set unsafe enables.
+
+5. Structural safety:
+   validation structural no-harm vs No-Design fallback.
+
+6. Prediction safety:
+   empirical target RMSE and worst-group non-inferiority under the frozen
+   development margin.
+
+7. Nontrivial utility:
+   SAG is not identically OFF; on certified safe windows it produces positive
+   alignment/NAG benefit often enough to justify the added mechanism.
+
+If 1--6 pass but 7 fails:
+  SAG is safe but scientifically unnecessary;
+  do not expand to the full v2.0 paper.
+
+============================================================
+22. FINAL CLOSURE CONSISTENCY CHECK
+============================================================
+
+The v1.2 closure incorporates every mandatory item from the Second Formal
+Audit:
+
+P0-1 CLOSED:
+  A9 extends O/U positivity and sequential ignorability to the gated
+  identification support when g_r<1.
+
+P0-2 CLOSED:
+  Theorem 4 now includes the explicit common-support certificate-failure term:
+
+    + 2 delta_cal,r.
+
+P1-1 CLOSED:
+  Theorem 2 is stated as an exact conditional corrected-measure identity,
+  not a finite-sample realized Hajek equality.
+
+P1-2 CLOSED:
+  online B_M,r is explicitly F_{r-}-measurable; realized K_r is not used in
+  the pre-window certificate.
+
+P1-3 CLOSED:
+  Theorem 3 is explicitly a one-step same-pre-window-state counterfactual
+  sensitivity result, not an alternate-history trajectory theorem.
+
+P1-4 CLOSED:
+  Theorem 4 is renamed as a structural perturbation bound and gains an
+  explicit per-window structural-harm corollary; no prefix Delta_group theorem
+  is claimed.
+
+P1-5 CLOSED:
+  delta_cal / certificate coverage is frozen with tau, H, models, and all
+  Gate calibration rules before unseen test environments are opened.
+
+Final symbol/interface check:
+  - G_r is F_{r-}-measurable.
+  - A7 supplies the shared counterfactual selection trace.
+  - A8a controls active-set mismatch risk.
+  - A8b controls common-support beta/M/V certificate coverage.
+  - A9 supplies gated-support O/U identification.
+  - Theorem 2 supplies gated-law semantics.
+  - Theorem 3 supplies common-support P2 sensitivity.
+  - Theorem 4 + Corollary 4 supply structural safety relative to fallback.
+  - Prediction no-harm remains empirical.
+  - Algorithm 1 follows the theorem ordering exactly.
+
+No further mechanism/theorem invention is authorized before SAG-G0/G1.
+
+============================================================
+23. FINAL FREEZE STATUS
+============================================================
+
+FINAL THEORY STATUS:
+
+  PASS / FORMALLY CLOSED FOR IMPLEMENTATION
+
+Freeze label:
+
+  RAVEN_MCS_SUPPORT_AWARE_GATE_SPEC_V1_2_FINAL
+
+This v1.2 document is the unique SAG method/theory basis for:
+  - rewriting Sections III--VI;
+  - implementing SAG-G0/G1;
+  - defining the Gate logs and certificate models;
+  - later strong-baseline and unseen-environment experiments.
+
+From this point until SAG-G0/G1 evidence is reviewed:
+
+DO NOT:
+  - invent another Gate mechanism;
+  - alter Theorems 2--4 without a newly discovered mathematical defect;
+  - add learner-stability/RMSE theory merely for length;
+  - use dataset identity in the Gate;
+  - use same-window R/O/U or test outcomes to select G_r;
+  - tune tau or delta_cal after unseen test is opened.
+
+NEXT ACTION:
+
+  Rewrite RAVEN-MCS Sections III--VI around this v1.2 final SAG specification,
+  then issue a minimal SAG-G0/G1 implementation/validation instruction.
+
+END OF SAG v1.2 FINAL CLOSURE

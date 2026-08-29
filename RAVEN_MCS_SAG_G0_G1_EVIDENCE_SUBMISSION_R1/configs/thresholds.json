@@ -1,0 +1,17 @@
+{
+  "tau_cov": 0.05,
+  "tau_ret": 0.05,
+  "tau_ESS": 1.0,
+  "tau_clip": 0.95,
+  "tau_A": 0.35,
+  "tau_safe": 4.0,
+  "delta_cal": 0.05,
+  "lookback_min": 8,
+  "lookback_max": 32,
+  "quantile_level": 0.95,
+  "lambda_group": 1.0,
+  "lambda_beta": 1.0,
+  "lambda_variance": 0.1,
+  "coverage_target": 0.95,
+  "notes": "Frozen before G0/G1. Not a dataset-name Gate."
+}

@@ -1,0 +1,10 @@
+{
+  "executive_verdict": "REPAIR",
+  "flags": {
+    "Gate-1 Predictability": true,
+    "Gate-2 Certificate": false,
+    "Gate-3 Safety": true,
+    "Gate-4 Prediction": true,
+    "Gate-5 Utility": false
+  }
+}

@@ -1,0 +1,2714 @@
+% =====================================================================
+% RAVEN-MCS v2.0 -- Sections III--VI Post-Audit Repaired Technical Master
+% Basis: SAG v1.2 Final Closure + III--VI Joint Consistency Audit
+% Repairs embedded:
+%   P0-1 event-mark law vs. R-indicator separation;
+%   P0-2 pre-U positive-mass training set B_r;
+%   P0-3 explicit pre-O / pre-U propensity freezing;
+%   P0-4 common-nonempty A8b event plus both-empty case;
+%   P1 notation, theorem-scope, compile-layout, and proof-obligation fixes.
+% This file contains manuscript Sections III--VI only.
+% =====================================================================
+
+% =====================================================================
+% RAVEN-MCS v2.0
+% Section III -- System Model and Support-Safe Target Alignment
+% Theory basis: RAVEN_MCS_SUPPORT_AWARE_GATE_SPEC_V1_2_FINAL
+% Target journal: IEEE Transactions on Mobile Computing
+% =====================================================================
+
+\section{System Model and Support-Safe Target Alignment}
+\label{sec:system_model}
+
+This section defines the mobile selection process, the public deployment
+target, and the finite-support difficulty that motivates RAVEN-MCS.  The key
+distinction is between \emph{statistical target correction} and
+\emph{support-safe correction}: even when an inverse-selection ratio has the
+correct population interpretation, applying it in a finite mobile window can
+change the effective client support and thereby alter the feasible
+aggregation problem.  Section~\ref{sec:reconstruction} therefore decides
+whether the opportunity/Design correction may be enabled before the current
+selection process is realized.
+
+\subsection{Windowed-Asynchronous Mobile Crowdsensing}
+\label{subsec:windowed_mcs}
+
+We consider a mobile crowdsensing (MCS) system with a server and a set of
+clients
+\begin{equation}
+    \mathcal K=\{1,\ldots,K\}.
+    \label{eq:client_set}
+\end{equation}
+The common prediction domain is partitioned into atomic units
+$i\in\mathcal I$; an atomic unit may be written as $i=(n,t)$, where $n$
+denotes a spatial unit and $t$ an absolute time index.  Unit $i$ has a
+deployment target $Y_i$ and public deployment context
+$C_i^{\mathrm{dep}}$.  All clients contribute to the common predictor
+\begin{equation}
+    \widehat Y_i
+    =
+    f_{\boldsymbol\theta}
+    \!\left(i;C_i^{\mathrm{dep}}\right).
+    \label{eq:common_predictor_v2}
+\end{equation}
+When client $k$ obtains a sensing value for unit $i$ in server window $r$, we
+denote it by $Z_{k,r,i}$.
+
+Server time is divided into aggregation windows
+\begin{equation}
+    \mathcal W_r=[T_r,T_{r+1}),
+    \qquad r=0,1,\ldots .
+    \label{eq:window_v2}
+\end{equation}
+The server keeps $\boldsymbol\theta_r$ fixed during $\mathcal W_r$.  Client
+$k$ may start local training from a previously downloaded model
+$\boldsymbol\theta_{\sigma_{k,r}}$, $\sigma_{k,r}\le r$, with model-version
+staleness
+\begin{equation}
+    \tau_{k,r}
+    \triangleq
+    r-\sigma_{k,r}.
+    \label{eq:staleness_v2}
+\end{equation}
+Updates may arrive at different times inside a window, but an individual
+arrival does not immediately modify the global model.  The server first
+closes the window, determines which registered attempts are usable, computes
+one aggregation vector, and then performs the single transition
+$\boldsymbol\theta_r\!\rightarrow\!\boldsymbol\theta_{r+1}$.  We therefore
+call the system \emph{windowed-asynchronous}; it is distinct from
+immediate-update FedAsync.
+
+\subsection{Sequential Mobile Selection and Legal Information}
+\label{subsec:selection_process_v2}
+
+The two-stage MCS process contains three selection layers.  The sensing-side
+stage consists of mobile opportunity and actual observation, whereas the
+update-side stage determines whether a registered client attempt becomes
+usable before window closure.
+
+For client $k$, window $r$, and atomic unit $i$, let
+\begin{equation}
+    R_{k,r,i}\in\{0,1\}
+    \label{eq:R_indicator_v2}
+\end{equation}
+denote whether $(k,i)$ belongs to the mobile opportunity/risk set before the
+current sensing outcome is revealed.  Conditional on $R_{k,r,i}=1$,
+\begin{equation}
+    O_{k,r,i}\in\{0,1\}
+    \label{eq:O_indicator_v2}
+\end{equation}
+indicates whether unit $i$ is actually observed.  A client with a nonempty
+observed buffer registers an update attempt; the registered-client set is
+$\mathcal E_r$.  For $k\in\mathcal E_r$, define
+\begin{equation}
+\begin{aligned}
+ U_{k,r}
+ =
+ \mathbf 1\{&
+ \text{computation and transmission succeed,}\\
+ &\text{arrival}\le T_{r+1},
+ \ \tau_{k,r}\le S_{\max}\},
+\end{aligned}
+\label{eq:U_indicator_v2}
+\end{equation}
+and the usable set
+\begin{equation}
+    \mathcal U_r
+    =
+    \{k\in\mathcal E_r:U_{k,r}=1\}.
+    \label{eq:usable_set_v2}
+\end{equation}
+The final aggregation set is a subset of $\mathcal U_r$ after reconstruction
+removes clients with zero effective mass.  Failed computation, transmission,
+deadline, or staleness events remain explicitly recorded as $U_{k,r}=0$.
+
+For theoretical bookkeeping, let $\mathcal E_r^{\mathrm{opp}}$ denote the
+set (or multiset) of realized opportunity events in window $r$.  A generic
+opportunity event $e\in\mathcal E_r^{\mathrm{opp}}$ carries the mark
+$X_{r,e}=(k_e,i_e)$.  With $\mathcal F_{r^-}$ denoting the pre-window
+information set defined below, its conditional mark law is
+\begin{equation}
+ \Pr\!\left(
+   X_{r,e}=(k,i)
+   \mid
+   \mathcal F_{r^-}
+ \right)
+ =
+ P_r^{\mathrm{opp}}(k,i).
+ \label{eq:opp_event_mark_law_v2}
+\end{equation}
+where the normalized opportunity-event law is
+\begin{equation}
+ P_r^{\mathrm{opp}}(k,i)
+ =
+ \pi^{\mathrm{opp}}_{k,s(i),r}
+ \nu^{\mathrm{opp}}_{k,r}(i\mid s(i)),
+ \qquad
+ \sum_{k,i}P_r^{\mathrm{opp}}(k,i)=1.
+ \label{eq:opp_event_law_v2}
+\end{equation}
+Here $\pi^{\mathrm{opp}}_{k,s,r}$ is the client--stratum opportunity mass
+and $\nu^{\mathrm{opp}}_{k,r}(i\mid s)$ is the conditional atomic
+opportunity law.  The realized indicators $R_{k,r,i}$ remain the
+implementation-level risk-set bookkeeping induced by the same mobile
+exposure process; they are not assumed to be independent Bernoulli draws and
+are not identified with the normalized event-mark probabilities in
+\eqref{eq:opp_event_law_v2}.
+
+The subsequent observation and usable-update probabilities are
+\begin{align}
+ p^{\mathrm{obs}}_{k,r,i}
+ &\triangleq
+ \Pr\!\left(
+ O_{k,r,i}=1
+ \mid
+ R_{k,r,i}=1,
+ \mathcal H^{\mathrm{obs}}_{k,r,i}
+ \right),
+ \label{eq:pobs_def_v2}\\
+ q^{\mathrm{use}}_{k,r}
+ &\triangleq
+ \Pr\!\left(
+ U_{k,r}=1
+ \mid
+ k\in\mathcal E_r,
+ \mathcal H^{\mathrm{use}}_{k,r}
+ \right).
+ \label{eq:quse_def_v2}
+\end{align}
+Here $\mathcal H^{\mathrm{obs}}_{k,r,i}$ contains only information measurable
+before $O_{k,r,i}$ is realized.  The usable-update history
+$\mathcal H^{\mathrm{use}}_{k,r}$ is measured after sensing-side registration
+but before $U_{k,r}$ is realized; it may contain the registered attempt state,
+but not the realized computation/transmission outcome, future events, or the
+current random update used for aggregation.
+
+The support-aware Gate introduced in Section~\ref{sec:reconstruction} obeys a
+stricter pre-window boundary.  Let $\mathcal F_{r^-}$ denote the
+$\sigma$-field available immediately before the current opportunity process
+$R_r$ is realized.  It contains the public target, frozen hyperparameters,
+completed-window selection metadata, lagged opportunity/propensity states,
+completed-window support audits, and any exogenous context measured before
+the current opportunity process.  It excludes the current/future information set
+\begin{equation}
+\begin{aligned}
+ \mathcal I_r^{\mathrm{excl}}
+ ={}&\{R_r,O_r,U_r,Z_r\}\\
+ &\cup\{\text{current loss or update information}\}\\
+ &\cup\{\text{future or test outcomes}\}.
+\end{aligned}
+\label{eq:gate_information_exclusion}
+\end{equation}
+The Gate variable $G_r$ must be $\mathcal F_{r^-}$-measurable and is frozen
+for the entire window.  This predictability requirement prevents the current
+selection realization from retrospectively deciding whether that same
+realization should receive the opportunity/Design correction.
+
+\subsection{Deployment Groups, Opportunity Strata, and Public Target}
+\label{subsec:target_measures_v2}
+
+We distinguish two structural mappings.  The \emph{deployment group}
+$h(i)\in\mathcal G$ identifies the application-level mass the deployed
+predictor should serve, whereas the \emph{opportunity stratum}
+$s(i)\in\mathcal S$ pools repeated mobile exposure patterns for selection
+modeling.  They are different scientific objects:
+\begin{equation}
+    h(i)\neq s(i)
+    \quad\text{in general}.
+    \label{eq:h_neq_s_v2}
+\end{equation}
+Both mappings are frozen from public/training-side information and never use
+test-label values.
+
+We begin from a public, label-independent atomic deployment law
+\begin{equation}
+    \varpi_i^{\mathrm{tar}}\ge0,
+    \qquad
+    \sum_{i\in\mathcal I_{\mathrm{dep}}}
+    \varpi_i^{\mathrm{tar}}
+    =1.
+    \label{eq:atomic_target_v2}
+\end{equation}
+Its deployment-group marginal is
+\begin{equation}
+    \mu_g
+    =
+    \sum_{i:h(i)=g}
+    \varpi_i^{\mathrm{tar}},
+    \qquad
+    \boldsymbol\mu\in\Delta^{|\mathcal G|-1}.
+    \label{eq:target_group_mass_v2}
+\end{equation}
+
+For selection reconstruction, define the target mass of opportunity stratum
+$s$ as
+\begin{equation}
+    \Lambda_s^{\mathrm{tar}}
+    =
+    \sum_{i:s(i)=s}
+    \varpi_i^{\mathrm{tar}}.
+    \label{eq:target_stratum_mass_v2}
+\end{equation}
+For $\Lambda_s^{\mathrm{tar}}>0$,
+\begin{equation}
+    \nu^{\mathrm{tar}}_{i\mid s}
+    =
+    \frac{\varpi_i^{\mathrm{tar}}}
+         {\Lambda_s^{\mathrm{tar}}},
+    \qquad s(i)=s,
+    \label{eq:target_conditional_atomic_v2}
+\end{equation}
+and let $\lambda^{\mathrm{tar}}_{k\mid s}$ be a frozen, public,
+support-compatible client share satisfying
+\begin{equation}
+    \lambda^{\mathrm{tar}}_{k\mid s}\ge0,
+    \qquad
+    \sum_k\lambda^{\mathrm{tar}}_{k\mid s}=1.
+    \label{eq:target_client_share_v2}
+\end{equation}
+We then define
+\begin{equation}
+ \pi^{\mathrm{tar}}_{k,s}
+ =
+ \begin{cases}
+ \Lambda_s^{\mathrm{tar}}
+ \lambda^{\mathrm{tar}}_{k\mid s},
+ &\Lambda_s^{\mathrm{tar}}>0,\\
+ 0,&\Lambda_s^{\mathrm{tar}}=0,
+ \end{cases}
+ \label{eq:target_ks_mass_v2}
+\end{equation}
+and
+\begin{equation}
+ \pi^{\mathrm{tar}}_{k,i}
+ =
+ \begin{cases}
+ \pi^{\mathrm{tar}}_{k,s(i)}
+ \nu^{\mathrm{tar}}_{i\mid s(i)},
+ &\Lambda_{s(i)}^{\mathrm{tar}}>0,\\
+ 0,&\Lambda_{s(i)}^{\mathrm{tar}}=0.
+ \end{cases}
+ \label{eq:target_ki_mass_v2}
+\end{equation}
+Hence
+\begin{equation}
+    \sum_k\pi^{\mathrm{tar}}_{k,i}
+    =
+    \varpi_i^{\mathrm{tar}},
+    \qquad
+    \sum_{k,s}\pi^{\mathrm{tar}}_{k,s}=1.
+    \label{eq:target_compatibility_v2}
+\end{equation}
+Equation~\eqref{eq:target_compatibility_v2} is the compatibility bridge between
+the application-level deployment target and the client--stratum target used
+for opportunity correction.
+
+At the operational client--stratum granularity, define the target support
+\begin{equation}
+    \mathcal S^{\mathrm{tar}}
+    =
+    \{(k,s):\pi^{\mathrm{tar}}_{k,s}>0\}.
+    \label{eq:target_support_v2}
+\end{equation}
+The opportunity support in window $r$ is
+\begin{equation}
+    \mathcal S^{\mathrm{opp}}_r
+    =
+    \{(k,s):\pi^{\mathrm{opp}}_{k,s,r}>0\}.
+    \label{eq:opp_support_v2}
+\end{equation}
+These sets need not coincide.  Missing opportunity support on
+$\mathcal S^{\mathrm{tar}}$ creates a positivity problem, whereas substantial
+opportunity mass outside $\mathcal S^{\mathrm{tar}}$ can be suppressed by
+Full Design and thereby change the finite-window effective client support.
+This asymmetry is the key support-safety issue addressed in Section~IV.
+
+\subsection{Deployment-Target Risk and Arrival Risk}
+\label{subsec:target_risk_v2}
+
+For a loss $\ell(\widehat Y,Y)$, the deployment-target risk is
+\begin{equation}
+ \mathcal R_{\mu}(\boldsymbol\theta)
+ =
+ \sum_{i\in\mathcal I_{\mathrm{dep}}}
+ \varpi_i^{\mathrm{tar}}
+ \ell\!\left(
+ f_{\boldsymbol\theta}(i;C_i^{\mathrm{dep}}),
+ Y_i
+ \right).
+ \label{eq:target_risk_v2}
+\end{equation}
+By contrast, the data reaching learning are distributed according to
+opportunity, observation, and usable-update selection.  For evaluation,
+quantities without a window index denote frozen evaluation-period marginals
+of their corresponding legal pre-outcome mechanisms.  A label-free atomic
+arrival intensity is
+\begin{equation}
+ \widehat r_i^{\mathrm{arr}}
+ =
+ \sum_k
+ \widehat\pi^{\mathrm{opp}}_{k,s(i)}
+ \widehat\nu^{\mathrm{opp}}_{k}(i\mid s(i))
+ \widehat p^{\mathrm{obs}}_{k,i}
+ \widehat q^{\mathrm{use}}_{k,s(i)}.
+ \label{eq:arrival_intensity_v2}
+\end{equation}
+Normalize
+\begin{equation}
+ \widetilde\rho_i^{\mathrm{arr}}
+ =
+ \frac{
+   \widehat r_i^{\mathrm{arr}}
+ }{
+   \sum_{j\in\mathcal I_{\mathrm{dep}}}
+   \widehat r_j^{\mathrm{arr}}
+ },
+ \label{eq:arrival_distribution_v2}
+\end{equation}
+and define
+\begin{equation}
+ \mathcal R_{\rho}(\boldsymbol\theta)
+ =
+ \sum_{i\in\mathcal I_{\mathrm{dep}}}
+ \widetilde\rho_i^{\mathrm{arr}}
+ \ell\!\left(
+ f_{\boldsymbol\theta}(i;C_i^{\mathrm{dep}}),
+ Y_i
+ \right).
+ \label{eq:arrival_risk_v2}
+\end{equation}
+The two risks answer different questions.  In general,
+$\widetilde{\boldsymbol\rho}^{\mathrm{arr}}\neq
+\boldsymbol\varpi^{\mathrm{tar}}$, so optimizing the distribution induced by
+successfully delivered updates need not optimize the deployment population
+of interest.  Proposition~1 in Section~VI formalizes this distinction.
+
+\subsection{Finite-Support Incompatibility and the Design Objective}
+\label{subsec:support_safe_problem}
+
+The previous subsection motivates target correction statistically, but does
+not establish that a full correction is safe in a finite mobile window.
+Full opportunity correction and its No-Design fallback can assign different
+record masses to the same realized selection trace.  These differences can
+alter the within-client composition, effective sample size, variance proxy,
+and, in extreme cases, whether a client retains any target-relevant mass at
+all.  Hence a statistically meaningful target ratio can modify the support
+and geometry of the subsequent feasible aggregation problem.
+
+To make this distinction explicit, we compare two same-window
+counterfactual reconstruction modes under the same exogenous selection trace:
+\begin{align}
+    D &: \text{Full opportunity/Design correction}, \nonumber\\
+    0 &: \text{No-Design RAVEN fallback}.
+    \label{eq:counterfactual_modes}
+\end{align}
+Mode $0$ removes only the opportunity/Design ratio; observation correction,
+usable-update correction, feasible calibration, and the remaining RAVEN
+pipeline are unchanged.  The comparison is therefore a support-safety
+comparison, not a comparison against an uncorrected FL method.
+
+Section~IV constructs, for each window, corrected within-client deployment
+compositions
+$\mathbf c^g_{k,r}\in\Delta^{|\mathcal G|-1}$ and opportunity-stratum
+compositions
+$\mathbf c^s_{k,r}\in\Delta^{|\mathcal S|-1}$.  For the realized final
+aggregation set $\mathcal A_r$, let
+\begin{equation}
+    M_r
+    =
+    [\mathbf c^g_{k,r}]_{k\in\mathcal A_r}.
+    \label{eq:Mr_def_v2}
+\end{equation}
+Section~V defines the feasible aggregation set $\mathcal C_r$.  Its image in
+deployment-group space is
+\begin{equation}
+    \Omega_r
+    \triangleq
+    \{
+      M_r\boldsymbol\alpha:
+      \boldsymbol\alpha\in\mathcal C_r
+    \}.
+    \label{eq:feasible_target_image_v2}
+\end{equation}
+The instantaneous irreducible feasibility gap is
+\begin{equation}
+    d_r^{\mathrm{feas}}
+    \triangleq
+    \min_{\boldsymbol\omega\in\Omega_r}
+    \|
+      \boldsymbol\omega-\boldsymbol\mu
+    \|_2.
+    \label{eq:feasibility_gap_v2}
+\end{equation}
+Thus $d_r^{\mathrm{feas}}>0$ means that no aggregation rule using the same
+finite-window support and constraints can exactly realize the public target
+in that window.  RAVEN-MCS therefore does not ask the reconstruction stage to
+synthesize unavailable support.
+
+For an active window, the effective deployment-group composition is
+\begin{equation}
+    \boldsymbol\omega_r
+    =
+    M_r\boldsymbol\alpha_r.
+    \label{eq:omega_r_v2}
+\end{equation}
+Let $\eta_r>0$ be the server step size,
+$I_r=\mathbf 1\{|\mathcal A_r|>0\}$, and
+\begin{equation}
+    S_R
+    =
+    \sum_{r=0}^{R-1}
+    \eta_r I_r.
+    \label{eq:active_mass_v2}
+\end{equation}
+For $S_R>0$, define
+\begin{equation}
+    \overline{\boldsymbol\omega}_R
+    =
+    \frac{1}{S_R}
+    \sum_{r=0}^{R-1}
+    \eta_r I_r
+    \boldsymbol\omega_r,
+    \label{eq:omega_bar_v2}
+\end{equation}
+and the deployment-group structural mismatch
+\begin{equation}
+    \Delta_{\mathrm{group}}(R)
+    =
+    \|
+      \overline{\boldsymbol\omega}_R
+      -
+      \boldsymbol\mu
+    \|_1.
+    \label{eq:delta_group_v2}
+\end{equation}
+
+For client--stratum structure, extend $\alpha_{k,r}=0$ to
+$k\notin\mathcal A_r$ and define
+\begin{equation}
+ \widehat\Pi_{k,s}(R)
+ =
+ \frac{1}{S_R}
+ \sum_{r=0}^{R-1}
+ \eta_r I_r
+ \alpha_{k,r}
+ c^s_{k,r,s},
+ \label{eq:Pi_hat_ks_v2}
+\end{equation}
+so that
+$\sum_{k,s}\widehat\Pi_{k,s}(R)=1$.  The finer structural mismatch is
+\begin{equation}
+ \Delta_{c\text{-}s}(R)
+ =
+ \sum_{k,s}
+ \left|
+   \widehat\Pi_{k,s}(R)
+   -
+   \pi^{\mathrm{tar}}_{k,s}
+ \right|.
+ \label{eq:delta_cs_v2}
+\end{equation}
+
+The resulting design problem has three layers.  First, the predictor should
+be judged under the public deployment risk $\mathcal R_\mu$, not under the
+arrival risk by convention.  Second, opportunity correction should be enabled
+only when its finite-support perturbation relative to the No-Design RAVEN
+fallback is predictably controlled.  Third, the corrected reference must be
+mapped to the realizable set $\Omega_r$ rather than to an unavailable target
+composition.  We therefore seek
+\begin{equation}
+\boxed{
+\begin{aligned}
+&\text{low deployment-target prediction risk},\\
+&\text{low }
+  \Delta_{\mathrm{group}}(R)
+  \text{ and }
+  \Delta_{c\text{-}s}(R),\\
+&\text{and support-safe use of Full Design under }
+  \mathcal F_{r^-}.
+\end{aligned}}
+\label{eq:support_safe_goal}
+\end{equation}
+The support-aware Gate that operationalizes the third requirement is developed
+in Section~IV.  Importantly, prediction no-harm is not imposed through
+current/test outcomes in the online Gate; it is a frozen validation/test
+criterion in Section~VII.  Section~V then performs feasibility-aware
+calibration within the finite-window image $\Omega_r$, and Section~VI states
+the corresponding identification and structural-safety guarantees.
+
+% =====================================================================
+% RAVEN-MCS v2.0
+% Section IV -- Support-Aware Sequential Target Reconstruction
+% Theory basis: RAVEN_MCS_SUPPORT_AWARE_GATE_SPEC_V1_2_FINAL
+% Must follow Section III:
+%   RAVEN_MCS_v2_Section_III_Support_Safe_Final.txt
+% Target journal: IEEE Transactions on Mobile Computing
+% =====================================================================
+
+\section{Support-Aware Sequential Target Reconstruction}
+\label{sec:reconstruction}
+
+Section~\ref{sec:system_model} separates the public deployment target from the
+distribution induced by mobile opportunity, observation, and usable-update
+selection.  A conventional response would always apply the corresponding
+inverse-selection correction.  This is insufficient in a finite mobile
+window: Full Design can suppress available mass outside the target support,
+concentrate record weights, alter the set of clients with positive corrected
+mass, and thereby change the feasible calibration problem itself.  RAVEN-MCS
+therefore makes the opportunity correction \emph{conditional on a predictable
+support-safety certificate}.  The Gate is frozen before the current
+opportunity process is realized; observation and usable-update corrections
+then retain their original stage-specific legal-information boundaries.
+
+\subsection{Full-Design and No-Design Reconstruction Modes}
+\label{subsec:design_modes}
+
+For an atomic client--unit mark with positive opportunity probability, the
+ideal opportunity/Design ratio is
+\begin{equation}
+ \zeta^{o}_{k,r,i}
+ =
+ \frac{\pi^{\mathrm{tar}}_{k,s(i)}}
+      {\pi^{\mathrm{opp}}_{k,s(i),r}}
+ \frac{\nu^{\mathrm{tar}}_{i\mid s(i)}}
+      {\nu^{\mathrm{opp}}_{k,r}(i\mid s(i))}
+ =
+ \frac{\pi^{\mathrm{tar}}_{k,i}}
+      {P_r^{\mathrm{opp}}(k,i)}.
+ \label{eq:design_ratio_general_v2}
+\end{equation}
+Under the within-stratum exchangeability used by the main implementation,
+$\nu^{\mathrm{opp}}_{k,r}(i\mid s)=\nu^{\mathrm{tar}}_{i\mid s}$, so the
+operational ratio reduces to
+\begin{equation}
+ \widehat\zeta^{o,D}_{k,r,s}
+ =
+ \frac{
+   \pi^{\mathrm{tar}}_{k,s}
+ }{
+   \max\{
+     \widehat\pi^{\mathrm{opp}}_{k,s,r},
+     \pi_{\min}
+   \}
+ }.
+ \label{eq:design_ratio_full_v2}
+\end{equation}
+For atomic bookkeeping, the operational stratum ratio is lifted by
+\begin{equation}
+ \widehat\zeta^{o,D}_{k,r,i}
+ \triangleq
+ \widehat\zeta^{o,D}_{k,r,s(i)},
+ \qquad
+ \widehat\zeta^{o,0}_{k,r,i}
+ \triangleq 1.
+ \label{eq:design_ratio_atomic_lift_v2}
+\end{equation}
+The superscript $D$ denotes \emph{Full Design}.  Its same-pipeline
+No-Design fallback is
+\begin{equation}
+    \widehat\zeta^{o,0}_{k,r,s}=1.
+    \label{eq:design_ratio_nod_v2}
+\end{equation}
+Only the opportunity/Design ratio changes between these two modes;
+observation correction, usable-update correction, feasible calibration, and
+the global update remain common.
+
+Opportunity estimation is lagged.  One admissible implementation maintains
+\begin{align}
+ C^{\mathrm{opp}}_{k,s,r}
+ &=
+ \rho_{\mathrm{opp}}
+ C^{\mathrm{opp}}_{k,s,r-1}
+ +
+ N^{\mathrm{opp}}_{k,s,r-1},
+ \label{eq:opp_ema_v2}\\
+ \widehat\pi^{\mathrm{opp}}_{k,s,r}
+ &=
+ \frac{
+   C^{\mathrm{opp}}_{k,s,r}
+   +
+   \epsilon_{\mathrm{opp}}
+ }{
+   \sum_{j,u}
+   \left(
+     C^{\mathrm{opp}}_{j,u,r}
+     +
+     \epsilon_{\mathrm{opp}}
+   \right)
+ }.
+ \label{eq:opp_estimate_v2}
+\end{align}
+Other estimators are admissible provided that they are measurable with
+respect to the pre-window information set of Section~III.  Importantly, the
+smoothed point estimate in \eqref{eq:opp_estimate_v2} is not itself treated as
+a positivity certificate.
+
+\subsection{Predictable Support-Safety Certificates}
+\label{subsec:sag_certificates}
+
+Before the current $R/O/U$ realization, SAG summarizes two distinct kinds of
+evidence.  The first consists of interpretable support and weight-stability
+diagnostics; the second directly bounds the probability and magnitude of the
+Full-Design perturbation relative to the No-Design fallback.  All online
+certificates below are $\mathcal F_{r^-}$-measurable.
+
+\subsubsection{Target-support coverage and retained opportunity mass}
+
+For each target-positive client--stratum pair, let
+$\underline\pi^{\mathrm{opp}}_{k,s,r}$ be a one-sided lower safety bound on the
+current opportunity mass.  The certified target-support coverage is
+\begin{equation}
+ \underline C^{\mathrm{cov}}_r
+ =
+ \sum_{k,s}
+ \pi^{\mathrm{tar}}_{k,s}
+ \mathbf 1
+ \left\{
+   \underline\pi^{\mathrm{opp}}_{k,s,r}
+   \ge
+   \pi_{\mathrm{safe}}
+ \right\}.
+ \label{eq:sag_cov_v2}
+\end{equation}
+Thus a numerically positive smoothed estimate does not certify support unless
+its lower bound exceeds the frozen safety floor $\pi_{\mathrm{safe}}$.
+
+A different risk arises when substantial opportunity mass lies outside the
+target-positive support and would therefore be attenuated or removed by Full
+Design.  Let $\bar\pi^{\mathrm{opp}}_{k,s,r^-}$ be the predictable lagged
+opportunity law.  Its retained mass inside the target support is
+\begin{equation}
+ C^{\mathrm{ret}}_{r^-}
+ =
+ \sum_{k,s}
+ \bar\pi^{\mathrm{opp}}_{k,s,r^-}
+ \mathbf 1
+ \left\{
+   \pi^{\mathrm{tar}}_{k,s}>0
+ \right\}.
+ \label{eq:sag_ret_point_v2}
+\end{equation}
+The Gate uses a conservative lower certificate
+\begin{equation}
+    \underline C^{\mathrm{ret}}_r
+    \le
+    C^{\mathrm{ret}}_{r},
+    \label{eq:sag_ret_lcb_v2}
+\end{equation}
+whose construction is calibrated on completed development windows.
+
+\subsubsection{ESS retention and Design-induced clipping}
+
+For a completed window $t$, reconstruct Full-Design and No-Design first-stage
+weights on the same selection trace.  For $m\in\{D,0\}$, let
+\begin{equation}
+ a^{m}_{k,t,i}
+ =
+ \min\!\left\{
+ a_{\max},
+ \frac{
+   \widehat\zeta^{o,m}_{k,t,i}
+ }{
+   \max\{
+     \widehat p^{\mathrm{obs}}_{k,t,i},
+     p_{\min}
+   \}
+ }
+ \right\}.
+ \label{eq:counterfactual_a_v2}
+\end{equation}
+The corresponding effective sample size is
+\begin{equation}
+ \operatorname{ESS}^{m}_{k,t}
+ =
+ \frac{
+   \left(
+     \sum_i
+     R_{k,t,i}
+     O_{k,t,i}
+     a^{m}_{k,t,i}
+   \right)^2
+ }{
+   \sum_i
+   \left(
+     R_{k,t,i}
+     O_{k,t,i}
+     a^{m}_{k,t,i}
+   \right)^2
+   +
+   \varepsilon_0
+ }.
+ \label{eq:cf_ess_v2}
+\end{equation}
+For eligible clients define
+\begin{equation}
+ e_{k,t}
+ =
+ \min\!\left\{
+ 1,
+ \frac{
+   \operatorname{ESS}^{D}_{k,t}
+ }{
+   \max\{
+     \operatorname{ESS}^{0}_{k,t},
+     1
+   \}
+ }
+ \right\}.
+ \label{eq:ess_ret_client_v2}
+\end{equation}
+Completed windows provide realized ESS-retention statistics; a frozen
+calibration map converts their lagged history and other pre-window support
+features into the lower certificate
+$\underline C^{\mathrm{ESS}}_r$ used online.
+
+To distinguish instability caused specifically by Design from clipping that
+would already occur under observation correction, define the unclipped
+candidates
+\begin{equation}
+ \widetilde a^{D}_{k,t,i}
+ =
+ \frac{
+   \widehat\zeta^{o,D}_{k,t,i}
+ }{
+   \max\{
+     \widehat p^{\mathrm{obs}}_{k,t,i},
+     p_{\min}
+   \}
+ },
+ \qquad
+ \widetilde a^{0}_{k,t,i}
+ =
+ \frac{1}{
+   \max\{
+     \widehat p^{\mathrm{obs}}_{k,t,i},
+     p_{\min}
+   \}
+ }.
+ \label{eq:unclipped_candidates_v2}
+\end{equation}
+A clipping event is called Design-induced when
+\begin{equation}
+ \widetilde a^{D}_{k,t,i}>a_{\max}
+ \quad\text{and}\quad
+ \widetilde a^{0}_{k,t,i}\le a_{\max}.
+ \label{eq:design_induced_clip_event_v2}
+\end{equation}
+The online Gate uses a predictable upper certificate
+$\overline C^{\mathrm{clip}}_r$ for the corresponding near-term clipping
+burden.  Observation-layer clipping common to both modes is not counted as
+Design-induced clipping.
+
+\subsubsection{Active-set risk and calibration perturbation}
+
+The most consequential support failure is a change in the usable
+positive-mass client set.  Let
+$\mathcal A_r^D$ and $\mathcal A_r^0$ denote the counterfactual aggregation
+sets that Full Design and No Design would produce on the same exogenous
+selection trace.  Their conditional mismatch risk is
+\begin{equation}
+ \delta_{A,r}
+ =
+ \Pr\!\left(
+   \mathcal A_r^D
+   \neq
+   \mathcal A_r^0
+   \mid
+   \mathcal F_{r^-}
+ \right).
+ \label{eq:active_set_risk_v2}
+\end{equation}
+SAG uses a frozen, calibrated upper certificate
+\begin{equation}
+    \delta_{A,r}
+    \le
+    \overline\delta_{A,r}.
+    \label{eq:active_set_ucb_v2}
+\end{equation}
+
+When the two modes share the same active set, they can still produce
+different reference vectors, composition matrices, and variance states.  The
+post-window audits therefore record
+\begin{align}
+ \Delta_{\beta,t}
+ &=
+ \left\|
+   \boldsymbol\beta_t^D
+   -
+   \boldsymbol\beta_t^0
+ \right\|_2,
+ \label{eq:delta_beta_audit_v2}\\
+ \Delta_{M,t}
+ &=
+ \left\|
+   M_t^D
+   -
+   M_t^0
+ \right\|_2,
+ \label{eq:delta_M_audit_v2}\\
+ \Delta_{V,t}
+ &=
+ \left\|
+   V_t^D
+   -
+   V_t^0
+ \right\|_2.
+ \label{eq:delta_V_audit_v2}
+\end{align}
+From completed common-support windows, the certificate module produces
+$\mathcal F_{r^-}$-measurable upper bounds
+$\overline\Delta_{\beta,r}$,
+$\overline\Delta_{M,r}$, and
+$\overline\Delta_{V,r}$.  Let
+\begin{equation}
+    B_{M,r}^{\mathrm{pre}}
+    =
+    \sqrt{K}
+    \label{eq:BM_safe_v2}
+\end{equation}
+be the universal predictable bound used by the main implementation; any
+tighter replacement must itself be $\mathcal F_{r^-}$-measurable.  Let
+$B_{Q,r}=\|\mathbf Q_r\|_2$, where $\mathbf Q_r$ is the optional
+pre-window target-debt state of Section~V.  With the frozen calibration
+coefficients of Section~V, define
+\begin{equation}
+\begin{aligned}
+ \overline D^{\alpha}_r
+ &=
+ \overline\Delta_{\beta,r}
+ +
+ \frac{
+   B_{Q,r}
+   +
+   \lambda_g
+   \left(
+     2B_{M,r}^{\mathrm{pre}}+1
+   \right)
+ }{
+   \lambda_{\beta}
+ }
+ \overline\Delta_{M,r}\\
+ &\quad+
+ \frac{\lambda_v}{\lambda_{\beta}}
+ \overline\Delta_{V,r}.
+\end{aligned}
+\label{eq:Dalpha_cert_v2}
+\end{equation}
+The corresponding common-support service-composition certificate is
+\begin{equation}
+ \overline B^{\mathrm{srv}}_r
+ =
+ \sqrt{|\mathcal G|}
+ \left(
+   \overline\Delta_{M,r}
+   +
+   B_{M,r}^{\mathrm{pre}}
+   \overline D^{\alpha}_r
+ \right).
+ \label{eq:Bsrv_cert_v2}
+\end{equation}
+Finally, let $\delta_{\mathrm{cal},r}$ be the frozen conditional failure level
+of the common-support perturbation certificate.  The total structural-safety
+certificate is
+\begin{equation}
+ \boxed{
+ \overline B^{\mathrm{tot}}_r
+ =
+ \overline B^{\mathrm{srv}}_r
+ +
+ 2\overline\delta_{A,r}
+ +
+ 2\delta_{\mathrm{cal},r}.
+ }
+ \label{eq:Btot_cert_v2}
+\end{equation}
+Section~VI proves the common-support sensitivity bound underlying
+\eqref{eq:Dalpha_cert_v2}--\eqref{eq:Bsrv_cert_v2} and gives the precise
+expected structural-harm interpretation of
+$\overline B^{\mathrm{tot}}_r$.
+
+\subsection{Support-Aware Gate}
+\label{subsec:sag_gate}
+
+Let the frozen threshold vector be
+\begin{equation}
+ \boldsymbol\tau^{\mathrm{SAG}}
+ =
+ \left(
+ \tau_{\mathrm{cov}},
+ \tau_{\mathrm{ret}},
+ \tau_{\mathrm{ESS}},
+ \tau_{\mathrm{clip}},
+ \tau_A,
+ \tau_{\mathrm{safe}}
+ \right).
+ \label{eq:sag_threshold_vector_v2}
+\end{equation}
+The certificate failure level $\delta_{\mathrm{cal}}$ (or its frozen
+pre-window rule) is fixed together with these thresholds, the look-back
+horizon, the propensity models, and the certificate models before unseen
+evaluation.
+
+The binary Support-Aware Gate is
+\begin{equation}
+\boxed{
+ G_r
+ =
+ \mathbf 1
+ \left\{
+ \begin{array}{l}
+ \underline C^{\mathrm{cov}}_r
+ \ge\tau_{\mathrm{cov}},\\
+ \underline C^{\mathrm{ret}}_r
+ \ge\tau_{\mathrm{ret}},\\
+ \underline C^{\mathrm{ESS}}_r
+ \ge\tau_{\mathrm{ESS}},\\
+ \overline C^{\mathrm{clip}}_r
+ \le\tau_{\mathrm{clip}},\\
+ \overline\delta_{A,r}
+ \le\tau_A,\\
+ \overline B^{\mathrm{tot}}_r
+ \le\tau_{\mathrm{safe}}
+ \end{array}
+ \right\}.
+}
+\label{eq:sag_gate_v2}
+\end{equation}
+If any required certificate is missing, non-finite, outside its calibrated
+applicability region, or unavailable during cold start, SAG fails closed:
+\begin{equation}
+    G_r=0.
+    \label{eq:sag_fail_closed_v2}
+\end{equation}
+Crucially, $G_r$ is computed entirely from $\mathcal F_{r^-}$ and is frozen
+before the current opportunity process is realized.  Dataset identity,
+current $R/O/U$, sensing values, current prediction residuals, and test
+outcomes are not Gate inputs.
+
+The gated Design ratio used throughout window $r$ is
+\begin{equation}
+ \widetilde\zeta^{o}_{k,r,i}
+ =
+ 1
+ +
+ G_r
+ \left(
+   \widehat\zeta^{o,D}_{k,r,i}
+   -
+   1
+ \right).
+ \label{eq:gated_design_ratio_v2}
+\end{equation}
+Thus $G_r=1$ gives Full Design and $G_r=0$ gives the No-Design RAVEN
+fallback without disabling the remaining correction and calibration
+pipeline.
+
+The thresholds are not optimized online.  Candidate grids and certificate
+models are formed on development data, then a safe-first validation protocol
+first enforces a predeclared prediction no-harm margin and structural no-harm
+relative to the No-Design fallback, verifies certificate coverage, minimizes
+false enables, and only then prefers larger target-alignment benefit.  All
+choices are frozen before genuinely unseen environments are opened.
+Section~VII specifies the experimental instantiation and statistical
+protocol.
+
+\subsection{Gated Observation Correction and Local H\'ajek Update}
+\label{subsec:gated_hajek}
+
+After $G_r$ has been frozen, the current opportunity process $R_r$ is
+realized.  Before any current observation outcome is revealed, the server or
+client evaluates and freezes
+$\widehat p^{\mathrm{obs}}_{k,r,i}$ from the legal
+$\mathcal H^{\mathrm{obs}}_{k,r,i}$.  Only then is the current observation
+process $O_r$ realized.  The inverse factor applied after observing $O_r$
+therefore uses a value fixed before that same outcome.  The ideal gated
+opportunity ratio corresponding to a predictable scalar $g_r\in[0,1]$ is
+\begin{equation}
+ \zeta^{o,(g)}_{k,r,i}
+ =
+ 1
+ +
+ g_r
+ \left(
+   \frac{
+     \pi^{\mathrm{tar}}_{k,i}
+   }{
+     P_r^{\mathrm{opp}}(k,i)
+   }
+   -
+   1
+ \right).
+ \label{eq:ideal_gated_ratio_v2}
+\end{equation}
+The operational binary SAG uses $g_r=G_r$ and the plug-in version
+\eqref{eq:gated_design_ratio_v2}.  The stabilized first-stage record weight
+is
+\begin{equation}
+ a_{k,r,i}^{\mathrm{SAG}}
+ =
+ \min\!\left\{
+ a_{\max},
+ \frac{
+   \widetilde\zeta^{o}_{k,r,i}
+ }{
+   \max\{
+     \widehat p^{\mathrm{obs}}_{k,r,i},
+     p_{\min}
+   \}
+ }
+ \right\}.
+ \label{eq:a_sag_v2}
+\end{equation}
+Define the corrected total mass
+\begin{equation}
+ m_{k,r}
+ =
+ \sum_i
+ R_{k,r,i}
+ O_{k,r,i}
+ a_{k,r,i}^{\mathrm{SAG}},
+ \label{eq:m_total_v2}
+\end{equation}
+the deployment-group mass
+\begin{equation}
+ m^g_{k,r,g}
+ =
+ \sum_i
+ R_{k,r,i}
+ O_{k,r,i}
+ a_{k,r,i}^{\mathrm{SAG}}
+ \mathbf 1\{h(i)=g\},
+ \label{eq:m_group_v2}
+\end{equation}
+and the opportunity-stratum mass
+\begin{equation}
+ m^s_{k,r,s}
+ =
+ \sum_i
+ R_{k,r,i}
+ O_{k,r,i}
+ a_{k,r,i}^{\mathrm{SAG}}
+ \mathbf 1\{s(i)=s\}.
+ \label{eq:m_stratum_v2}
+\end{equation}
+Before the usable-update event is realized, define the positive-mass
+training/attempt set
+\begin{equation}
+    \mathcal B_r
+    =
+    \{k\in\mathcal E_r:m_{k,r}>0\}.
+    \label{eq:preU_training_set_v2}
+\end{equation}
+Every $k\in\mathcal B_r$ has normalized record weights
+\begin{equation}
+ \overline a_{k,r,i}
+ =
+ \frac{
+   R_{k,r,i}
+   O_{k,r,i}
+   a_{k,r,i}^{\mathrm{SAG}}
+ }{
+   m_{k,r}
+ },
+ \label{eq:abar_v2}
+\end{equation}
+deployment-group composition
+\begin{equation}
+    c^g_{k,r,g}
+    =
+    \frac{m^g_{k,r,g}}{m_{k,r}},
+    \label{eq:ckrg_v2}
+\end{equation}
+and opportunity-stratum composition
+\begin{equation}
+    c^s_{k,r,s}
+    =
+    \frac{m^s_{k,r,s}}{m_{k,r}}.
+    \label{eq:ckrs_v2}
+\end{equation}
+Both composition vectors sum to one.
+
+The local effective sample size is
+\begin{equation}
+ n^{\mathrm{eff}}_{k,r}
+ =
+ \frac{
+   m_{k,r}^{2}
+ }{
+   \sum_i
+   \left(
+     R_{k,r,i}
+     O_{k,r,i}
+     a_{k,r,i}^{\mathrm{SAG}}
+   \right)^2
+ }
+ =
+ \frac{1}{
+   \sum_i
+   \overline a_{k,r,i}^{\,2}
+ }.
+ \label{eq:neff_v2}
+\end{equation}
+It measures weight concentration rather than target-equivalent mass.
+
+Only after the Gate is frozen and the current observation process has
+realized does the learning routine access the observed values.  Each $k\in\mathcal B_r$
+minimizes the local H\'ajek-normalized completion objective
+\begin{equation}
+ \widehat F^H_{k,r}(\boldsymbol\theta)
+ =
+ \sum_i
+ \overline a_{k,r,i}
+ \frac{1}{2}
+ \left[
+ f_{\boldsymbol\theta}
+ \!\left(
+   i;C_i^{\mathrm{dep}}
+ \right)
+ -
+ Z_{k,r,i}
+ \right]^2.
+ \label{eq:local_hajek_objective_v2}
+\end{equation}
+Starting from $\boldsymbol\theta_{\sigma_{k,r}}$, client $k$ performs
+$E_{\mathrm{loc}}$ local steps with step size $\gamma_r$.  Its normalized
+model displacement is
+\begin{equation}
+ \mathbf u_{k,r}
+ =
+ \frac{
+   \boldsymbol\theta_{\sigma_{k,r}}
+   -
+   \boldsymbol\theta^{(E_{\mathrm{loc}})}_{k,r}
+ }{
+   \gamma_r E_{\mathrm{loc}}
+ }.
+ \label{eq:normalized_update_v2}
+\end{equation}
+Neither $G_r$ nor its thresholds can change after seeing
+$Z_{k,r,i}$, the local loss, or $\mathbf u_{k,r}$.
+
+\subsection{Usable-Update Correction and Reference Mass}
+\label{subsec:usable_correction_v2}
+
+The update-side correction remains distinct from the sensing-side Gate.
+After local computation/transmission is initiated from $\mathcal B_r$, the
+legal pre-$U$ history $\mathcal H^{\mathrm{use}}_{k,r}$ is formed.  Before
+$U_{k,r}$ is revealed, RAVEN evaluates and freezes
+$\widehat q^{\mathrm{use}}_{k,r}$ using only this pre-$U$ information.  The
+usable-update event is then realized, and the actual aggregation set becomes
+\begin{equation}
+ \mathcal A_r
+ =
+ \{k\in\mathcal B_r:U_{k,r}=1\}
+ =
+ \mathcal B_r\cap\mathcal U_r.
+ \label{eq:aggregation_set_v2}
+\end{equation}
+The already computed masses, compositions, and effective sample sizes for
+clients in $\mathcal B_r$ are simply restricted to $\mathcal A_r$ for server
+calibration.  For $k\in\mathcal A_r$, define
+\begin{equation}
+ d_{k,r}
+ =
+ \min\!\left\{
+ d_{\max},
+ \frac{1}{
+   \max\{
+     \widehat q^{\mathrm{use}}_{k,r},
+     q_{\min}
+   \}
+ }
+ \right\},
+ \label{eq:d_use_v2}
+\end{equation}
+and
+\begin{equation}
+    b_{k,r}
+    =
+    m_{k,r}d_{k,r}.
+    \label{eq:b_mass_v2}
+\end{equation}
+The selection-corrected reference vector is
+\begin{equation}
+ \widehat\beta_{k,r}
+ =
+ \frac{
+   b_{k,r}
+ }{
+   \sum_{j\in\mathcal A_r}
+   b_{j,r}
+ },
+ \qquad
+ k\in\mathcal A_r.
+ \label{eq:beta_ref_v2}
+\end{equation}
+Hence
+$\widehat{\boldsymbol\beta}_r$ is a probability vector over the current
+aggregation set.
+
+For theory, define the ideal untruncated gated first-stage weight
+\begin{equation}
+ a^{\star,(g)}_{k,r,i}
+ =
+ \frac{
+   \zeta^{o,(g)}_{k,r,i}
+ }{
+   p^{\mathrm{obs}}_{k,r,i}
+ }.
+ \label{eq:a_star_gated_v2}
+\end{equation}
+Together with
+$d^\star_{k,r}=1/q^{\mathrm{use}}_{k,r}$, a realized record with mark
+$(k,i)$ receives the operational ideal factor
+\begin{equation}
+ O_{k,r,i}
+ U_{k,r}
+ \frac{
+   \zeta^{o,(g)}_{k,r,i}
+ }{
+   p^{\mathrm{obs}}_{k,r,i}
+   q^{\mathrm{use}}_{k,r}
+ }.
+ \label{eq:factorized_global_weight_gated_v2}
+\end{equation}
+For identification, this factor is integrated with respect to the normalized
+opportunity-event mark law $P_r^{\mathrm{opp}}$ of Section~III, rather than by
+identifying $P_r^{\mathrm{opp}}(k,i)$ with the expectation of the risk-set
+indicator $R_{k,r,i}$.  Section~VI shows that the resulting ideal event-level
+conditional corrected measure is exactly a predictable interpolation between
+the deployment target and the opportunity law.  The
+implemented clipped plug-in weights in \eqref{eq:a_sag_v2} and
+\eqref{eq:d_use_v2} are finite-sample stabilizers and are not claimed to be
+exactly unbiased when their bounds are active.
+
+Before server calibration, the reference deployment composition is
+\begin{equation}
+    \boldsymbol\omega_r^{\mathrm{ref}}
+    =
+    M_r
+    \widehat{\boldsymbol\beta}_r.
+    \label{eq:omega_ref_v2}
+\end{equation}
+This vector need not equal $\boldsymbol\mu$: even a statistically coherent
+reference can lie outside the finite-window feasible target image
+$\Omega_r$ defined in Section~III.  Section~V therefore treats
+$\widehat{\boldsymbol\beta}_r$ as a reference rather than an automatically
+feasible final aggregation decision.
+
+\subsection{Post-Window Counterfactual Audit}
+\label{subsec:post_window_audit}
+
+After window $r$ closes, RAVEN reconstructs both Full-Design and No-Design
+counterfactual states on the \emph{same recorded exogenous selection trace}.
+This audit does not alter the already executed Gate decision.  Define
+\begin{equation}
+ D^A_r
+ =
+ \mathbf 1
+ \left\{
+   \mathcal A_r^D
+   \neq
+   \mathcal A_r^0
+ \right\}.
+ \label{eq:DA_audit_v2}
+\end{equation}
+When
+$\mathcal A_r^D=\mathcal A_r^0\neq\emptyset$, both modes are represented on
+common client coordinates and the audit records
+\begin{equation}
+ \left(
+   \Delta_{\beta,r},
+   \Delta_{M,r},
+   \Delta_{V,r}
+ \right).
+ \label{eq:common_support_audit_tuple_v2}
+\end{equation}
+If both counterfactual aggregation sets are empty, the service perturbation is
+zero and no $\beta/M/V$ perturbation tuple is formed.
+It also logs realized support coverage, target-support retention, ESS
+retention, and Design-induced clipping.  These completed-window quantities
+may update only the \emph{future} Gate state through certificate models whose
+form and update rule were frozen before held-out evaluation.
+
+This post-window construction is central to avoiding a post-hoc Gate.  The
+current window first commits to $G_r$ from $\mathcal F_{r^-}$; only after the
+window has completed can its realized Full-vs-No-Design discrepancy become
+training evidence for future certificates.
+
+\begin{algorithm}[t]
+\caption{Support-Aware Gated Reconstruction (SAG-RAVEN)}
+\label{alg:sag_raven}
+\begin{algorithmic}[1]
+\REQUIRE Frozen target maps, propensity models, certificate models,
+thresholds $\boldsymbol\tau^{\mathrm{SAG}}$, look-back horizon, and RAVEN
+parameters.
+\FOR{window $r=0,1,\ldots$}
+  \STATE Update lagged states from completed windows only.
+  \STATE Before current $R$ is realized, compute the SAG certificates and
+  $\overline B_r^{\mathrm{tot}}$ from $\mathcal F_{r^-}$.
+  \IF{any required certificate is invalid or unavailable}
+      \STATE $G_r\gets0$.
+  \ELSE
+      \STATE Evaluate $G_r$ by \eqref{eq:sag_gate_v2}.
+  \ENDIF
+  \STATE Freeze $G_r$ for the entire window.
+  \STATE Realize the current opportunity process $R_r$.
+  \STATE Evaluate and freeze $\widehat p^{\mathrm{obs}}_{k,r,i}$ from
+  $\mathcal H^{\mathrm{obs}}_{k,r,i}$ before observing $O_{k,r,i}$.
+  \STATE Realize the current observation process $O_r$ and form
+  $\mathcal E_r$.
+  \STATE Set
+  $\widetilde\zeta^o_{k,r,i}
+  \gets1+G_r(\widehat\zeta^{o,D}_{k,r,i}-1)$.
+  \STATE Construct first-stage masses and the pre-$U$ positive-mass set
+  $\mathcal B_r$; compute normalized weights, compositions, and
+  $n^{\mathrm{eff}}_{k,r}$ on $\mathcal B_r$.
+  \STATE Run the local H\'ajek update for clients in $\mathcal B_r$.
+  \STATE Form $\mathcal H^{\mathrm{use}}_{k,r}$ and evaluate/freeze
+  $\widehat q^{\mathrm{use}}_{k,r}$ before observing $U_{k,r}$.
+  \STATE Realize $U_{k,r}$ and set
+  $\mathcal A_r\gets\mathcal B_r\cap\mathcal U_r$.
+  \STATE Restrict the pre-$U$ masses/compositions to $\mathcal A_r$, apply
+  usable correction, and obtain $\widehat{\boldsymbol\beta}_r$, $M_r$, $V_r$,
+  and $\mathcal C_r$.
+  \IF{$\mathcal A_r=\emptyset$}
+      \STATE Keep the global model and optional debt state unchanged.
+  \ELSE
+      \STATE Solve (P2), perform one global update, and update optional Debt.
+  \ENDIF
+  \STATE After window closure, reconstruct Full-Design and No-Design audit
+  statistics on the shared selection trace.
+  \STATE Append completed-window audit statistics to the future Gate state only.
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+The resulting architecture has a deliberate separation of roles.  SAG decides
+\emph{whether} the opportunity/Design correction is support-safe before the
+current window; the layered reconstruction determines \emph{what statistical
+mass} the usable records represent; and Section~V determines \emph{what
+deployment composition} can be realized by the current feasible client set.
+No stage uses current or test prediction outcomes to retroactively alter the
+same-window Gate.
+
+% =====================================================================
+% RAVEN-MCS v2.0
+% Section V -- Feasibility-Aware Deployment-Target Calibration
+% Theory basis: RAVEN_MCS_SUPPORT_AWARE_GATE_SPEC_V1_2_FINAL
+% Must follow:
+%   Section III -- System Model and Support-Safe Target Alignment
+%   Section IV  -- Support-Aware Sequential Target Reconstruction
+% Target journal: IEEE Transactions on Mobile Computing
+% =====================================================================
+
+\section{Feasibility-Aware Deployment-Target Calibration}
+\label{sec:calibration}
+
+Section~\ref{sec:reconstruction} determines which statistical mass the usable
+records represent after the support-aware opportunity decision and the
+subsequent observation/usable-update corrections.  The resulting
+$\widehat{\boldsymbol\beta}_r$ is a \emph{reference distribution} over the
+current aggregation set.  It is not, in general, a feasible final aggregation
+decision: mobile availability can make the public target
+$\boldsymbol\mu$ unattainable in a finite window, and the corrected reference
+itself may violate client-concentration or effective-support constraints.
+RAVEN-MCS therefore separates \emph{reconstruction} from
+\emph{realization}.  This section maps the reconstructed reference into the
+current feasible aggregation set without pretending that unavailable target
+mass can be synthesized.
+
+\subsection{From a Corrected Reference to a Feasible Target Image}
+\label{subsec:reference_to_feasible}
+
+Consider an active window $r$ with
+\begin{equation}
+    K_r
+    =
+    |\mathcal A_r|
+    \ge 1.
+    \label{eq:Kr_v2}
+\end{equation}
+Retain the deployment-group composition matrix constructed in
+Section~\ref{sec:reconstruction},
+\begin{equation}
+    M_r
+    =
+    [\mathbf c^g_{k,r}]_{k\in\mathcal A_r}
+    \in
+    \mathbb R^{|\mathcal G|\times K_r}.
+    \label{eq:Mr_calibration_v2}
+\end{equation}
+Each column is a probability vector.  Hence any aggregation distribution
+$\boldsymbol\alpha_r$ over the active clients induces the deployment-group
+composition
+\begin{equation}
+    \boldsymbol\omega_r
+    =
+    M_r\boldsymbol\alpha_r.
+    \label{eq:omega_calibration_v2}
+\end{equation}
+
+The distinction between
+$\widehat{\boldsymbol\beta}_r$ and
+$\boldsymbol\alpha_r$ is fundamental.  The former answers
+
+\begin{quote}
+\emph{What statistical mass do the currently usable data represent after the
+selected support-aware reconstruction?}
+\end{quote}
+
+whereas the latter answers
+
+\begin{quote}
+\emph{What client mixture can be realized now while remaining close to that
+reference and tracking the public deployment target?}
+\end{quote}
+
+Accordingly, the reference composition
+\begin{equation}
+    \boldsymbol\omega_r^{\mathrm{ref}}
+    =
+    M_r
+    \widehat{\boldsymbol\beta}_r
+    \label{eq:omega_ref_calibration_v2}
+\end{equation}
+is not assumed to equal $\boldsymbol\mu$ and is not assumed to be the final
+service composition.
+
+As introduced in Section~III, the finite-window feasible target image is
+\begin{equation}
+    \Omega_r
+    =
+    \left\{
+      M_r\boldsymbol\alpha:
+      \boldsymbol\alpha\in\mathcal C_r
+    \right\}.
+    \label{eq:Omega_restate_v2}
+\end{equation}
+The corresponding irreducible group-level feasibility gap is
+\begin{equation}
+    d_r^{\mathrm{feas}}
+    =
+    \min_{\boldsymbol\omega\in\Omega_r}
+    \left\|
+      \boldsymbol\omega-\boldsymbol\mu
+    \right\|_2.
+    \label{eq:dfeas_restate_v2}
+\end{equation}
+Thus every admissible aggregation rule using the same current support obeys
+\begin{equation}
+    \left\|
+      M_r\boldsymbol\alpha_r-\boldsymbol\mu
+    \right\|_2
+    \ge
+    d_r^{\mathrm{feas}}.
+    \label{eq:dfeas_lower_bound_v2}
+\end{equation}
+This lower bound makes explicit why statistical target reconstruction and
+instantaneous target realization must be treated as different problems.
+
+\subsection{Feasible Aggregation Set and Pre-Aggregation State}
+\label{subsec:feasible_set_v2}
+
+The server chooses
+$\boldsymbol\alpha_r\in\mathbb R^{K_r}$ from
+\begin{equation}
+ \mathcal C_r
+ =
+ \left\{
+ \boldsymbol\alpha:
+ \mathbf 1^\top\boldsymbol\alpha=1,\;
+ 0\le\alpha_k\le\overline\alpha_r,\;
+ \|\boldsymbol\alpha\|_2^2
+ \le
+ \frac{1}{\overline E_r}
+ \right\},
+ \label{eq:Cr_v2}
+\end{equation}
+where
+\begin{equation}
+\begin{aligned}
+ \overline\alpha_r
+ &=
+ \min\!\left\{
+ 1,
+ \max\!\left\{
+   \alpha_{\max},
+   \frac{1}{K_r}
+ \right\}
+ \right\},\\
+ \overline E_r
+ &=
+ \min\{E_{\min},K_r\}.
+\end{aligned}
+\label{eq:cap_ess_v2}
+\end{equation}
+Here $0<\alpha_{\max}\le1$ and $E_{\min}\ge1$ are frozen design
+parameters.  The coordinate cap limits single-client dominance, while the
+$\ell_2$ constraint enforces the effective aggregation support
+\begin{equation}
+    E_{\mathrm{agg}}
+    \!\left(
+      \boldsymbol\alpha_r
+    \right)
+    \triangleq
+    \frac{1}{
+      \|\boldsymbol\alpha_r\|_2^2
+    }
+    \ge
+    \overline E_r.
+    \label{eq:aggregation_effective_support_v2}
+\end{equation}
+The uniform vector $\mathbf 1/K_r$ belongs to $\mathcal C_r$; hence every
+active window has a nonempty feasible set.  Section~VI uses this property to
+establish the existence and uniqueness of the calibration solution.
+
+RAVEN-MCS uses only pre-aggregation uncertainty when assigning client
+weights.  Let
+$\overline S_{k,r^-}^{\,2}$ be a lagged client-side variance state available
+before the current random update is used by the server.  With the
+reconstruction-dependent effective sample size
+$n^{\mathrm{eff}}_{k,r}$ from Section~IV, define
+\begin{equation}
+ v_{k,r}
+ =
+ \frac{
+   \overline S_{k,r^-}^{\,2}
+ }{
+   \max\{
+     n^{\mathrm{eff}}_{k,r},
+     1
+   \}
+ }
+ +
+ v_{\mathrm{floor}},
+ \qquad
+ V_r
+ =
+ \operatorname{diag}(v_{k,r})
+ \succeq0.
+ \label{eq:variance_proxy_v2}
+\end{equation}
+This construction may differ between Full Design and No Design because their
+record weights and effective sample sizes may differ; this dependence is
+precisely why Section~VI's common-support sensitivity result treats $V_r$ as
+a perturbed state rather than as a fixed constant.
+
+Let
+\begin{equation}
+    \overline{\boldsymbol\tau}_r
+    =
+    [\tau_{k,r}]_{k\in\mathcal A_r}
+    \succeq\mathbf 0
+    \label{eq:staleness_vector_v2}
+\end{equation}
+be the pre-aggregation staleness vector.  Under the same-window
+Full-Design/No-Design counterfactual comparison of Section~IV, this vector is
+common whenever the active client coordinates are common because both modes
+share the exogenous usable-update trace.
+
+\subsection{Long-Horizon Target Debt as an Accounting State}
+\label{subsec:debt_v2}
+
+Instantaneous feasibility may repeatedly under-serve the same deployment
+groups.  To record, rather than hide, this unresolved mass, RAVEN-MCS may
+maintain a nonnegative target-debt state
+\begin{equation}
+    \mathbf Q_r
+    \in
+    \mathbb R_+^{|\mathcal G|},
+    \qquad
+    \mathbf Q_0=\mathbf 0.
+    \label{eq:debt_state_v2}
+\end{equation}
+For an active window, after
+$\boldsymbol\omega_r=M_r\boldsymbol\alpha_r$ has been realized, update
+\begin{equation}
+ \mathbf Q_{r+1}
+ =
+ \left[
+ \mathbf Q_r
+ +
+ \eta_r
+ \left(
+   \boldsymbol\mu
+   -
+   \boldsymbol\omega_r
+ \right)
+ \right]_+.
+ \label{eq:debt_update_v2}
+\end{equation}
+If the window is inactive,
+$\mathbf Q_{r+1}=\mathbf Q_r$.
+
+A positive $Q_{r,g}$ records accumulated under-service of deployment group
+$g$.  Debt does not create unavailable clients, modify the current
+support-aware Gate, or retroactively change the reconstructed reference.  It
+only provides a lagged inter-window signal to the calibration objective.
+
+For every prefix with the active step mass
+\begin{equation}
+    S_R
+    =
+    \sum_{r=0}^{R-1}
+    \eta_r I_r
+    >0,
+    \label{eq:SR_debt_v2}
+\end{equation}
+the recursion implies the deterministic accounting relation
+\begin{equation}
+ \left\|
+   \overline{\boldsymbol\omega}_R
+   -
+   \boldsymbol\mu
+ \right\|_1
+ \le
+ \frac{
+   2
+   \|\mathbf Q_R\|_1
+ }{
+   S_R
+ }.
+ \label{eq:debt_bound_v2}
+\end{equation}
+The proof is deferred to the Appendix.  Equation~\eqref{eq:debt_bound_v2}
+is an accounting statement: sublinear debt implies vanishing prefix
+structural mismatch, but the paper does not require or claim that Debt has a
+large isolated empirical effect.
+
+For applications that do not use long-horizon accounting, set
+\begin{equation}
+    \mathbf Q_r\equiv\mathbf 0.
+    \label{eq:no_debt_mode_v2}
+\end{equation}
+The support-aware reconstruction and instantaneous calibration remain
+well-defined.  This makes Debt an optional long-horizon extension rather than
+a separate innovation.
+
+\subsection{Feasibility-Aware Calibration Program}
+\label{subsec:P2_v2}
+
+For every active window, RAVEN-MCS solves
+\begin{equation}
+ \text{(P2)}
+ \qquad
+ \boldsymbol\alpha_r^\star
+ \in
+ \arg\min_{\boldsymbol\alpha\in\mathcal C_r}
+ J_r(\boldsymbol\alpha).
+ \label{eq:P2_v2}
+\end{equation}
+The objective is
+\begin{align}
+ J_r(\boldsymbol\alpha)
+ ={}&
+ -\mathbf Q_r^\top
+ M_r\boldsymbol\alpha
+ +
+ \frac{\lambda_g}{2}
+ \left\|
+   M_r\boldsymbol\alpha
+   -
+   \boldsymbol\mu
+ \right\|_2^2
+ \nonumber\\
+ &+
+ \frac{\lambda_\beta}{2}
+ \left\|
+   \boldsymbol\alpha
+   -
+   \widehat{\boldsymbol\beta}_r
+ \right\|_2^2
+ \nonumber\\
+ &+
+ \frac{\lambda_v}{2}
+ \boldsymbol\alpha^\top
+ V_r
+ \boldsymbol\alpha
+ +
+ \lambda_s
+ \overline{\boldsymbol\tau}_r^\top
+ \boldsymbol\alpha.
+ \label{eq:P2_objective_v2}
+\end{align}
+The frozen coefficients satisfy
+\begin{equation}
+    \lambda_\beta>0,
+    \qquad
+    \lambda_g,\lambda_v,\lambda_s\ge0.
+    \label{eq:P2_lambdas_v2}
+\end{equation}
+
+The terms have distinct but coordinated roles.  The first term favors groups
+with accumulated under-service when Debt is enabled.  The second term tracks
+the public deployment target inside the current feasible image
+$\Omega_r$.  The third anchors the solution to the selection-corrected
+reference produced by Section~IV.  The fourth discourages concentration on
+clients with larger pre-aggregation uncertainty, and the last term penalizes
+stale usable updates.  These terms constitute one feasibility-aware
+calibration program; they are not presented as independent algorithmic
+contributions.
+
+The reference term is especially important under SAG.  When the Gate is
+OFF, Theorem~2 will show that the ideal corrected measure moves toward the
+opportunity law rather than pretending to equal the public target.
+P2 does not erase that statistical meaning.  Instead, it determines how far
+the currently feasible aggregation can move toward $\boldsymbol\mu$ without
+abandoning the reference, uncertainty, staleness, and client-support
+constraints.  Conversely, when the Gate is ON, P2 cannot create target mass
+outside $\Omega_r$.  In both cases, reconstruction and calibration retain
+separate semantics:
+\begin{equation}
+\boxed{
+\begin{aligned}
+ \text{selection representation}
+ &\longrightarrow
+ \widehat{\boldsymbol\beta}_r,\\
+ \text{feasible realization}
+ &\longrightarrow
+ \boldsymbol\alpha_r^\star.
+\end{aligned}}
+\label{eq:reconstruction_realization_chain_v2}
+\end{equation}
+
+The parameters in
+\eqref{eq:Cr_v2}--\eqref{eq:P2_lambdas_v2} are selected only from the
+development protocol and are frozen before genuinely unseen evaluation.
+The online SAG decision does not tune or modify them using current/test
+prediction outcomes.
+
+\subsection{Global Update and Window-Close Logic}
+\label{subsec:global_update_v2}
+
+Let $\boldsymbol\alpha_r^\star$ be the unique P2 solution established in
+Section~VI.  The server performs
+\begin{equation}
+ \boldsymbol\theta_{r+1}
+ =
+ \boldsymbol\theta_r
+ -
+ \eta_r
+ \sum_{k\in\mathcal A_r}
+ \alpha_{k,r}^\star
+ \mathbf u_{k,r}.
+ \label{eq:server_update_v2}
+\end{equation}
+The realized deployment-group composition is
+\begin{equation}
+    \boldsymbol\omega_r
+    =
+    M_r
+    \boldsymbol\alpha_r^\star.
+    \label{eq:omega_star_v2}
+\end{equation}
+If Debt is enabled, the server then applies
+\eqref{eq:debt_update_v2}.  Only after the current aggregation/debt step is
+complete are the lagged states advanced for future windows.
+
+If
+\begin{equation}
+    \mathcal A_r=\varnothing,
+    \label{eq:inactive_condition_v2}
+\end{equation}
+the window is inactive:
+\begin{equation}
+    \boldsymbol\theta_{r+1}
+    =
+    \boldsymbol\theta_r,
+    \qquad
+    \mathbf Q_{r+1}
+    =
+    \mathbf Q_r,
+    \label{eq:inactive_update_v2}
+\end{equation}
+and the window contributes no active step mass to $S_R$.
+
+Together with Algorithm~\ref{alg:sag_raven}, the complete window order is
+therefore
+\begin{equation}
+\boxed{
+\begin{aligned}
+ \mathcal F_{r^-}
+ &\rightarrow G_r
+ \rightarrow R
+ \rightarrow \widehat p^{\mathrm{obs}}\ \text{freeze}
+ \rightarrow O
+ \rightarrow \mathcal B_r\\
+ &\rightarrow \text{local update}
+ \rightarrow \widehat q^{\mathrm{use}}\ \text{freeze}
+ \rightarrow U
+ \rightarrow \mathcal A_r\\
+ &\rightarrow \widehat{\boldsymbol\beta}_r
+ \rightarrow \text{(P2)}
+ \rightarrow \boldsymbol\alpha_r^\star
+ \rightarrow \text{global/debt update}\\
+ &\rightarrow \text{post-window Full/No-Design audit}.
+\end{aligned}}
+\label{eq:raven_pipeline_v2}
+\end{equation}
+The ordering is deliberate.  SAG controls whether Full Design is
+support-safe before the current selection process; the reconstruction layer
+determines what the selected usable data represent; P2 maps that reference
+onto the current feasible target image; and only completed-window structural
+audits may affect future Gate certificates.
+
+\subsection{Interface to the Safety Analysis}
+\label{subsec:calibration_safety_interface}
+
+The same P2 program is used under Full Design and the No-Design fallback.
+For a one-window counterfactual comparison starting from the same
+pre-window state, the two modes may nevertheless produce different
+\begin{equation}
+    \widehat{\boldsymbol\beta}_r,
+    \qquad
+    M_r,
+    \qquad
+    V_r,
+    \label{eq:P2_perturbed_states_v2}
+\end{equation}
+and may even produce different active client sets.  Therefore the
+beta-only non-expansion result used in the earlier RAVEN analysis is not
+sufficient for SAG.
+
+Section~VI addresses these two cases separately.  On a common active set, it
+uses the $\lambda_\beta$-strong convexity of P2 to bound the change in
+$\boldsymbol\alpha_r^\star$ jointly in
+$\Delta_{\beta,r}$,
+$\Delta_{M,r}$, and
+$\Delta_{V,r}$.  When the active sets differ, it combines that
+common-support sensitivity with the predictable mismatch-risk certificate
+$\overline\delta_{A,r}$ and the explicit certificate-failure probability
+$\delta_{\mathrm{cal},r}$.  The resulting bound is exactly the
+$\overline B_r^{\mathrm{tot}}$ quantity already used by SAG in
+Section~IV.
+
+This interface also fixes the claim boundary.  The calibration theory
+controls service-composition perturbation and per-window structural harm
+relative to the No-Design fallback.  It does not, under the present
+assumptions, imply a universal bound on deployment-target RMSE or
+WorstGroupRMSE because the reconstruction weights can also change the local
+learning trajectory.  Prediction no-harm is therefore evaluated empirically
+under the frozen protocol rather than asserted by P2.
+
+% =====================================================================
+% RAVEN-MCS v2.0
+% Section VI -- Theoretical Analysis
+% Theory basis:
+%   RAVEN_MCS_SUPPORT_AWARE_GATE_SPEC_V1_2_FINAL
+% Must follow the rewritten Sections III--V.
+% Complete proofs are deferred to the Appendix; no proof sketch is used.
+% Target journal: IEEE Transactions on Mobile Computing
+% =====================================================================
+
+\section{Theoretical Analysis}
+\label{sec:theory}
+
+We analyze the three questions induced by Sections~III--V: whether the
+deployment and arrival laws define the same learning objective, what
+statistical law is represented by predictable gated correction, and how much
+Full Design can perturb the feasible calibration relative to the No-Design
+RAVEN fallback.  The analysis deliberately separates ideal identification
+from finite-window stabilization.  It does not claim recovery outside
+identifiable support, robustness to arbitrary hidden confounding, exact
+unbiasedness under active clipping, universal prediction-risk improvement, or
+trajectory-level equivalence between counterfactual algorithms.
+
+\subsection{Assumptions and Scope}
+\label{subsec:assumptions_v2}
+
+\noindent\textbf{A1 (Compatible target support and positivity).}
+The public target measures in Section~III satisfy
+\eqref{eq:atomic_target_v2}--\eqref{eq:target_compatibility_v2}.
+Whenever $\pi^{\mathrm{tar}}_{k,i}>0$ is eligible for Full-Design
+reconstruction,
+\begin{equation}
+    P_r^{\mathrm{opp}}(k,i)>0,
+    \qquad
+    p^{\mathrm{obs}}_{k,r,i}>0,
+    \qquad
+    q^{\mathrm{use}}_{k,r}>0
+    \label{eq:A1_v2}
+\end{equation}
+on the corresponding sequential events.
+
+\noindent\textbf{A2 (Sequential pre-outcome ignorability).}
+Conditional on the legal information available at each stage, observation and
+usable-update selection are conditionally mean-ignorable for the bounded
+moment being reconstructed.  In particular, for every relevant registered
+attempt,
+\begin{equation}
+ \mathbb E\!\left[
+ \left.
+ \frac{U_{k,r}}{q^{\mathrm{use}}_{k,r}}
+ \right|
+ \mathcal H^{\mathrm{use}}_{k,r},
+ O_{k,r,i}=1,
+ R_{k,r,i}=1
+ \right]
+ =1,
+ \label{eq:A2_use_v2}
+\end{equation}
+and the analogous observation identity holds under
+$\mathcal H^{\mathrm{obs}}_{k,r,i}$.  Neither history contains the random
+outcome it is used to correct.
+
+\noindent\textbf{A3 (Correct ideal ratios and cluster-level regularity).}
+For exact identification, the ideal opportunity, observation, and
+usable-update probabilities equal their population counterparts and the
+inverse factors are untruncated, or the stabilizing bounds are inactive on the
+relevant support.  Along a growing sequence of opportunity-event
+clusters/windows, the weighted numerator and denominator obey a weak law of
+large numbers, and the normalized denominator converges in probability to a
+strictly positive limit.
+
+\noindent\textbf{A4 (Convex calibration).}
+In every active window,
+$K_r\ge1$, $0<\alpha_{\max}\le1$, $E_{\min}\ge1$,
+$V_r\succeq0$, $\lambda_\beta>0$, and
+$\lambda_g,\lambda_v,\lambda_s\ge0$.  The feasible set is
+\eqref{eq:Cr_v2}--\eqref{eq:cap_ess_v2}.
+
+\noindent\textbf{A5 (Quantitative fixed-support plug-in regularity).}
+On the target-supported events of A1, the opportunity, observation, and
+usable-update probabilities are bounded away from zero by positive constants.
+The plug-in errors satisfy
+\begin{equation}
+\begin{aligned}
+ \sup |\widehat\pi^{\mathrm{opp}}-\pi^{\mathrm{opp}}|
+ &\le \epsilon_\pi,\\
+ \sup |\widehat p^{\mathrm{obs}}-p^{\mathrm{obs}}|
+ &\le \epsilon_p,\\
+ \sup |\widehat q^{\mathrm{use}}-q^{\mathrm{use}}|
+ &\le \epsilon_q,
+\end{aligned}
+\label{eq:A5_plugin_errors_v2}
+\end{equation}
+and $\epsilon_{\mathrm{clip}}$ bounds the aggregate residual introduced by
+truncating the corresponding unclipped observation/Design and usable-update
+ratios.  The ideal and implemented H\'ajek normalizing denominators are
+bounded below by $B_{\min}>0$, and the same-window ideal and practical
+constructions induce the same $\mathcal A_r$, $M_r$, and $\mathcal C_r$.
+This assumption is intentionally local: it fails when Design changes support
+or when target-zero opportunity mass changes the active client set.
+
+\noindent\textbf{A6 (Gate predictability).}
+The operational Gate $G_r$ and all quantities used to compute it are
+$\mathcal F_{r^-}$-measurable.  Hence $G_r$ is frozen before the current
+$R/O/U$ realization and cannot depend on current sensing values, prediction
+residuals, update coordinates, future events, or test outcomes.
+
+\noindent\textbf{A7 (Shared exogenous selection trace).}
+Conditional on the common pre-window state and legal stage histories, the
+Full-Design and No-Design counterfactuals use the same realized
+$R/O/\mathcal E_r/U$ trace.  Design changes statistical weights and the local
+objective, but does not change the exogenous opportunity, observation,
+registration, computation, network, deadline, or staleness events in this
+comparison.
+
+\noindent\textbf{A8a (Active-set-risk upper validity).}
+The certificate $\overline\delta_{A,r}$ is
+$\mathcal F_{r^-}$-measurable and, on the frozen Gate applicability region,
+\begin{equation}
+ \delta_{A,r}
+ =
+ \Pr\!\left(
+   \mathcal A_r^D\neq\mathcal A_r^0
+   \mid
+   \mathcal F_{r^-}
+ \right)
+ \le
+ \overline\delta_{A,r}.
+ \label{eq:A8a_v2}
+\end{equation}
+
+\noindent\textbf{A8b (Common-nonempty-support perturbation coverage).}
+Partition active-set equality into
+\begin{align}
+ \mathcal E_r^+
+ &=
+ \{\mathcal A_r^D=\mathcal A_r^0\neq\emptyset\},
+ \label{eq:common_active_event_v2}\\
+ \mathcal E_r^{\emptyset}
+ &=
+ \{\mathcal A_r^D=\mathcal A_r^0=\emptyset\}.
+ \label{eq:both_empty_event_v2}
+\end{align}
+The $\beta/M/V$ perturbations are defined only on $\mathcal E_r^+$.  Whenever
+$\Pr(\mathcal E_r^+\mid\mathcal F_{r^-})>0$, conditional on
+$\mathcal F_{r^-}$ and $\mathcal E_r^+$ the pre-window upper certificates
+satisfy; if this conditional event has zero probability, the A8b requirement
+is vacuous for that window
+\begin{equation}
+\begin{aligned}
+ \Pr\!\bigl(
+ &\Delta_{\beta,r}
+ \le
+ \overline\Delta_{\beta,r},\;
+ \Delta_{M,r}
+ \le
+ \overline\Delta_{M,r},\\[-1mm]
+ &\Delta_{V,r}
+ \le
+ \overline\Delta_{V,r}
+ \mid
+ \mathcal F_{r^-},
+ \mathcal E_r^+
+ \bigr)
+ \ge
+ 1-\delta_{\mathrm{cal},r},
+\end{aligned}
+\label{eq:A8b_v2}
+\end{equation}
+where $\delta_{\mathrm{cal},r}$ is frozen before unseen evaluation.
+
+\noindent\textbf{A9 (Gated-support sequential identification).}
+For any predictable $g_r\in[0,1]$, define
+\begin{equation}
+ \mathcal S_r^{\mathrm{gate}}
+ =
+ \left\{
+ (k,i):
+ g_r\pi^{\mathrm{tar}}_{k,i}
+ +
+ (1-g_r)P_r^{\mathrm{opp}}(k,i)
+ >
+ 0
+ \right\}.
+ \label{eq:Sgate_v2}
+\end{equation}
+On $\mathcal S_r^{\mathrm{gate}}$, the opportunity ratio is well-defined,
+$p^{\mathrm{obs}}_{k,r,i}$ and $q^{\mathrm{use}}_{k,r}$ are positive on the
+events to which their inverse factors are applied, and the sequential
+mean-ignorability identities of A2 hold.  When $g_r=1$, A9 reduces to the
+Full-Design target-supported identification region; when $g_r=0$, it also
+covers opportunity-positive but target-zero marks retained by the No-Design
+fallback.
+
+\subsection{Target Risk Is Not Arrival Risk}
+\label{subsec:prop_risk_v2}
+
+\noindent\textbf{Proposition 1 (Target--arrival risk distinction).}
+Let
+$\boldsymbol\varpi^{\mathrm{tar}}$ and
+$\widetilde{\boldsymbol\rho}^{\mathrm{arr}}$ be normalized laws on the same
+finite atomic domain.  If
+\begin{equation}
+    \boldsymbol\varpi^{\mathrm{tar}}
+    \neq
+    \widetilde{\boldsymbol\rho}^{\mathrm{arr}},
+    \label{eq:unequal_laws_v2}
+\end{equation}
+then there exists a bounded loss profile
+$\mathbf L=(L_i)_i$ for which
+\begin{equation}
+ \sum_i
+ \varpi_i^{\mathrm{tar}}L_i
+ \neq
+ \sum_i
+ \widetilde\rho_i^{\mathrm{arr}}L_i.
+ \label{eq:risk_noninterchange_v2}
+\end{equation}
+Equivalently, equality of the two risk functionals for every bounded loss
+profile requires equality of the underlying laws.
+
+\noindent\emph{Proof.}
+See Appendix~A.
+
+Proposition~1 does not claim that every trained predictor must exhibit a large
+numerical risk gap.  It establishes that the arrival law cannot be substituted
+for the deployment law by convention.
+
+\subsection{Full-Design Target Reconstruction}
+\label{subsec:prop_reconstruction_v2}
+
+For an opportunity event $e\in\mathcal E_r^{\mathrm{opp}}$ in window $r$ with
+mark $X_{r,e}=(k_e,i_e)$ as defined in Section~III, define the ideal
+Full-Design contribution.  By convention, a contribution is zero unless the
+event is observed and its client forms a registered attempt; the
+$q^{\mathrm{use}}$ factor is evaluated only on such registered attempts
+\begin{equation}
+ \chi_e
+ =
+ O_eU_{k_e,r}
+ \frac{
+   \pi^{\mathrm{tar}}_{k_e,i_e}
+ }{
+   P_r^{\mathrm{opp}}(k_e,i_e)
+   p^{\mathrm{obs}}_{k_e,r,i_e}
+   q^{\mathrm{use}}_{k_e,r}
+ }.
+ \label{eq:chi_full_design_v2}
+\end{equation}
+
+\noindent\textbf{Proposition 2 (Normalized Full-Design target reconstruction).}
+Under A1--A3, for any bounded function $\phi(k,i)$,
+\begin{equation}
+ \widehat\Phi_R^D
+ =
+ \frac{
+   \sum_{r<R}
+   \sum_{e\in\mathcal E_r^{\mathrm{opp}}}
+   \chi_e
+   \phi(k_e,i_e)
+ }{
+   \sum_{r<R}
+   \sum_{e\in\mathcal E_r^{\mathrm{opp}}}
+   \chi_e
+ }
+ \xrightarrow{p}
+ \Phi^{\mathrm{tar}},
+ \label{eq:prop2_full_design_v2}
+\end{equation}
+where
+\begin{equation}
+    \Phi^{\mathrm{tar}}
+    =
+    \sum_{k,i}
+    \pi^{\mathrm{tar}}_{k,i}
+    \phi(k,i).
+    \label{eq:phi_target_v2}
+\end{equation}
+Consequently, client--stratum indicators recover
+$\pi^{\mathrm{tar}}_{k,s}$, and
+$\phi(k,i)=\mathbf1\{h(i)=g\}$ recovers the deployment-group mass $\mu_g$.
+
+\noindent\emph{Proof.}
+See Appendix~A.
+
+This is an ideal pooled consistency statement.  It does not imply that the
+finite-window clipped reference
+$\widehat{\boldsymbol\beta}_r$ exactly realizes
+$\boldsymbol\mu$.
+
+\subsection{Existence and Uniqueness of Feasible Calibration}
+\label{subsec:theorem_calibration_v2}
+
+\noindent\textbf{Theorem 1 (Unique feasible calibration).}
+Under A4, every active window has a nonempty compact convex feasible set
+$\mathcal C_r$, and program~\eqref{eq:P2_v2} has a unique global minimizer
+\begin{equation}
+    \boldsymbol\alpha_r^\star.
+    \label{eq:alpha_unique_v2}
+\end{equation}
+
+\noindent\emph{Proof.}
+See Appendix~A.
+
+The theorem concerns the mathematical program.  It does not retrospectively
+certify exact optimality of every numerical solver output.
+
+\subsection{Fixed-Support Plug-In Stability and Its Limitation}
+\label{subsec:plugin_scope_v2}
+
+The previous RAVEN analysis also provides a local finite-window plug-in result.
+Let $\boldsymbol\beta_r^\star$ be the same-window ideal untruncated reference
+and $\widehat{\boldsymbol\beta}_r$ the implemented clipped plug-in.
+
+\noindent\textbf{Proposition 3 (Practical plug-in perturbation on fixed support).}
+Under A1, A4, and A5, there exists the explicit finite constant $C_1$ given
+in Appendix~A such that
+\begin{equation}
+ \left\|
+   \widehat{\boldsymbol\beta}_r
+   -
+   \boldsymbol\beta_r^\star
+ \right\|_1
+ \le
+ C_1
+ \left(
+   \epsilon_\pi
+   +
+   \epsilon_p
+   +
+   \epsilon_q
+   +
+   \epsilon_{\mathrm{clip}}
+ \right).
+ \label{eq:plugin_beta_bound_v2}
+\end{equation}
+At the same fixed window state, with $M_r$, $V_r$, $\mathcal C_r$, and the
+active coordinates held fixed,
+\begin{align}
+ \left\|
+   \boldsymbol\alpha^\star(
+     \widehat{\boldsymbol\beta}_r
+   )
+   -
+   \boldsymbol\alpha^\star(
+     \boldsymbol\beta_r^\star
+   )
+ \right\|_2
+ &\le
+ \left\|
+   \widehat{\boldsymbol\beta}_r
+   -
+   \boldsymbol\beta_r^\star
+ \right\|_2,
+ \label{eq:plugin_alpha_nonexpand_v2}\\
+ \left\|
+ M_r
+ \left[
+   \boldsymbol\alpha^\star(
+     \widehat{\boldsymbol\beta}_r
+   )
+   -
+   \boldsymbol\alpha^\star(
+     \boldsymbol\beta_r^\star
+   )
+ \right]
+ \right\|_2
+ &\le
+ \|M_r\|_2
+ \left\|
+   \widehat{\boldsymbol\beta}_r
+   -
+   \boldsymbol\beta_r^\star
+ \right\|_2.
+ \label{eq:plugin_service_nonexpand_v2}
+\end{align}
+
+\noindent\emph{Proof.}
+See Appendix~A.
+
+Proposition~3 is retained only as a fixed-support stabilization result.  It
+does not compare Full Design with No Design when $M_r$, $V_r$, or
+$\mathcal A_r$ changes.  The next two theorems address precisely that missing
+regime.
+
+\subsection{Predictable Gated Reconstruction}
+\label{subsec:thm_gated_law_v2}
+
+\noindent\textbf{Theorem 2 (Predictable gated reconstruction law).}
+Fix window $r$ and let $g_r\in[0,1]$ be
+$\mathcal F_{r^-}$-measurable.  For every opportunity-event mark with
+$P_r^{\mathrm{opp}}(k,i)>0$, define
+\begin{equation}
+ \zeta^{o,(g)}_{k,r,i}
+ =
+ 1
+ +
+ g_r
+ \left[
+   \frac{\pi^{\mathrm{tar}}_{k,i}}{P_r^{\mathrm{opp}}(k,i)}
+   -1
+ \right].
+ \label{eq:gated_ratio_theory_v2}
+\end{equation}
+Assume A6 and A9 and the correct, untruncated ideal stage probabilities in the
+identification part of A3.  As above, the usable-update inverse factor is
+evaluated only for registered attempts, with zero contribution otherwise.
+For a generic opportunity event
+$e\in\mathcal E_r^{\mathrm{opp}}$ with mark $X_{r,e}$, define the conditional
+ideal corrected event measure
+\begin{equation}
+\begin{aligned}
+ \Gamma_r^{(g)}(k,i)
+ =
+ \mathbb E\!\left[
+ \left.
+ \mathbf 1\{X_{r,e}=(k,i)\}
+ O_e U_{k_e,r}
+ \frac{\zeta^{o,(g)}_{k_e,r,i_e}}
+ {p^{\mathrm{obs}}_{k_e,r,i_e}q^{\mathrm{use}}_{k_e,r}}
+ \right|
+ \mathcal F_{r^-}
+ \right].
+\end{aligned}
+\label{eq:Gamma_gated_v2}
+\end{equation}
+Then
+\begin{equation}
+ \boxed{
+ \Gamma_r^{(g)}(k,i)
+ =
+ g_r\pi^{\mathrm{tar}}_{k,i}
+ +(1-g_r)P_r^{\mathrm{opp}}(k,i).
+ }
+ \label{eq:gated_mixture_law_v2}
+\end{equation}
+Consequently,
+$\sum_{k,i}\Gamma_r^{(g)}(k,i)=1$, and for any bounded $\phi$,
+\begin{equation}
+ \Phi_r^{(g)}
+ =
+ g_r\Phi^{\mathrm{tar}}
+ +(1-g_r)\Phi_r^{\mathrm{opp}}.
+ \label{eq:gated_moment_v2}
+\end{equation}
+For the deployment-group indicator this gives
+\begin{equation}
+ \boldsymbol\mu_r^{(g)}
+ =
+ g_r\boldsymbol\mu
+ +(1-g_r)\boldsymbol\mu_r^{\mathrm{opp}},
+ \label{eq:gated_group_mixture_v2}
+\end{equation}
+and
+\begin{equation}
+ \boxed{
+ \left\|
+   \boldsymbol\mu_r^{(g)}-\boldsymbol\mu
+ \right\|_1
+ =
+ (1-g_r)
+ \left\|
+   \boldsymbol\mu_r^{\mathrm{opp}}-\boldsymbol\mu
+ \right\|_1.
+ }
+ \label{eq:gated_group_distance_v2}
+\end{equation}
+
+\noindent\emph{Proof.}
+See Appendix~A.
+
+Theorem~2 is an exact conditional \emph{opportunity-event corrected-measure}
+identity.  It does not equate
+$P_r^{\mathrm{opp}}(k,i)$ with
+$\mathbb E[R_{k,r,i}\mid\mathcal F_{r^-}]$ and does not assert an exact
+finite-sample H\'ajek equality.  Setting $g_r=1$ recovers the ideal
+Full-Design target law; setting $g_r=0$ yields the ideal O/U-corrected
+opportunity law.  If the cluster/window regularity part of A3 also holds, the
+pooled normalized estimator converges to the corresponding event/window-
+weighted average of these gated laws.
+
+\subsection{Common-Support Calibration Sensitivity}
+\label{subsec:thm_common_support_v2}
+
+\noindent\textbf{Theorem 3 (Common-support calibration sensitivity).}
+Fix one window and compare Full Design $D$ with No Design $0$ from the same
+pre-window state.  Suppose both modes have the same nonempty active set,
+placed in the same canonical client order, and therefore the same feasible
+set $\mathcal C_r$.  The two P2 problems share
+$\mathbf Q_r$, $\boldsymbol\mu$, $\overline{\boldsymbol\tau}_r$,
+$\lambda_g$, $\lambda_\beta$, $\lambda_v$, $\lambda_s$, and
+$\mathcal C_r$; only $\boldsymbol\beta_r$, $M_r$, and $V_r$ are perturbed.
+Let
+\begin{align}
+ \Delta_{\beta,r}
+ &=
+ \left\|
+   \boldsymbol\beta_r^D
+   -
+   \boldsymbol\beta_r^0
+ \right\|_2,
+ \nonumber\\
+ \Delta_{M,r}
+ &=
+ \left\|
+   M_r^D
+   -
+   M_r^0
+ \right\|_2,
+ \nonumber\\
+ \Delta_{V,r}
+ &=
+ \left\|
+   V_r^D
+   -
+   V_r^0
+ \right\|_2,
+ \label{eq:three_perturbations_v2}
+\end{align}
+and
+\begin{equation}
+ B_{M,r}^{\mathrm{cf}}
+ =
+ \max\{
+   \|M_r^D\|_2,
+   \|M_r^0\|_2
+ \},
+ \qquad
+ B_{Q,r}
+ =
+ \|\mathbf Q_r\|_2.
+ \label{eq:BM_BQ_v2}
+\end{equation}
+Let
+$\boldsymbol\alpha_r^D$ and
+$\boldsymbol\alpha_r^0$ be the corresponding P2 minimizers.  Then
+\begin{equation}
+\boxed{
+\begin{aligned}
+ \left\|
+   \boldsymbol\alpha_r^D
+   -
+   \boldsymbol\alpha_r^0
+ \right\|_2
+ \le{}&
+ \Delta_{\beta,r}\\
+ &+
+ \frac{
+   B_{Q,r}
+   +
+   \lambda_g
+   (2B_{M,r}^{\mathrm{cf}}+1)
+ }{
+   \lambda_\beta
+ }
+ \Delta_{M,r}\\
+ &+
+ \frac{\lambda_v}{\lambda_\beta}
+ \Delta_{V,r}.
+\end{aligned}}
+\label{eq:T3_alpha_bound_v2}
+\end{equation}
+Furthermore,
+\begin{equation}
+\boxed{
+ \left\|
+   M_r^D
+   \boldsymbol\alpha_r^D
+   -
+   M_r^0
+   \boldsymbol\alpha_r^0
+ \right\|_2
+ \le
+ \Delta_{M,r}
+ +
+ B_{M,r}^{\mathrm{cf}}
+ \left\|
+   \boldsymbol\alpha_r^D
+   -
+   \boldsymbol\alpha_r^0
+ \right\|_2.
+}
+\label{eq:T3_service_bound_v2}
+\end{equation}
+
+\noindent\emph{Proof.}
+See Appendix~A.
+
+The proof uses the
+$\lambda_\beta$-strong convexity of P2 and the variational inequalities of
+the two constrained minimizers.  Unlike
+Proposition~3, Theorem~3 jointly accounts for changes in the reconstructed
+reference, the client composition matrix, and the variance state.  It is a
+same-window, same-pre-window-state sensitivity result; it is not a
+trajectory-level comparison of two algorithms run from time zero.
+
+\subsection{Active-Set-Risk Structural Safety}
+\label{subsec:thm_active_set_v2}
+
+For mode $m\in\{D,0\}$, define the service vector
+\begin{equation}
+ \mathbf s_r^m
+ =
+ I_r^m
+ M_r^m
+ \boldsymbol\alpha_r^m,
+ \label{eq:service_vector_mode_v2}
+\end{equation}
+where $\mathbf s_r^m=\mathbf0$ for an inactive mode.  On the nonempty
+common-active-set event, Theorem~3 and A8b provide the certified
+$\ell_1$ bound
+\begin{equation}
+ \overline B_r^{\mathrm{srv}}
+ =
+ \sqrt{|\mathcal G|}
+ \left(
+   \overline\Delta_{M,r}
+   +
+   B_{M,r}^{\mathrm{pre}}
+   \overline D_r^\alpha
+ \right),
+ \label{eq:Bsrv_theory_v2}
+\end{equation}
+where $B_{M,r}^{\mathrm{pre}}$ is the predictable Gate-side upper bound
+satisfying
+\begin{equation}
+ B_{M,r}^{\mathrm{pre}}
+ \ge
+ B_{M,r}^{\mathrm{cf}},
+ \qquad
+ B_{M,r}^{\mathrm{pre}}=\sqrt K
+ \ \text{is always valid},
+ \label{eq:BM_pre_cf_relation_v2}
+\end{equation}
+and
+\begin{equation}
+\begin{aligned}
+ \overline D_r^\alpha
+ =
+ &\overline\Delta_{\beta,r}
+ +
+ \frac{
+   B_{Q,r}
+   +
+   \lambda_g
+   (2B_{M,r}^{\mathrm{pre}}+1)
+ }{
+   \lambda_\beta
+ }
+ \overline\Delta_{M,r}\\
+ &+
+ \frac{\lambda_v}{\lambda_\beta}
+ \overline\Delta_{V,r}.
+\end{aligned}
+\label{eq:Dalpha_theory_v2}
+\end{equation}
+If both counterfactual active sets are empty, their service difference is zero.
+
+\noindent\textbf{Theorem 4 (Active-set-risk structural perturbation bound).}
+Under A4 and A6--A8, condition on $\mathcal F_{r^-}$ and compare Full Design
+with the No-Design fallback on the A7 shared selection trace.  Then
+\begin{equation}
+\boxed{
+\begin{aligned}
+ \mathbb E\!\left[
+ \left.
+ \left\|
+   \mathbf s_r^D
+   -
+   \mathbf s_r^0
+ \right\|_1
+ \right|
+ \mathcal F_{r^-}
+ \right]
+ \le{}&
+ \overline B_r^{\mathrm{srv}}
+ +
+ 2\overline\delta_{A,r}\\
+ &+
+ 2\delta_{\mathrm{cal},r}
+ =
+ \overline B_r^{\mathrm{tot}}.
+\end{aligned}}
+\label{eq:T4_total_bound_v2}
+\end{equation}
+For the binary SAG action
+\begin{equation}
+ \mathbf s_r^{\mathrm{SAG}}
+ =
+ G_r\mathbf s_r^D
+ +
+ (1-G_r)\mathbf s_r^0,
+ \label{eq:sag_service_vector_v2}
+\end{equation}
+the Gate rule
+$\overline B_r^{\mathrm{tot}}\le\tau_{\mathrm{safe}}$ whenever $G_r=1$
+implies
+\begin{equation}
+ \boxed{
+ \mathbb E\!\left[
+ \left.
+ \left\|
+   \mathbf s_r^{\mathrm{SAG}}
+   -
+   \mathbf s_r^0
+ \right\|_1
+ \right|
+ \mathcal F_{r^-}
+ \right]
+ \le
+ \tau_{\mathrm{safe}}.
+ }
+ \label{eq:T4_sag_bound_v2}
+\end{equation}
+If $G_r=0$, the SAG-vs-fallback service perturbation is exactly zero.
+
+\noindent\emph{Proof.}
+See Appendix~A.
+
+The proof partitions the window into four cases:
+$\mathcal E_r^+$ with a valid common-support certificate,
+$\mathcal E_r^+$ with certificate failure,
+$\mathcal E_r^{\emptyset}$, and active-set mismatch.  The both-empty case has
+zero service difference.  The mismatch event contributes at most the
+$\ell_1$ diameter $2$ of the zero-extended deployment-group simplex, while
+A8b contributes the explicit common-nonempty certificate-failure term
+$2\delta_{\mathrm{cal},r}$.  This is why both terms appear in
+\eqref{eq:T4_total_bound_v2}.
+
+\noindent\textbf{Corollary 1 (Per-window structural-harm bound).}
+Define
+\begin{equation}
+    L_r^m
+    =
+    \left\|
+      \mathbf s_r^m
+      -
+      \boldsymbol\mu
+    \right\|_1.
+    \label{eq:per_window_target_discrepancy_v2}
+\end{equation}
+Then
+\begin{equation}
+ \boxed{
+ \mathbb E\!\left[
+ \left.
+ \bigl(
+   L_r^D-L_r^0
+ \bigr)_+
+ \right|
+ \mathcal F_{r^-}
+ \right]
+ \le
+ \overline B_r^{\mathrm{tot}}.
+ }
+ \label{eq:cor_structural_harm_full_v2}
+\end{equation}
+For the actual SAG action,
+\begin{equation}
+ \boxed{
+ \mathbb E\!\left[
+ \left.
+ \bigl(
+   L_r^{\mathrm{SAG}}-L_r^0
+ \bigr)_+
+ \right|
+ \mathcal F_{r^-}
+ \right]
+ \le
+ G_r
+ \overline B_r^{\mathrm{tot}}
+ \le
+ \tau_{\mathrm{safe}}
+ }
+ \label{eq:cor_structural_harm_sag_v2}
+\end{equation}
+whenever the Gate is ON.
+
+\noindent\emph{Proof.}
+By the reverse triangle inequality,
+$(L_r^D-L_r^0)_+
+\le
+\|\mathbf s_r^D-\mathbf s_r^0\|_1$; apply Theorem~4.
+The SAG statement follows from the predictability of $G_r$.
+\hfill$\square$
+
+Corollary~1 gives the precise meaning of \emph{structural safety}: the Gate
+controls expected \emph{per-window} excess deployment-target discrepancy
+relative to the No-Design RAVEN fallback.  It is not a direct theorem for the
+prefix metric $\Delta_{\mathrm{group}}(R)$, whose normalization can differ
+when the two modes induce different active-window sets.
+
+\subsection{Implications and Claim Boundary}
+\label{subsec:theory_implications_v2}
+
+The results form a single support-aware chain.  Proposition~1 establishes why
+the arrival population cannot replace the deployment population by convention.
+Proposition~2 gives the classical Full-Design target-law interpretation under
+supported sequential identification.  Theorem~2 then shows what changes when
+the opportunity correction is predictably gated: the exact conditional
+corrected measure interpolates between the deployment law and the opportunity
+law rather than silently changing its statistical meaning.  Theorem~3
+quantifies how Full Design can perturb feasible calibration even when the
+active client coordinates are unchanged, and Theorem~4 extends the analysis
+to uncertain active-set changes and imperfect certificates.  P2 remains the
+feasibility map connecting reconstructed statistical mass to what can
+actually be realized in a finite mobile window.
+
+The guarantees stop at this structural boundary.  SAG changes local record
+weights and can therefore change the local objective and the subsequent model
+trajectory.  Without additional learner-stability assumptions, none of
+Theorems~2--4 implies universal no-harm for
+$\mathcal R_\mu$, RMSE, or WorstGroupRMSE.  Prediction no-harm and
+prefix-level structural performance are therefore evaluated under the frozen
+experimental protocol rather than asserted as theoretical consequences.
+
+
+% POST-AUDIT PROOF OBLIGATION (source comment only): before submission,
+% Appendix A must be synchronized with the event-level proof of Theorem 2,
+% the full variational-inequality proof of Theorem 3, the E_r^+ / E_r^empty
+% decomposition and certificate-failure term in Theorem 4, and Corollary 1.

@@ -1,0 +1,1102 @@
+
+RAVEN-MCS v2.0
+Cursor 实验指令：SAG-G0 / SAG-G1 最小实现与验证
+============================================================
+版本：v1.0
+目标：只完成 SAG-G0 + SAG-G1。不要提前启动 E1--E5 全量论文实验。
+理论依据：
+1) RAVEN_MCS_SUPPORT_AWARE_GATE_SPEC_V1_2_FINAL
+2) RAVEN_MCS_v2_Sections_III_VI_PostAudit_Final.txt
+3) 当前论文既有实验代码、EventTrace、SensorScope、U-Air 数据和旧实验资产
+
+总原则：
+- 严格围绕论文主线，不做无意义旁支实验。
+- 不重新发明算法，不增加新 Gate，不增加新 RQ。
+- 先保证时间顺序、信息边界、counterfactual 语义正确，再看结果。
+- G0 是“实现正确性审计”，G1 是“最小科学可行性验证”。
+- G0/G1 未 PASS 前，不做 20-seed、大规模 unseen、real replay、强基线全集。
+- 不允许用 dataset 名称决定 Gate。
+- 不允许使用当前窗口 R/O/U、Z、当前 loss、当前 update、test outcome 决定同一窗口 Gate。
+- 所有 threshold、certificate model、look-back horizon 在 test/unseen 前冻结。
+- 如果代码与论文公式冲突，以 Sections III--VI PostAudit Final 为准。
+- 不要为了让结果变好而修改理论公式或 Gate 条件。
+
+============================================================
+一、任务总览
+============================================================
+
+本轮只做两阶段：
+
+Stage G0：SAG 实现审计
+  目标：确认代码严格实现理论顺序和 counterfactual 日志。
+  数据：SensorScope + U-Air。
+  seeds：2--3 个。
+  结果：只判断代码 PASS/FAIL，不写论文结论。
+
+Stage G1：SAG 最小验证
+  目标：判断 SAG 是否“安全且有用”。
+  数据：SensorScope + U-Air，作为 development/diagnostic environments。
+  seeds：先 5 个；若结果稳定再扩到 10 个。
+  比较：
+    Always-Design
+    No-Design RAVEN
+    SAG-RAVEN
+  结果：做 GO / REPAIR / STOP 判断。
+
+============================================================
+二、禁止事项
+============================================================
+
+Cursor 不得执行以下行为：
+
+1) 不得写：
+   if dataset == "SensorScope": G=1
+   if dataset == "U-Air": G=0
+
+2) 不得让当前窗口的任何以下量进入 G_r：
+   R_r
+   O_r
+   U_r
+   Z_r
+   current loss
+   current RMSE
+   current update vector
+   current gradient
+   current test label
+   current prediction residual
+   future event
+
+3) 不得在看到 O 后重新估计当前 p_obs。
+   当前窗口使用的 p_hat_obs 必须在 O realization 前冻结。
+
+4) 不得在看到 U 后重新估计当前 q_use。
+   当前窗口使用的 q_hat_use 必须在 U realization 前冻结。
+
+5) 不得用 post-window oracle 结果修改同一窗口 G_r。
+
+6) 不得把 No-Design RAVEN 实现成 FedAvg 或 ObsUse。
+   No-Design 只关闭 opportunity/Design ratio：
+      zeta_hat^0 = 1
+   其余 observation correction、usable correction、P2、staleness、variance 等保持一致。
+
+7) 不得用不同的 EventTrace 比较 D / 0 / SAG。
+   三者必须共享相同的 exogenous R/O/U/deadline/staleness trace。
+
+8) 不得在本轮做：
+   大规模 baseline sweep
+   20-seed 全实验
+   4--6 unseen environment
+   T-Drive Level-B
+   大规模敏感性实验
+   新数据集下载
+   新模型架构
+   深度学习 Gate
+   RL Gate
+
+============================================================
+三、代码分支与冻结
+============================================================
+
+请新建独立分支：
+
+  raven_sag_g0_g1
+
+运行前保存：
+
+  git commit hash
+  config hash
+  target-map hash
+  propensity-model hash
+  certificate-model hash
+  threshold hash
+
+在 outputs/ 下建立：
+
+  outputs/sag_g0/
+  outputs/sag_g1/
+
+每次运行必须保存完整 config.yaml 或 config.json。
+
+============================================================
+四、核心时间顺序：必须逐行实现
+============================================================
+
+每个 window r 必须严格执行：
+
+1. completed-history update
+2. compute predictable SAG certificates from F_{r-}
+3. compute and freeze G_r
+4. realize current R
+5. compute/freeze p_hat_obs from legal pre-O history
+6. realize current O
+7. form registered set E_r
+8. compute corrected mass m_{k,r}
+9. form pre-U positive-mass training set B_r
+10. construct normalized record weights/compositions/n_eff on B_r
+11. local training / local attempt
+12. compute/freeze q_hat_use from legal pre-U history
+13. realize current U
+14. form A_r = B_r cap U_r
+15. usable-update correction
+16. construct beta_hat, M_r, V_r, C_r
+17. solve P2
+18. global update
+19. optional Debt update
+20. post-window Full/No-Design counterfactual audit
+21. append audit quantities to future Gate state only
+
+必须新增：
+
+  B_r = {k in E_r : m_{k,r} > 0}
+
+以及：
+
+  A_r = {k in B_r : U_{k,r}=1}
+
+不要再用 A_r 做 pre-U local training set。
+
+============================================================
+五、Full Design / No-Design / SAG 三种模式
+============================================================
+
+实现三个模式：
+
+Mode D：Always-Design
+  G_r = 1
+  zeta_tilde = zeta_hat^D
+
+Mode 0：No-Design RAVEN
+  G_r = 0
+  zeta_tilde = 1
+
+Mode SAG：
+  G_r 由 SAG certificate 决定
+  zeta_tilde = 1 + G_r * (zeta_hat^D - 1)
+
+三种模式必须使用相同：
+  train/val split
+  random seed
+  EventTrace
+  R/O/U realization
+  deadline trace
+  staleness trace
+  initialization
+  local steps
+  learning rate
+  P2 parameters
+  target map
+  observation/usable propensity models
+
+============================================================
+六、SAG Gate 输入
+============================================================
+
+在线 Gate 使用：
+
+  C_cov_LCB
+  C_ret_LCB
+  C_ESS_LCB
+  C_clip_UCB
+  delta_A_UCB
+  B_tot_UCB
+
+其中：
+
+  B_tot_UCB
+  =
+  B_srv_UCB
+  +
+  2 * delta_A_UCB
+  +
+  2 * delta_cal
+
+Gate：
+
+  G_r = 1 iff
+
+    C_cov_LCB  >= tau_cov
+    C_ret_LCB  >= tau_ret
+    C_ESS_LCB  >= tau_ESS
+    C_clip_UCB <= tau_clip
+    delta_A_UCB <= tau_A
+    B_tot_UCB <= tau_safe
+
+否则：
+
+  G_r = 0
+
+任何以下情况也必须 fail closed：
+
+  certificate missing
+  NaN / inf
+  insufficient history
+  model outside calibrated range
+  cold start
+  confidence bound unavailable
+
+============================================================
+七、certificate 模块：先简单、可审计
+============================================================
+
+本轮不使用神经网络 Gate。
+
+允许优先实现：
+
+A. delta_A_UCB
+  低维 logistic / isotonic / empirical-bin calibration
+  + one-sided upper calibration
+
+B. Delta_beta / Delta_M / Delta_V upper bounds
+  rolling quantile / calibrated quantile
+  或简单低维 quantile regression
+
+C. C_cov
+  使用 opportunity probability 的 one-sided lower bound
+  不得直接把 smoothed positive estimate 当 positivity certificate
+
+D. C_ret / C_ESS / C_clip
+  使用 completed-window history 生成 predictable lower/upper bound
+
+优先原则：
+  简单
+  稳定
+  可解释
+  可复算
+  可输出 coverage
+
+============================================================
+八、G0：实现正确性审计
+============================================================
+
+G0 只跑 2--3 seeds。
+
+建议每个数据集先跑：
+  SensorScope: 2--3 seeds
+  U-Air: 2--3 seeds
+
+如果完整训练仍耗时较高，可先缩短窗口数做 smoke run，但：
+  不得改变代码路径；
+  不得使用特殊 dataset gate；
+  不得跳过 P2；
+  不得跳过 counterfactual audit。
+
+G0 必做测试：
+
+Test G0-1：时间泄漏审计
+每个 window 保存：
+  gate_decision_timestamp
+  R_realization_timestamp
+  p_obs_freeze_timestamp
+  O_realization_timestamp
+  q_use_freeze_timestamp
+  U_realization_timestamp
+
+必须满足：
+
+  gate_time < R_time
+  R_time <= p_obs_freeze_time < O_time
+  O_time < q_use_freeze_time < U_time
+
+若实现中不存在真实 wall-clock timestamp，可使用逻辑 stage index：
+
+  gate_stage = 1
+  R_stage = 2
+  p_obs_stage = 3
+  O_stage = 4
+  local_stage = 5
+  q_use_stage = 6
+  U_stage = 7
+  P2_stage = 8
+
+并写自动 assert。
+
+Test G0-2：B_r / A_r 审计
+
+自动 assert：
+
+  A_r subseteq B_r
+  A_r subseteq U_r
+  every k in B_r has m_{k,r} > 0
+  every k in A_r has U_{k,r}=1
+
+Test G0-3：shared EventTrace
+
+对相同 dataset/seed/window：
+  Always-D
+  No-D
+  SAG
+
+必须有完全相同的：
+  R trace hash
+  O trace hash
+  U trace hash
+  deadline hash
+  staleness hash
+
+若不同：
+  G0 FAIL。
+
+Test G0-4：No-Design 语义
+
+No-Design 必须满足：
+
+  zeta_tilde == 1
+
+但以下仍然开启：
+  p_obs correction
+  q_use correction
+  P2
+  V_r
+  staleness
+  optional Debt
+
+Test G0-5：Gate feature leakage
+
+导出 Gate feature list。
+自动检查禁止字段：
+  dataset_id
+  current_R
+  current_O
+  current_U
+  Z
+  label
+  loss
+  RMSE
+  gradient
+  update_vector
+  future_state
+
+若任何禁止字段进入 Gate model：
+  G0 FAIL。
+
+Test G0-6：post-window audit
+
+对每个 window 保存：
+
+  A_D_size
+  A_0_size
+  active_set_mismatch
+  Delta_beta
+  Delta_M
+  Delta_V
+  realized_C_cov
+  realized_C_ret
+  realized_C_ESS
+  realized_C_clip
+
+仅当：
+
+  A_D = A_0 != empty
+
+时定义：
+
+  Delta_beta
+  Delta_M
+  Delta_V
+
+若：
+
+  A_D = A_0 = empty
+
+则：
+  both_empty = 1
+  service_diff = 0
+  Delta_beta/M/V = NA
+
+不要填 0 假装它们已定义。
+
+============================================================
+九、G0 输出文件
+============================================================
+
+生成：
+
+outputs/sag_g0/
+  G0_IMPLEMENTATION_AUDIT.md
+  G0_WINDOW_TRACE.csv
+  G0_GATE_FEATURE_AUDIT.csv
+  G0_EVENTTRACE_HASH_CHECK.csv
+  G0_B_A_SET_AUDIT.csv
+  G0_COUNTERFACTUAL_AUDIT.csv
+  G0_ASSERTION_SUMMARY.json
+  configs/
+  logs/
+
+G0_IMPLEMENTATION_AUDIT.md 必须明确给出：
+
+  PASS / FAIL
+
+并逐项回答：
+  timing correct?
+  p_obs frozen before O?
+  q_use frozen before U?
+  B_r/A_r correct?
+  shared EventTrace?
+  no dataset-name gate?
+  no forbidden Gate feature?
+  counterfactual audit valid?
+
+若任何 P0 失败：
+  STOP。
+不要进入 G1。
+
+============================================================
+十、G1：最小科学验证
+============================================================
+
+前提：
+  G0 全部 PASS。
+
+数据：
+  SensorScope
+  U-Air
+
+角色：
+  development / diagnostic only
+
+seeds：
+  先 5 个：
+    0,1,2,3,4
+或沿用论文已有预注册 5 个 paired seeds，保持一致。
+
+若 5-seed 结果稳定，再扩到 10 seeds。
+
+比较：
+
+  Always-Design
+  No-Design RAVEN
+  SAG-RAVEN
+
+============================================================
+十一、G1 Gate reliability 指标
+============================================================
+
+每个 dataset、seed、window 记录：
+
+  G_r
+  C_cov_LCB
+  C_ret_LCB
+  C_ESS_LCB
+  C_clip_UCB
+  delta_A_UCB
+  Delta_beta_UCB
+  Delta_M_UCB
+  Delta_V_UCB
+  B_srv_UCB
+  delta_cal
+  B_tot_UCB
+  fallback_reason
+
+post-window 记录：
+
+  active_set_mismatch
+  both_empty
+  Delta_beta_actual
+  Delta_M_actual
+  Delta_V_actual
+
+汇总：
+
+  Gate_ON_rate
+  Gate_OFF_rate
+
+  P(active_set_mismatch | G=1)
+  P(active_set_mismatch | G=0)
+
+  false_enable_rate
+  false_disable_rate
+
+建议将 oracle-unsafe 初版定义为：
+
+  active_set_mismatch == 1
+
+同时另报更宽的 diagnostic unsafe 标签：
+  active_set_mismatch
+  OR certificate-bound violation
+  OR severe realized clipping/ESS collapse
+
+不要把更宽标签偷偷替代主定义。
+主定义与扩展定义分开报告。
+
+============================================================
+十二、certificate coverage
+============================================================
+
+仅在：
+
+  A_D = A_0 != empty
+
+的窗口统计：
+
+  cover_beta
+  =
+  1{Delta_beta_actual <= Delta_beta_UCB}
+
+  cover_M
+  =
+  1{Delta_M_actual <= Delta_M_UCB}
+
+  cover_V
+  =
+  1{Delta_V_actual <= Delta_V_UCB}
+
+以及 joint coverage：
+
+  cover_joint
+  =
+  cover_beta * cover_M * cover_V
+
+统计：
+
+  marginal coverage
+  joint coverage
+  average bound width
+  median bound width
+  95th percentile bound width
+
+delta_A 需要做概率 calibration：
+  reliability bins
+  predicted upper risk
+  empirical mismatch frequency
+
+本轮先固定一个 coverage target。
+建议：
+  95%
+
+如果历史数据过少导致 95% 太保守，可报告 90% 和 95% 两套开发诊断，
+但在进入正式 unseen test 前必须只冻结一套。
+
+============================================================
+十三、prediction metrics
+============================================================
+
+对三个方法统一报告：
+
+  RMSE_mu
+  WorstGroupRMSE
+
+并保留现有论文已有：
+  MAE 或其他指标
+仅作为补充，不扩散主线。
+
+相对 No-Design：
+
+  harm_RMSE
+  =
+  (RMSE_SAG - RMSE_NoD)
+  /
+  RMSE_NoD
+
+  harm_Worst
+  =
+  (Worst_SAG - Worst_NoD)
+  /
+  Worst_NoD
+
+开发阶段 no-harm threshold：
+
+  epsilon_pred = 0.5%
+
+先报告：
+  mean relative harm
+
+如果 10 seeds：
+  再报告 paired one-sided confidence upper bound。
+
+============================================================
+十四、structural metrics
+============================================================
+
+统一报告：
+
+  Delta_group
+  Delta_c-s
+
+并计算：
+
+  gain_group
+  =
+  Delta_group(NoD)
+  -
+  Delta_group(SAG)
+
+  gain_cs
+  =
+  Delta_cs(NoD)
+  -
+  Delta_cs(SAG)
+
+若已有 feasible reference / feasible oracle，可计算：
+
+  NAG
+  =
+  (Delta_baseline - Delta_method)
+  /
+  (Delta_baseline - Delta_feasible)
+
+其中 baseline 固定使用：
+  No-Design RAVEN
+
+必须清楚定义：
+  Delta_feasible
+
+不要用 test hindsight 构造它。
+
+若当前代码还没有合法的 feasible oracle：
+  G1 先报告 raw structural gain；
+  不要临时创造一个伪 NAG denominator。
+  在报告中标记：
+    NAG_NOT_AVAILABLE_IN_G1
+  后续正式实验再补。
+
+============================================================
+十五、G1 三个核心比较
+============================================================
+
+Comparison A：Always-D vs No-D
+
+目的：
+  重现旧 failure boundary。
+
+SensorScope-like compatible 环境应观察：
+  Full Design 可能有结构收益。
+
+U-Air-like 环境应保留：
+  Full Design 可能造成 active-set/support damage。
+
+不要删除 negative result。
+
+Comparison B：SAG vs Always-D
+
+目的：
+  验证 SAG 是否减少 unsafe enable。
+
+重点：
+  false_enable
+  active_set_mismatch among ON windows
+  prediction harm
+
+Comparison C：SAG vs No-D
+
+目的：
+  验证 SAG 是否“不是永远 OFF”。
+
+重点：
+  Gate_ON_rate
+  structural gain
+  prediction no-harm
+
+============================================================
+十六、G1 Go / Repair / Stop 判据
+============================================================
+
+G1 完成后，不允许只写“结果还不错”。
+必须按下面五项给出 PASS/FAIL。
+
+Gate-1 Predictability：
+  G0 全部 PASS。
+  否则：
+    STOP / FIX CODE。
+
+Gate-2 Certificate：
+  held-out development coverage 达到预设水平，
+  且 delta_A calibration 没有明显系统性低估。
+  否则：
+    REPAIR CERTIFICATE。
+
+Gate-3 Safety：
+  SAG 的 unsafe enable 明显低于 Always-Design。
+  至少要求方向稳定，并报告 paired bootstrap/CI。
+  若没有降低：
+    STOP / REPAIR。
+
+Gate-4 Prediction：
+  相对 No-Design：
+
+    mean RMSE harm <= 0.5%
+    mean WorstGroup harm <= 0.5%
+
+  如果扩到 10 seeds：
+    优先检查 one-sided CI upper bound。
+
+  若明显超过：
+    STOP / REPAIR。
+
+Gate-5 Utility：
+  必须同时满足：
+
+    Gate_ON_rate 非接近 0；
+    safe/compatible windows 中存在正 structural gain；
+    SAG 不退化成几乎 Always-NoDesign。
+
+  若前四项通过但 Gate_ON_rate 极低，
+  或结构收益接近 0：
+    STOP FULL CAMPAIGN。
+
+============================================================
+十七、建议的最低解释阈值
+============================================================
+
+以下只是 G1 的工程判定参考，不作为论文最终结论：
+
+A. Gate_ON_rate
+  若 < 5%：
+    高风险，基本属于“几乎永远 OFF”。
+
+  5%--15%：
+    borderline，需要看收益是否很大。
+
+  > 15%：
+    才值得认真检查 utility。
+
+不要为了超过该值而放宽 safety threshold。
+
+B. false-enable
+  目标必须显著低于 Always-D。
+
+C. structural gain
+  不设置人为“必须 5%”。
+  先看：
+    paired direction
+    practical magnitude
+    NAG/feasible gap
+
+============================================================
+十八、必须生成的 G1 表
+============================================================
+
+1) G1_METHOD_SUMMARY.csv
+
+字段：
+  dataset
+  seed
+  method
+  RMSE_mu
+  WorstGroupRMSE
+  Delta_group
+  Delta_cs
+  Gate_ON_rate
+  false_enable_rate
+  active_set_mismatch_rate
+
+2) G1_GATE_WINDOW_LOG.csv
+
+每个 window 一行。
+
+3) G1_CERTIFICATE_COVERAGE.csv
+
+字段：
+  dataset
+  seed
+  n_common_nonempty
+  coverage_beta
+  coverage_M
+  coverage_V
+  coverage_joint
+  mean_width_beta
+  mean_width_M
+  mean_width_V
+
+4) G1_PREDICTION_SAFETY.csv
+
+字段：
+  dataset
+  seed
+  RMSE_NoD
+  RMSE_SAG
+  relative_harm_RMSE
+  Worst_NoD
+  Worst_SAG
+  relative_harm_Worst
+
+5) G1_STRUCTURAL_GAIN.csv
+
+字段：
+  dataset
+  seed
+  Delta_group_NoD
+  Delta_group_SAG
+  gain_group
+  Delta_cs_NoD
+  Delta_cs_SAG
+  gain_cs
+  NAG_if_available
+
+============================================================
+十九、建议生成的 G1 图
+============================================================
+
+Fig G1-1：
+  Gate ON rate + false-enable
+  分 SensorScope / U-Air
+
+Fig G1-2：
+  delta_A_UCB calibration reliability diagram
+
+Fig G1-3：
+  actual vs upper-bound：
+    Delta_beta
+    Delta_M
+    Delta_V
+  可以做三张单独图，不要混成难读的图
+
+Fig G1-4：
+  Prediction harm vs structural gain
+  每个 seed 一个点
+
+Fig G1-5：
+  Window timeline：
+    Gate
+    active-set mismatch
+    B_tot_UCB
+  用于观察 SAG 是否提前关闭危险窗口
+
+============================================================
+二十、统计要求
+============================================================
+
+G1 先用 paired seeds。
+
+所有方法必须共享 seed 和 EventTrace。
+
+优先报告：
+  paired difference
+  mean
+  median
+  95% bootstrap CI
+
+本轮不要做一大堆 hypothesis tests。
+
+如果需要显著性：
+  只对核心比较：
+    SAG vs No-D
+    SAG vs Always-D
+  做 paired test。
+
+不要为了显著性增加大量 seeds。
+
+============================================================
+二十一、运行时间控制
+============================================================
+
+先执行：
+
+G0-smoke：
+  1 dataset
+  1 seed
+  小窗口
+
+若通过：
+
+G0-full：
+  2 datasets
+  2--3 seeds
+
+若通过：
+
+G1-5seed：
+  2 datasets
+  5 seeds
+  3 methods
+
+只有结果稳定时：
+  G1-10seed
+
+若 G1-5seed 已显示：
+  Gate 几乎全 OFF；
+  false-enable 不下降；
+  RMSE 明显恶化；
+则不要扩到 10 seeds。
+
+============================================================
+二十二、推荐目录结构
+============================================================
+
+src/
+  sag/
+    gate.py
+    certificates.py
+    counterfactual_audit.py
+    sag_state.py
+
+  selection/
+    opportunity.py
+    observation.py
+    usable.py
+
+  reconstruction/
+    design_weight.py
+    hajek.py
+    reference_mass.py
+
+  calibration/
+    p2.py
+    debt.py
+
+  experiments/
+    run_sag_g0.py
+    run_sag_g1.py
+
+  audits/
+    timing_audit.py
+    leakage_audit.py
+    eventtrace_audit.py
+    certificate_audit.py
+
+configs/
+  sag_g0/
+  sag_g1/
+
+outputs/
+  sag_g0/
+  sag_g1/
+
+tests/
+  test_sag_timing.py
+  test_sag_nod_semantics.py
+  test_sag_eventtrace.py
+  test_sag_B_A_sets.py
+  test_sag_gate_features.py
+  test_sag_counterfactual.py
+
+不要为了符合这个目录结构而重构整个旧项目。
+如果现有工程已有稳定目录，请在原结构中最小改动实现相同模块职责。
+
+============================================================
+二十三、必须写的单元测试
+============================================================
+
+test_1:
+  Gate 冻结后再改变 current R/O/U，
+  G_r 不得变化。
+
+test_2:
+  改变 dataset name，
+  在所有 Gate inputs 相同时 G_r 不得变化。
+
+test_3:
+  No-Design：
+    zeta == 1
+  但 p_obs / q_use / P2 仍运行。
+
+test_4:
+  D / 0 / SAG 的 EventTrace hash 必须一致。
+
+test_5:
+  A_r subset B_r。
+
+test_6:
+  p_obs freeze stage < O realization stage。
+
+test_7:
+  q_use freeze stage < U realization stage。
+
+test_8:
+  both-empty 时：
+    service_diff == 0
+    Delta_beta/M/V == NA
+
+test_9:
+  B_tot ==
+  B_srv + 2*delta_A_UCB + 2*delta_cal
+
+test_10:
+  Gate 缺任一 certificate 时：
+    G=0
+
+============================================================
+二十四、报告模板
+============================================================
+
+最终输出：
+
+outputs/sag_g1/SAG_G0_G1_REPORT.md
+
+必须按以下结构写：
+
+# 1. Executive Verdict
+只能选：
+  GO
+  REPAIR
+  STOP
+
+# 2. G0 Implementation Audit
+逐项 PASS/FAIL。
+
+# 3. Gate Behavior
+SensorScope / U-Air：
+  ON rate
+  OFF rate
+  false-enable
+  false-disable
+
+# 4. Certificate Calibration
+  delta_A calibration
+  beta/M/V coverage
+  bound width
+
+# 5. Prediction Safety
+  RMSE
+  WorstGroupRMSE
+  relative harm
+
+# 6. Structural Utility
+  Delta_group
+  Delta_cs
+  NAG if available
+
+# 7. Failure Analysis
+列出：
+  哪些 Gate 条件最常触发 OFF
+  哪种环境最容易 active-set mismatch
+  certificate 是否过宽/过窄
+  是否存在 Gate almost-always-OFF
+
+# 8. Go/Repair/Stop Decision
+必须严格按五个 Gate 判据做决定。
+
+# 9. Files Produced
+列出所有 csv/json/png/log。
+
+============================================================
+二十五、Cursor 最终执行口令
+============================================================
+
+请严格执行以下要求：
+
+1. 先阅读当前项目代码，不要立即大改。
+2. 找到旧 Design gate、R/O/U timing、local training、P2、EventTrace 的实现位置。
+3. 先生成：
+     SAG_IMPLEMENTATION_PLAN.md
+   列出准备修改的文件和函数。
+4. 然后实现最小改动。
+5. 先运行单元测试。
+6. 再运行 G0 smoke。
+7. G0 有任何 P0 FAIL，停止并修复。
+8. G0 全 PASS 后运行 G0 full。
+9. 只有 G0 full PASS 才运行 G1 5-seed。
+10. G1 5-seed 后生成报告并停止。
+11. 不自动扩展到 10 seeds。
+12. 不自动启动 E1--E5。
+13. 不修改理论公式来迎合结果。
+14. 不删除 negative result。
+15. 不覆盖旧实验目录。
+16. 所有新结果保存到 outputs/sag_g0 和 outputs/sag_g1。
+
+本轮成功标准不是“得到最好结果”，而是回答：
+
+  SAG 是否能够在严格 pre-window 条件下，
+  减少 support-unsafe Full Design，
+  同时在 compatible windows 保持非零启用率，
+  并在 No-Design 的 0.5% prediction-risk budget 内
+  获得可重复的结构 alignment 收益？
+
+如果答案是 YES：
+  输出 GO。
+如果 certificate 有问题但机制有希望：
+  输出 REPAIR。
+如果 Gate 几乎永远 OFF、false-enable 不下降、
+或 prediction harm 明显超限：
+  输出 STOP。
+
+END OF CURSOR INSTRUCTION

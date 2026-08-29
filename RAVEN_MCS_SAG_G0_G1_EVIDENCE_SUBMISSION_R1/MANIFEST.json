@@ -1,0 +1,157 @@
+{
+  "package": "RAVEN_MCS_SAG_G0_G1_EVIDENCE_SUBMISSION_R1",
+  "created_utc": "2026-08-29T06:09:35.849373+00:00",
+  "branch": "raven_sag_g0_g1",
+  "git_commit_package": "bf04ff4",
+  "g0_full_git_commit": "b4af7a9dacf7c47243c67ad71b1ed4f0f51cf6b4",
+  "executive_verdict": "REPAIR",
+  "g0_verdict": "PASS",
+  "completed": {
+    "unit_tests": true,
+    "g0_smoke": true,
+    "g0_full": true,
+    "g1_5seed": true,
+    "g1_rerun_identical": true,
+    "g1_10seed": false,
+    "e1_e5": false
+  },
+  "threshold_hash": "526343535887e2f1094916be22d0403032fab0b905e74ac588f2b1bc6613510e",
+  "n_files": 27,
+  "files": [
+    {
+      "path": "00_README_SUBMIT.md",
+      "bytes": 3618,
+      "sha256": "ba30fd53763d9d4104e7a2aaaa84930053a0b6bb3838e62b0339655a23380aba"
+    },
+    {
+      "path": "authority/RAVEN_MCS_Cursor_SAG_G0_G1_Experiment_Instruction_v1.0.txt",
+      "bytes": 23078,
+      "sha256": "990083f76bd52deabaac952bb54ba9ab7db08384e9db2ec1fef22fc6e2c38725"
+    },
+    {
+      "path": "authority/RAVEN_MCS_Support_Aware_Gate_Spec_v1.2_Final_Closure.txt",
+      "bytes": 48030,
+      "sha256": "4484239b61e32efe51fad08d7471522980ea87922425cdee6aeee476a440860d"
+    },
+    {
+      "path": "authority/RAVEN_MCS_v2_Sections_III_VI_PostAudit_Final.txt",
+      "bytes": 80482,
+      "sha256": "700f89dcff5bd76352e669fa3b2f60ef5e4db3f8db120011110941d73aadbe38"
+    },
+    {
+      "path": "authority/README_FIRST_RAVEN_MCS_CURSOR_HANDOFF_v1.1.txt",
+      "bytes": 2926,
+      "sha256": "079281594c23d180cb42466c122525984c8ca445435688b1e2aad583db1dea4e"
+    },
+    {
+      "path": "configs/g1_thresholds_note.json",
+      "bytes": 145,
+      "sha256": "1fad4b2d6bb63b5c9cd39fc7a9dff440fc185d90bf92953bd24c189060bd1241"
+    },
+    {
+      "path": "configs/thresholds.json",
+      "bytes": 380,
+      "sha256": "526343535887e2f1094916be22d0403032fab0b905e74ac588f2b1bc6613510e"
+    },
+    {
+      "path": "g0/configs/config_full.json",
+      "bytes": 514,
+      "sha256": "9da4ad35491687faebb25defab39f9b655fe8128cb005904879dde9802d8be6a"
+    },
+    {
+      "path": "g0/configs/config_smoke.json",
+      "bytes": 478,
+      "sha256": "054291dd91a1eb79525c3ff6ecc193e2114b7a788b43f2e9f2b07b60e9b3e059"
+    },
+    {
+      "path": "g0/G0_ASSERTION_SUMMARY.json",
+      "bytes": 1438,
+      "sha256": "62d727027906a973bae613e8ebdb982e7f2df927ea417318c1b4ffb309ea5739"
+    },
+    {
+      "path": "g0/G0_B_A_SET_AUDIT.csv",
+      "bytes": 694096,
+      "sha256": "e43591bc4e82a2a9e3160cb6a496dff51fd8f19f608055b810eda47bb1ff156e"
+    },
+    {
+      "path": "g0/G0_COUNTERFACTUAL_AUDIT.csv",
+      "bytes": 203572,
+      "sha256": "c6728791fe70f45f9cef09958345482f30586ddfc4ebfb84e44374bcc79367e0"
+    },
+    {
+      "path": "g0/G0_EVENTTRACE_HASH_CHECK.csv",
+      "bytes": 181176,
+      "sha256": "3a82cc1005cf7d8cca6618b6c5c69b7a584def60e96ed12f892614c250fee1d6"
+    },
+    {
+      "path": "g0/G0_GATE_FEATURE_AUDIT.csv",
+      "bytes": 1291803,
+      "sha256": "1805d3703b377d99250295b4f9103446930ac36bbe2dad16fb2dd33151579b84"
+    },
+    {
+      "path": "g0/G0_IMPLEMENTATION_AUDIT.md",
+      "bytes": 1288,
+      "sha256": "ba354ac8f0c2ceaae098d9485def6a4a5a0c4f991d33ea2d6743376f7efb662f"
+    },
+    {
+      "path": "g0/G0_WINDOW_TRACE.csv",
+      "bytes": 1260855,
+      "sha256": "6477c86e20bb8ad00c0b1403c31c5e2d960ff2a38c4b6a328988628d0e72ddab"
+    },
+    {
+      "path": "g0/smoke_pass/G0_ASSERTION_SUMMARY.json",
+      "bytes": 1394,
+      "sha256": "8c1b2296ce65c79eeb5c699cd4e0b3856644a700b4826152a5465f72bf1f4b11"
+    },
+    {
+      "path": "g0/smoke_pass/G0_IMPLEMENTATION_AUDIT.md",
+      "bytes": 1262,
+      "sha256": "c999dbf8b41b0050500ec497d911c2a2a86df2af560882e92b6629489767d856"
+    },
+    {
+      "path": "g1/configs/config_g1_5seed.json",
+      "bytes": 587,
+      "sha256": "b42e45080a205fa7c4d23b1e3f1bf8835d46969f5eed7441add1c0004da9d104"
+    },
+    {
+      "path": "g1/G1_CERTIFICATE_COVERAGE.csv",
+      "bytes": 911,
+      "sha256": "6ba8dabfd4a042cdc76e7c6cec120f606e0c9a958bd74297ce226c9c8ff1046f"
+    },
+    {
+      "path": "g1/G1_GATE_WINDOW_LOG.csv",
+      "bytes": 2092781,
+      "sha256": "819ed3d291c7613b4400219ae3f0c4d1b34ca1a55d3a324c451f99253b819218"
+    },
+    {
+      "path": "g1/G1_METHOD_SUMMARY.csv",
+      "bytes": 4614,
+      "sha256": "e4cbd2054e28f12336811bd94f9beece6480055b53712df0e0287dd07fe9c200"
+    },
+    {
+      "path": "g1/G1_PREDICTION_SAFETY.csv",
+      "bytes": 1056,
+      "sha256": "f2d7f73b08a423ec3449d1cccc368057b9e6b10742298fae23103112166b0ebf"
+    },
+    {
+      "path": "g1/G1_STRUCTURAL_GAIN.csv",
+      "bytes": 1337,
+      "sha256": "6f4d679c22a42805a49514cb65b388fa795469d53d0602ead9688d81f8a7920c"
+    },
+    {
+      "path": "plan/SAG_IMPLEMENTATION_PLAN.md",
+      "bytes": 12080,
+      "sha256": "491288b3e5a8ecb88bfd490092b3fbb9f6aa1b8da4135ac285f7edd2c2f14449"
+    },
+    {
+      "path": "report/G1_VERDICT.json",
+      "bytes": 208,
+      "sha256": "a32987695438ea6abdc5f0fb8fa92f1054de788a257712a332c1186493138ff8"
+    },
+    {
+      "path": "report/SAG_G0_G1_REPORT.md",
+      "bytes": 3408,
+      "sha256": "27719d39fdb75551c4841b758c512ac3ea138b1e332bdc6129a2f67fc31cc8a5"
+    }
+  ]
+}
