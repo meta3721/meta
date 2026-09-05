@@ -1,0 +1,79 @@
+% Supplemental material (separate PDF). Compile after main.tex so xr can read main.aux.
+\documentclass[letterpaper,journal]{IEEEtran}
+%\usepackage{ctex}
+\usepackage{amsmath,amsfonts}
+\usepackage{amsthm}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{array}
+\usepackage[caption=false,font=normalsize,labelfont=sf,textfont=sf]{subfig}
+\usepackage{textcomp}
+\usepackage{stfloats}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{epsfig}
+% \usepackage{subfigure}
+\usepackage{epstopdf}
+\usepackage{cite}
+\usepackage{booktabs}
+\usepackage{multirow} 
+\usepackage{amssymb} 
+\newtheorem{definition}{Definition}  
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem*{proposition*}{Proposition}
+
+\newtheorem{assumption}{Assumption}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{remark}{Remark}
+%\usepackage{appendix}
+\usepackage{color}
+\usepackage{placeins}
+\def\red{\textcolor{red}}
+\def\blue{\textcolor{black}}
+\graphicspath{{./figures/}{./images/}}
+\hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
+
+\makeatletter
+\newcommand{\rmnum}[1]{\romannumeral #1}
+\newcommand{\Rmnum}[1]{\expandafter\@slowromancap\romannumeral #1@}
+\makeatother
+
+\renewcommand{\topfraction}{0.99}
+\renewcommand{\bottomfraction}{0.99}
+\renewcommand{\textfraction}{0.01}
+\renewcommand{\floatpagefraction}{0.99}
+\renewcommand{\dbltopfraction}{0.9}
+\renewcommand{\dblfloatpagefraction}{0.9}
+\setlength{\dbltextfloatsep}{8pt plus 2pt}
+\setcounter{topnumber}{5}
+\setcounter{bottomnumber}{5}
+\setcounter{totalnumber}{10}
+
+
+\usepackage{xr}
+\externaldocument{main}
+
+\begin{document}
+
+\title{Supplemental Material for\\
+RAVEN-MCS: Target-Risk-Calibrated Windowed-Asynchronous Federated Data Completion for Mobile Crowdsensing under Two-Stage Non-Random Selection}
+
+\author{**** and Anfeng Liu}
+
+\maketitle
+
+\noindent\textit{This file is supplemental material for the companion main paper
+and must be uploaded as a separate PDF. It is not a standalone submission.}
+
+% Continue figure/table/equation numbers from the companion main paper.
+% Update the three counters if the main-paper last numbers change.
+\setcounter{figure}{5}
+\setcounter{table}{5}
+\setcounter{equation}{50}
+
+\input{appendix}
+
+\end{document}
