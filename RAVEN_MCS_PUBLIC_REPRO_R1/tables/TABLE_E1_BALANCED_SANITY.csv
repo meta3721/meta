@@ -1,0 +1,6 @@
+method,n,RMSE_mu_mean,Tail_RMSE_mean,Delta_group_mean,Delta_c_s_mean,role
+FedAsync-Window,5,7.7222,8.44957,0.147352,0.604765,balanced_no_harm_sanity
+FedAvg-Window,5,7.72202,8.44939,0.147352,0.604765,balanced_no_harm_sanity
+RAVEN-MCS,5,7.7154,8.4426,0.147352,0.604765,balanced_no_harm_sanity
+TimeAlign-Agg,5,7.71076,8.43787,0.147352,0.604765,balanced_no_harm_sanity
+TwoStage-Hajek,5,7.72617,8.45364,0.147352,0.604765,balanced_no_harm_sanity

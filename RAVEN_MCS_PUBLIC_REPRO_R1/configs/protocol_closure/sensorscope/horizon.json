@@ -1,0 +1,32 @@
+{
+  "chosen_E3_formal_windows": 100,
+  "common_timestamps": 312,
+  "dataset": "sensorscope",
+  "justification": "Train timestamps=187; legal~149. Choose 100 windows within support (matches E1 fair horizon practice; not forced globally).",
+  "legal_evaluation_windows": 62,
+  "legal_training_windows": 149,
+  "matches_sealed_traffic_e2_if_traffic": false,
+  "same_across_methods": true,
+  "spatial_units": 55,
+  "split_boundaries": {
+    "test": {
+      "n_atomic": 3410,
+      "n_timestamps": 62,
+      "time_max": 311,
+      "time_min": 250
+    },
+    "train": {
+      "n_atomic": 10285,
+      "n_timestamps": 187,
+      "time_max": 186,
+      "time_min": 0
+    },
+    "validation": {
+      "n_atomic": 3465,
+      "n_timestamps": 63,
+      "time_max": 249,
+      "time_min": 187
+    }
+  },
+  "warmup_atomic_units": 2090
+}

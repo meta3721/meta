@@ -1,0 +1,11 @@
+{
+  "m_mc": 2000,
+  "num_windows": 80,
+  "stratum_meta": {
+    "dataset": "uair",
+    "n_unique_strata": 288,
+    "remapped": false,
+    "spatial_rule": "station/node spatial_id (no coarsening)",
+    "status": "FROZEN_IDENTITY_CONFIRMED"
+  }
+}

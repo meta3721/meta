@@ -1,0 +1,68 @@
+{
+  "created_utc": "2026-08-08T10:19:16.842314+00:00",
+  "dirty_working_tree": true,
+  "environment_summary_lines": 49,
+  "expected_eventtrace_count": 120,
+  "expected_run_count": 600,
+  "expected_windows_per_run": 100,
+  "experiment_id": "E2_TRAFFIC_FORMAL_RUNS_R1",
+  "git_commit": "e56687813f2bcb919a9208391f68a4db3488602e",
+  "hyperparameters": {
+    "a_max": 40.0,
+    "learning_rate": 0.01,
+    "local_steps": 2,
+    "n_clients": 43,
+    "n_protocol_atoms": 25800,
+    "n_windows": 100,
+    "s_max": 5,
+    "standardization": "train_split_zscore"
+  },
+  "method_display": {
+    "fedasync_window": "FedAsync",
+    "fedavg_window": "FedAvg",
+    "flamf_timealign_adapted": "TimeAlign",
+    "raven": "RAVEN",
+    "twostage_hajek": "TwoStage"
+  },
+  "methods": [
+    "fedavg_window",
+    "fedasync_window",
+    "flamf_timealign_adapted",
+    "twostage_hajek",
+    "raven"
+  ],
+  "profile": "PROFILE-S1",
+  "python_version": "Python 3.11.8",
+  "registry_path": "configs/frozen/e2_traffic_profiles_s1/traffic_s1_s6_profile_registry.json",
+  "registry_sha256": "7d9b8292522b6fbcc15d83ebb065fc8a73b79787ed643aea49c48f30596acbc7",
+  "scenarios": [
+    "balanced",
+    "opportunity_only",
+    "observation_only",
+    "usable_only",
+    "complete_aligned",
+    "complete_counteracting"
+  ],
+  "seeds": [
+    30001,
+    30002,
+    30003,
+    30004,
+    30005,
+    30006,
+    30007,
+    30008,
+    30009,
+    30010,
+    30011,
+    30012,
+    30013,
+    30014,
+    30015,
+    30016,
+    30017,
+    30018,
+    30019,
+    30020
+  ]
+}

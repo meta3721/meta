@@ -1,0 +1,7 @@
+RAVEN-MCS public reproducibility bundle.
+
+This artifact redistributes derived tables, configs, and EventTraces for
+research verification of the associated manuscript. The original
+SensorScope, U-Air, NSW-Traffic, and T-Drive datasets remain under their
+upstream licenses. Do not treat this bundle as an official release of
+FedAU or ObsUse.

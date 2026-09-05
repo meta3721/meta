@@ -1,0 +1,13 @@
+{
+  "adapter_layer": {
+    "classification": "DETERMINISTIC_DATA_QUALITY",
+    "rule": "a client_measurements row exists only after valid speed in [5,120] km/h and gap filters"
+  },
+  "eventtrace_layer": {
+    "classification": "CONTROLLED_EXPERIMENTAL",
+    "label": "REAL_MOBILITY_OPPORTUNITY + DETERMINISTIC_DATA_QUALITY + CONTROLLED_OBSERVATION",
+    "rule": "Complete-aligned controlled Bernoulli p_obs=0.35 on each R=1 unit, seed-specific, method-independent"
+  },
+  "forbidden_wording": "Do not describe controlled p_obs as real-world recorded sensor failure.",
+  "status": "FROZEN"
+}

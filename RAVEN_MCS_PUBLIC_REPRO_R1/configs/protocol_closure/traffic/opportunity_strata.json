@@ -1,0 +1,13 @@
+{
+  "dataset": "traffic",
+  "definition": "frozen opportunity_stratum = real_region_id::time_block::weekday_flag (E2 public-target 4 regions)",
+  "deterministic_construction": true,
+  "n_strata": 32,
+  "max_raw_strata": 32,
+  "spatial_coarsening": "43 stations -> 4 frozen real regions (no recluster)",
+  "region_mapping_hash": "490dc6130eb05731d81b170a3ace501c7e33d150bc2949506c7a5378054a343f",
+  "prior_frozen_reference": "configs/frozen/e2_traffic_public_target/station_region_identity.json",
+  "no_target_leakage": true,
+  "note": "E3-STRATUM-IDENTITY-AND-TRAFFIC-REUSE-SEAL-R1 corrects station-level 344 to region×time×day <=32.",
+  "support_hash_n": 32
+}

@@ -1,0 +1,6 @@
+method,n,D_aligned_mean,n_negative_sign,n_positive_sign,scenario
+FedAsync-Window,20,-0.0211545,18,2,complete_aligned
+FedAvg-Window,20,-0.0211463,18,2,complete_aligned
+RAVEN-MCS,20,-0.0208777,17,3,complete_aligned
+TimeAlign-Agg,20,-0.0213732,17,3,complete_aligned
+TwoStage-Hajek,20,-0.0212046,17,3,complete_aligned

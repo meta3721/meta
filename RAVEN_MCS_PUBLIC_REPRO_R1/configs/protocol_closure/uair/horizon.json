@@ -1,0 +1,32 @@
+{
+  "chosen_E3_formal_windows": 80,
+  "common_timestamps": 264,
+  "dataset": "uair",
+  "justification": "Train timestamps=158; legal~126. Choose 80 windows within U-Air support before outcomes.",
+  "legal_evaluation_windows": 53,
+  "legal_training_windows": 126,
+  "matches_sealed_traffic_e2_if_traffic": false,
+  "same_across_methods": true,
+  "spatial_units": 36,
+  "split_boundaries": {
+    "test": {
+      "n_atomic": 1908,
+      "n_timestamps": 53,
+      "time_max": 263,
+      "time_min": 211
+    },
+    "train": {
+      "n_atomic": 5688,
+      "n_timestamps": 158,
+      "time_max": 157,
+      "time_min": 0
+    },
+    "validation": {
+      "n_atomic": 1908,
+      "n_timestamps": 53,
+      "time_max": 210,
+      "time_min": 158
+    }
+  },
+  "warmup_atomic_units": 1152
+}

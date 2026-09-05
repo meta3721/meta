@@ -1,0 +1,13 @@
+{
+  "dataset": "traffic",
+  "generator": "traffic-profile-s1-hard-aou-bridge-v1",
+  "notes": [
+    "scenario=observation_only",
+    "PROFILE-S1",
+    "station=client"
+  ],
+  "num_clients": 43,
+  "num_windows": 100,
+  "s_max": 5,
+  "seed": 30010
+}

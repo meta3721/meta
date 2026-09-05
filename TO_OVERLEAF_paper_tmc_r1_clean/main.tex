@@ -2511,12 +2511,16 @@ and are not part of this file.
 
 \section*{Data and Code Availability}
 The SensorScope, U-Air, NSW-Traffic, and T-Drive sources are public
-and cited in Section~\ref{subsec:eval_setup}.  Frozen selection traces,
-target maps, the $20$ paired seeds, and the tabulated results in this
-paper are archived with the submission.  FedAU-Window and ObsUse-Window
-are windowed adaptations, not official reproductions of those systems.
-A complete public snapshot of the sealed training stack is not claimed
-at submission.
+and cited in Section~\ref{subsec:eval_setup}.  A frozen public
+reproducibility bundle is released with this paper as
+\texttt{RAVEN\_MCS\_PUBLIC\_REPRO\_R1}.  It contains the paired seeds,
+frozen target maps, selection-protocol configs, EventTrace files and
+indexes, tabulated results used by the figures and tables, and the
+coverage-audit window records.  A verifier in that directory checks
+file hashes against the included manifest.  FedAU-Window and
+ObsUse-Window are windowed adaptations, not official reproductions of
+those systems.  GPU-scale 20-seed retraining is not required to verify
+the tabulated numbers.
 
 \bibliographystyle{IEEEtran}
 \bibliography{reference}

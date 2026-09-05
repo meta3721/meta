@@ -1,0 +1,25 @@
+{
+  "created_utc": "2026-08-12T15:08:32.723616+00:00",
+  "definition": "RAVEN-w/o-Inst = full RAVEN with ONLY instantaneous/current target calibration removed.",
+  "forbidden": [
+    "lambda_beta=1e-8 uniqueness stub unless E3 used that value",
+    "new scientific regularizer",
+    "rerunning non-Inst ablations"
+  ],
+  "only_change": {
+    "instant_calibration": false,
+    "lambda_group": 0.0
+  },
+  "required_identities": {
+    "Debt": "full",
+    "Design": "full",
+    "ESS_constraints": 3.0,
+    "EventTrace": "matched E3 full-RAVEN per dataset×seed",
+    "Obs": "full",
+    "Use": "full",
+    "alpha_bounds": 0.5,
+    "lambda_beta": 1.0,
+    "lambda_s": 0.1,
+    "lambda_v": 0.1
+  }
+}

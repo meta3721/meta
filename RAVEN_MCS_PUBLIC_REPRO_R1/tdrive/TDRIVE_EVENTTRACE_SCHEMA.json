@@ -1,0 +1,121 @@
+{
+  "audit_long_table": "one row per client×atomic unit with R/O/U/h/s",
+  "canonical_runner_table": "E3 EventTrace events.parquet (one row per window×client) plus metadata.json",
+  "fields": [
+    {
+      "field": "dataset",
+      "post_outcome": false,
+      "required": true,
+      "source": "protocol"
+    },
+    {
+      "field": "seed",
+      "post_outcome": false,
+      "required": true,
+      "source": "protocol"
+    },
+    {
+      "field": "client_id",
+      "post_outcome": false,
+      "required": true,
+      "source": "processed"
+    },
+    {
+      "field": "atomic_unit_id",
+      "post_outcome": false,
+      "required": true,
+      "source": "processed"
+    },
+    {
+      "field": "spatial_id",
+      "post_outcome": false,
+      "required": true,
+      "source": "processed"
+    },
+    {
+      "field": "time_slot",
+      "post_outcome": false,
+      "required": true,
+      "source": "processed time_index"
+    },
+    {
+      "field": "target_group_h",
+      "post_outcome": false,
+      "required": true,
+      "source": "fallback H1-H4"
+    },
+    {
+      "field": "opportunity_stratum_s",
+      "post_outcome": false,
+      "required": true,
+      "source": "processed opportunity_stratum"
+    },
+    {
+      "field": "R_opportunity",
+      "post_outcome": false,
+      "required": true,
+      "source": "client_measurements"
+    },
+    {
+      "field": "O_observed",
+      "post_outcome": false,
+      "required": true,
+      "source": "controlled p_obs"
+    },
+    {
+      "field": "E_eligibility",
+      "post_outcome": false,
+      "required": true,
+      "source": "controlled complete_aligned"
+    },
+    {
+      "field": "U_usable",
+      "post_outcome": false,
+      "required": true,
+      "source": "controlled complete_aligned"
+    },
+    {
+      "field": "p_obs",
+      "post_outcome": false,
+      "required": true,
+      "source": "controlled 0.35"
+    },
+    {
+      "field": "q_use",
+      "post_outcome": false,
+      "required": true,
+      "source": "controlled U / MC q"
+    },
+    {
+      "field": "deadline state",
+      "post_outcome": false,
+      "required": true,
+      "source": "controlled"
+    },
+    {
+      "field": "staleness state tau",
+      "post_outcome": false,
+      "required": true,
+      "source": "controlled"
+    },
+    {
+      "field": "timestamp",
+      "post_outcome": false,
+      "required": true,
+      "source": "processed absolute_time"
+    },
+    {
+      "field": "source/provenance",
+      "post_outcome": false,
+      "required": true,
+      "source": "protocol"
+    }
+  ],
+  "forbidden_fields": [
+    "y_pred",
+    "test_error",
+    "RAVEN alpha",
+    "post-outcome labels used as q features"
+  ],
+  "status": "FROZEN"
+}

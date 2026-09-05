@@ -1,0 +1,92 @@
+{
+  "bundle_id": "RAVEN_MCS_PUBLIC_REPRO_R1",
+  "paper_method": "support-conditional Design (SCD)",
+  "design_rule": {
+    "SensorScope": "ON (compatible target support)",
+    "U-Air": "OFF (25.5% zero-target mass; withheld)",
+    "coverage_Gate": "diagnostic audit only; not the E3/E4 Design switch"
+  },
+  "seeds": {
+    "E1_balanced_no_harm": [
+      28001,
+      28002,
+      28003,
+      28004,
+      28005
+    ],
+    "E2_E3_E4": [
+      30001,
+      30002,
+      30003,
+      30004,
+      30005,
+      30006,
+      30007,
+      30008,
+      30009,
+      30010,
+      30011,
+      30012,
+      30013,
+      30014,
+      30015,
+      30016,
+      30017,
+      30018,
+      30019,
+      30020
+    ],
+    "TDrive_opportunity_replay": [
+      30001,
+      30002,
+      30003,
+      30004,
+      30005,
+      30006,
+      30007,
+      30008,
+      30009,
+      30010
+    ]
+  },
+  "lambdas": {
+    "lambda_group": 1.0,
+    "lambda_beta": 1.0,
+    "lambda_v": 0.1,
+    "lambda_s": 0.1,
+    "alpha_max": 0.5,
+    "ESS_constraints": 3.0
+  },
+  "certificate_audit": {
+    "role": "window-level lower bound on aggregate opportunity coverage C_t",
+    "tau_cov": 0.05,
+    "alpha": 0.05,
+    "n_min": 19,
+    "availability_grid": [
+      1.0,
+      0.8,
+      0.6,
+      0.4,
+      0.2
+    ],
+    "reset": "after a completed CERTIFIED window if C_LCB > C_t",
+    "predictor": "ridge, alpha=1.0, legal pre-window features only"
+  },
+  "environment": {
+    "python": "3.11",
+    "table_verify": [
+      "numpy",
+      "pandas"
+    ],
+    "retraining_optional": [
+      "torch>=2.1",
+      "cvxpy>=1.4",
+      "clarabel>=0.7"
+    ]
+  },
+  "not_included": [
+    "GPU checkpoints (.pt)",
+    "full E3/E4 training-run dumps",
+    "T-Drive unit-level opportunity audit CSV"
+  ]
+}

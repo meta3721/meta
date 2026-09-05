@@ -1,0 +1,32 @@
+{
+  "chosen_E3_formal_windows": 100,
+  "common_timestamps": 720,
+  "dataset": "traffic",
+  "justification": "Preserve sealed E2 Traffic 100-window identity for reused block and new Traffic methods.",
+  "legal_evaluation_windows": 144,
+  "legal_training_windows": 345,
+  "matches_sealed_traffic_e2_if_traffic": true,
+  "same_across_methods": true,
+  "spatial_units": 43,
+  "split_boundaries": {
+    "test": {
+      "n_atomic": 6192,
+      "n_timestamps": 144,
+      "time_max": 719,
+      "time_min": 576
+    },
+    "train": {
+      "n_atomic": 18576,
+      "n_timestamps": 432,
+      "time_max": 431,
+      "time_min": 0
+    },
+    "validation": {
+      "n_atomic": 6192,
+      "n_timestamps": 144,
+      "time_max": 575,
+      "time_min": 432
+    }
+  },
+  "warmup_atomic_units": 3741
+}

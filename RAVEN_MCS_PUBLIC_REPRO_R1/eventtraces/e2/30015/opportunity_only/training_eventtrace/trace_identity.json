@@ -1,0 +1,18 @@
+{
+  "events_sha256": "f0b2df1eb7d28366f972e99022eca2f24c4159003f73384f5d69635725c74674",
+  "metadata": {
+    "dataset": "traffic",
+    "generator": "traffic-profile-s1-hard-aou-bridge-v1",
+    "notes": [
+      "scenario=opportunity_only",
+      "PROFILE-S1",
+      "station=client"
+    ],
+    "num_clients": 43,
+    "num_windows": 100,
+    "s_max": 5,
+    "seed": 30015
+  },
+  "metadata_sha256": "567467089af312d4885d8913629806aa2c55c59e8e12444394efcf41eb9fdbfd",
+  "trace_hash": "a9d81c8230915e7d1e736b1b33ecbe4a0f9aabdd4991897f4a15a8135579cd4b"
+}

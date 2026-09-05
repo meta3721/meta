@@ -1,0 +1,35 @@
+{
+  "a_obs": -1.4611196666578508,
+  "a_opp": 0.20067069546030325,
+  "a_q": 0.4054651081105476,
+  "bounds": {
+    "obs": [
+      0.05,
+      0.95
+    ],
+    "opp": [
+      0.05,
+      0.95
+    ],
+    "q": [
+      0.05,
+      0.95
+    ]
+  },
+  "d_opp": 0,
+  "d_p": -1,
+  "d_q": 0,
+  "kappa_obs": 0.5,
+  "kappa_opp": 0.0,
+  "kappa_q": 0.0,
+  "obs_intercept_solved": false,
+  "opp_intercept_solved": false,
+  "per_seed_intercept_solve_count": 0,
+  "profile_id": "PROFILE-S1",
+  "q_intercept_solved": false,
+  "runtime_a_obs": -1.4611196666578508,
+  "runtime_a_opp": 0.20067069546030325,
+  "runtime_a_q": 0.4054651081105476,
+  "scenario_id": "observation_only",
+  "seed": 30019
+}

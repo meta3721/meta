@@ -1,0 +1,11 @@
+{
+  "m_mc": 2000,
+  "num_windows": 100,
+  "stratum_meta": {
+    "dataset": "sensorscope",
+    "n_unique_strata": 440,
+    "remapped": false,
+    "spatial_rule": "station/node spatial_id (no coarsening)",
+    "status": "FROZEN_IDENTITY_CONFIRMED"
+  }
+}

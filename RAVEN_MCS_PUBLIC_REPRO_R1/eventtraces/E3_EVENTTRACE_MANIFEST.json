@@ -1,0 +1,324 @@
+{
+  "rows": [
+    {
+      "dataset": "sensorscope",
+      "seed": 30001,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30002,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30003,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30004,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30005,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30006,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30007,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30008,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30009,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30010,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30011,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30012,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30013,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30014,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30015,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30016,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30017,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30018,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30019,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "sensorscope",
+      "seed": 30020,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30001,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30002,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30003,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30004,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30005,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30006,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30007,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30008,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30009,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30010,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30011,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30012,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30013,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30014,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30015,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30016,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30017,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30018,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30019,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "dataset": "uair",
+      "seed": 30020,
+      "status": "LAZY_ON_EXECUTION"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30001\\training_eventtrace",
+      "seed": 30001,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30001\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30002\\training_eventtrace",
+      "seed": 30002,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30002\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30003\\training_eventtrace",
+      "seed": 30003,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30003\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30004\\training_eventtrace",
+      "seed": 30004,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30004\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30005\\training_eventtrace",
+      "seed": 30005,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30005\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30006\\training_eventtrace",
+      "seed": 30006,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30006\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30007\\training_eventtrace",
+      "seed": 30007,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30007\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30008\\training_eventtrace",
+      "seed": 30008,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30008\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30009\\training_eventtrace",
+      "seed": 30009,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30009\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30010\\training_eventtrace",
+      "seed": 30010,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30010\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30011\\training_eventtrace",
+      "seed": 30011,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30011\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30012\\training_eventtrace",
+      "seed": 30012,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30012\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30013\\training_eventtrace",
+      "seed": 30013,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30013\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30014\\training_eventtrace",
+      "seed": 30014,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30014\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30015\\training_eventtrace",
+      "seed": 30015,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30015\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30016\\training_eventtrace",
+      "seed": 30016,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30016\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30017\\training_eventtrace",
+      "seed": 30017,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30017\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30018\\training_eventtrace",
+      "seed": 30018,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30018\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30019\\training_eventtrace",
+      "seed": 30019,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30019\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    },
+    {
+      "path": "D:\\Cursor\\raven.mcs\\artifacts\\e3_formal_runs_r1\\eventtraces\\traffic\\seed30020\\training_eventtrace",
+      "seed": 30020,
+      "source": "D:\\Cursor\\raven.mcs\\artifacts\\e2_traffic_formal_runs_r1\\eventtraces\\30020\\complete_aligned\\training_eventtrace",
+      "status": "COPIED"
+    }
+  ]
+}

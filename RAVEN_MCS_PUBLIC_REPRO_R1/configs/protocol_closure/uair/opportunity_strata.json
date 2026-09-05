@@ -1,0 +1,9 @@
+{
+  "dataset": "uair",
+  "definition": "processed opportunity_stratum = spatial_id::time_block::weekday_flag",
+  "deterministic_construction": true,
+  "n_strata": 288,
+  "no_target_leakage": true,
+  "note": "Stratum labels come from processed public features only; not model residuals.",
+  "support_hash_n": 288
+}

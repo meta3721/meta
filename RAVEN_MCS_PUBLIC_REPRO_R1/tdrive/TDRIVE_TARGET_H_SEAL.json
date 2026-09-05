@@ -1,0 +1,44 @@
+{
+  "definition": "four Beijing-local time-of-day groups H1-H4 from processed wall-clock hour",
+  "groups": [
+    {
+      "block": 0,
+      "h_id": "H1",
+      "hour_end": 6,
+      "hour_start": 0,
+      "mu": 0.08786493046708417,
+      "n_test_units": 6552
+    },
+    {
+      "block": 1,
+      "h_id": "H2",
+      "hour_end": 12,
+      "hour_start": 6,
+      "mu": 0.1622524105191165,
+      "n_test_units": 12099
+    },
+    {
+      "block": 2,
+      "h_id": "H3",
+      "hour_end": 18,
+      "hour_start": 12,
+      "mu": 0.514396062707023,
+      "n_test_units": 38358
+    },
+    {
+      "block": 3,
+      "h_id": "H4",
+      "hour_end": 24,
+      "hour_start": 18,
+      "mu": 0.23548659630677626,
+      "n_test_units": 17560
+    }
+  ],
+  "h_distinct_from_s": true,
+  "label": "PRE_REGISTERED_PROTOCOL_FALLBACK",
+  "performance_tuned": false,
+  "processed_target_group_field": "recovered as spatial_id::block{b}; NOT paper h(i)",
+  "reason": "No public_target.json or provenance-linked paper h(i) exists for T-Drive. Processed target_group couples spatial_id into the group and is too close to s(i).",
+  "status": "FROZEN",
+  "uses_speed_labels": false
+}

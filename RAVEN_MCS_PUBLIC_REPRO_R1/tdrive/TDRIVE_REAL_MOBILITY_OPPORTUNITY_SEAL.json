@@ -1,0 +1,24 @@
+{
+  "classification": "REAL_FROM_TDRIVE",
+  "definition": "R_{k,i}=1 iff processed client_measurements contains (client_id=k, unit_id=i)",
+  "depends_on": [
+    "trajectory",
+    "time",
+    "spatial geometry",
+    "public cleaning rules",
+    "fleet split seed 26001"
+  ],
+  "does_not_depend_on": [
+    "model prediction",
+    "test error",
+    "future label",
+    "local-update result",
+    "RAVEN weights",
+    "method identity",
+    "formal seed 30001-30010"
+  ],
+  "n_clients": 5867,
+  "n_r_ones": 2236407,
+  "scientific_meaning": "client-fleet taxi k occupied the 500 m cell of i during i's 30-min slot after frozen trajectory-quality rules, and i has a reference-fleet speed target",
+  "status": "FROZEN"
+}

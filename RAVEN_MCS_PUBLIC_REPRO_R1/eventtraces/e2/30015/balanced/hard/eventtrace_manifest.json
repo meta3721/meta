@@ -1,0 +1,23 @@
+{
+  "antithetic_arm_count": 1,
+  "arms": 1,
+  "cross_window_duplicate_count": 0,
+  "failed_attempt_omission_count": 0,
+  "frozen_intercepts": true,
+  "observed_count_in_q": 0,
+  "per_seed_intercept_solve_count": 0,
+  "profile_id": "PROFILE-S1",
+  "q_features_used": [
+    "client_id",
+    "pre_outcome_risk_set_size",
+    "window_id",
+    "z_tail"
+  ],
+  "realized_conditional_observation_rate": 0.20167470905478285,
+  "realized_conditional_usable_rate": 0.6127853881278539,
+  "realized_opportunity_rate": 0.5462015503875969,
+  "scenario_id": "balanced",
+  "seed": 30015,
+  "stage2_eligible_in_q": 0,
+  "unsupported_arrival_count": 0
+}

@@ -1,0 +1,32 @@
+{
+  "construction": "train_split_utc_block_mass_only_no_test_labels",
+  "dataset": "uair",
+  "group_definition": "repeatable_utc_time_of_day_4",
+  "group_ids": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "group_names": [
+    "UTC_00_06",
+    "UTC_06_12",
+    "UTC_12_18",
+    "UTC_18_24"
+  ],
+  "head_groups": [
+    0,
+    1
+  ],
+  "mu": {
+    "0": 0.26582278481012656,
+    "1": 0.26582278481012656,
+    "2": 0.24050632911392406,
+    "3": 0.22784810126582278
+  },
+  "n_train_atomic": 5688,
+  "tail_groups": [
+    2,
+    3
+  ]
+}

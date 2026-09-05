@@ -1,0 +1,8 @@
+{
+  "delivered_semantics": "delivered iff U=1",
+  "eligibility_rule": "U=1 requires compute_success and network_success and tau<=s_max and nonempty observations",
+  "failed_attempt_semantics": "O may be nonempty while U=0",
+  "observability_boundary": "no test labels; risk sets from train units only in generator",
+  "s_max": 5,
+  "stage1_stage2_timing": "opportunity then observation then usable within window"
+}

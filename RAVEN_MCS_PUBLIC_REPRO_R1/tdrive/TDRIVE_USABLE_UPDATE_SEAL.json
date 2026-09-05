@@ -1,0 +1,21 @@
+{
+  "classification": "CONTROLLED_EXPERIMENTAL",
+  "compute_success_rule": "E3 complete_aligned device-tier Bernoulli (tiers 0/1/2 with p=0.70/0.90/0.98) and nonempty observations",
+  "deadline_rule": "arrival_time < window_deadline (window_duration=1.0, strict less-than next window)",
+  "label_leakage_audit": "PASS_PRESTATE_ONLY",
+  "network_success_rule": "E3 complete_aligned tier Bernoulli conditional on compute_success (p=0.80/0.95/0.99)",
+  "prestate_feature_boundary": "device_tier, registration_time, window_id, has_observations; no Y, no predictions, no test errors",
+  "q_use_feature_list": [
+    "device_tier",
+    "registration_time",
+    "window_deadline",
+    "compute_duration",
+    "network_duration",
+    "tau",
+    "has_observations"
+  ],
+  "source": "src/raven_mcs/e3/real_runner/stage2_r3.py compute_usable_r3",
+  "staleness_rule": "U=1 requires tau<=s_max=5; tau sampled with P(age>s_max)≈0.20",
+  "status": "FROZEN",
+  "tdrive_contains_real_compute_network_deadline": false
+}

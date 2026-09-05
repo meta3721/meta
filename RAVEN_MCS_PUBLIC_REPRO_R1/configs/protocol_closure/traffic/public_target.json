@@ -1,0 +1,32 @@
+{
+  "construction": "train_split_utc_block_mass_only_no_test_labels",
+  "dataset": "traffic",
+  "group_definition": "repeatable_utc_time_of_day_4",
+  "group_ids": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "group_names": [
+    "UTC_00_06",
+    "UTC_06_12",
+    "UTC_12_18",
+    "UTC_18_24"
+  ],
+  "head_groups": [
+    0,
+    1
+  ],
+  "mu": {
+    "0": 0.25,
+    "1": 0.25,
+    "2": 0.25,
+    "3": 0.25
+  },
+  "n_train_atomic": 18576,
+  "tail_groups": [
+    2,
+    3
+  ]
+}

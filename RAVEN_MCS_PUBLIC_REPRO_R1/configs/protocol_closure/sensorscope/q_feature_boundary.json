@@ -1,0 +1,16 @@
+{
+  "allowed_features": [
+    "hour_sin",
+    "hour_cos",
+    "time_block",
+    "weekday",
+    "spatial_public_block"
+  ],
+  "fixed_prestate": true,
+  "forbidden": [
+    "future_labels",
+    "realized_target",
+    "post_delivery_private_state",
+    "test_outcomes"
+  ]
+}

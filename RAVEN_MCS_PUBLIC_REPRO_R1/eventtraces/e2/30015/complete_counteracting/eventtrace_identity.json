@@ -1,0 +1,55 @@
+{
+  "eventtrace_identity": {
+    "events_sha256": "003b37f5a7bf9a05f0a6760014add6cd6430c587bfec9c5bc9fe11fd4ac1ed59",
+    "metadata": {
+      "dataset": "traffic",
+      "generator": "traffic-profile-s1-hard-aou-bridge-v1",
+      "notes": [
+        "scenario=complete_counteracting",
+        "PROFILE-S1",
+        "station=client"
+      ],
+      "num_clients": 43,
+      "num_windows": 100,
+      "s_max": 5,
+      "seed": 30015
+    },
+    "metadata_sha256": "5deac646b06da99793b7c10216025ccf7ca4a6d634cdf3c6d889bc4e1d491ead",
+    "trace_hash": "cc51d56028d20f941434cb43d34b07b8eb54ce8b7dc87ccbffb3e2ace2ce88e6"
+  },
+  "hard_arrival_sha256": "56c70bffcfc89e844b9a81591a86e31806317d81fc004b7e0702038ff4dddb70",
+  "hard_dir": "artifacts/e2_traffic_formal_runs_r1/eventtraces/30015/complete_counteracting/hard",
+  "label": "S6",
+  "n_event_rows": 4300,
+  "params": {
+    "a_obs": -1.5668684648176168,
+    "a_opp": 0.21342481271631186,
+    "a_q": 0.656861230368122,
+    "bounds": {
+      "obs": [
+        0.05,
+        0.95
+      ],
+      "opp": [
+        0.05,
+        0.95
+      ],
+      "q": [
+        0.05,
+        0.95
+      ]
+    },
+    "d_opp": -1,
+    "d_p": -1,
+    "d_q": 1,
+    "kappa_obs": 0.5,
+    "kappa_opp": 0.5,
+    "kappa_q": 0.5,
+    "profile_id": "PROFILE-S1",
+    "scenario_id": "complete_counteracting"
+  },
+  "profile_id": "PROFILE-S1",
+  "scenario_id": "complete_counteracting",
+  "seed": 30015,
+  "training_eventtrace_dir": "artifacts/e2_traffic_formal_runs_r1/eventtraces/30015/complete_counteracting/training_eventtrace"
+}

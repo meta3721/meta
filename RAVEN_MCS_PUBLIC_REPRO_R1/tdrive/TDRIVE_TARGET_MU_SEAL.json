@@ -1,0 +1,10 @@
+{
+  "construction": "deterministic frequency of test-split atomic units over fallback h(i)",
+  "n_test_units": 74569,
+  "status": "FROZEN",
+  "sum_mu": 1.0,
+  "sum_ok": true,
+  "tolerance": 1e-12,
+  "uses_prediction_errors": false,
+  "uses_speed_labels": false
+}

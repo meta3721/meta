@@ -1,0 +1,27 @@
+{
+  "canary_seed": 30001,
+  "exogenous_eventtrace_shared_per_seed": true,
+  "formal_seeds": [
+    30001,
+    30002,
+    30003,
+    30004,
+    30005,
+    30006,
+    30007,
+    30008,
+    30009,
+    30010
+  ],
+  "matched_across_methods": true,
+  "micro_fixture_seed": 31999,
+  "r_independent_of_formal_seed": true,
+  "r_independent_of_method": true,
+  "seed_controls": [
+    "controlled observation realization",
+    "compute/network usability realization",
+    "initialization (future training only)",
+    "client/local stochasticity where applicable"
+  ],
+  "status": "FROZEN"
+}
