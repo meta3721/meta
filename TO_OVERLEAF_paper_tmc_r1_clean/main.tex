@@ -70,8 +70,8 @@
 
 \begin{abstract}
 Mobile crowdsensing (MCS) completion is trained on updates selected by a
-two-stage process with three layers---opportunity, observation, and
-usable-update delivery---so the arrival law need not match the public
+two-stage process with three layers (opportunity, observation, and
+usable-update delivery), so the arrival law need not match the public
 deployment target.  We propose RAVEN-MCS, which treats
 \emph{windowed-asynchronous} federated completion as target-risk alignment:
 the server updates once at window close, unlike immediate-update FedAsync.
@@ -83,6 +83,10 @@ and identification; calibration is uniquely solvable; and the clipped
 plug-in is a stable perturbation of that reference when target support is
 compatible.  RAVEN-MCS applies the Design-enabled branch when that
 target support is compatible, and withholds Design when it is not.
+Method ranking uses a Complete-aligned selection protocol on SensorScope
+and U-Air station traces.  A T-Drive taxi replay checks whether the same
+four-block target--opportunity mismatch appears under real mobility
+opportunity; it does not rank methods.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -195,9 +199,11 @@ Our main contributions are as follows.
     We develop an exposure-aware normalized reconstruction that keeps the
     opportunity/design, observation, and usable-update mechanisms separate
     instead of collapsing them into a single missingness probability.  The
-    correction uses only legal pre-outcome information, combines local
-    H\'ajek normalization with usable-update correction, and yields a
-    selection-corrected reference mass for aggregation.  Under explicit support,
+    correction uses only legal pre-outcome information and local
+    H\'ajek normalization, and yields a selection-corrected reference mass
+    for aggregation.  Usable-update correction is retained as a third
+    sequential factor, not as an isolated empirical driver.
+    Under explicit support,
     sequential ignorability, correct ideal selection laws, and cluster-level
     regularity, we show that the ideal pooled normalized sequential estimator
     recovers the compatible deployment target.  Clipping is a finite-sample
@@ -219,16 +225,20 @@ Our main contributions are as follows.
     stated conditions.  When the active set is held fixed and target support is
     compatible, the implemented clipped plug-in is a Lipschitz perturbation of
     the same-window ideal reference, and P2 does not amplify that error.
-    Debt remains an internal accounting term, not a separate contribution.
+    Target debt is an internal accounting recursion for residual
+    group under-service, not a standalone performance contribution.
 \end{itemize}
 
 RAVEN's novelty is therefore not inverse-probability weighting or H\'ajek
 normalization as such.  It is the combination of deployment-target semantics,
-R/O/U legal histories, and finite-support calibration.
+selection-layer legal histories, and finite-support calibration.
+Isolated usable-update and debt terms are retained for sequential
+factorization and accounting; they are not the empirical claim.
 
 We evaluate these contributions with a no-harm control, a risk-semantic
-block, SensorScope and U-Air reconstruction experiments, and a T-Drive
-opportunity replay.  RAVEN-MCS uses support-conditional Design: on when
+block, SensorScope and U-Air reconstruction experiments under a protocol
+selection process, and a T-Drive taxi opportunity replay that is not a
+method ranking.  RAVEN-MCS uses support-conditional Design: on when
 target support is compatible (SensorScope), off when it is not (U-Air).
 Section~\ref{subsec:eval_certificate} additionally audits a candidate
 per-window coverage Gate on a frozen coverage-stress oracle.  That Gate
@@ -236,7 +246,8 @@ is not used to switch Design in E3 or E4.
 
 The remainder of the paper is organized as follows.
 Section~\ref{sec:related_work} reviews sparse MCS completion, asynchronous
-federated completion, and participation-aware FL.
+federated completion, participation-aware FL, and federated conformal
+prediction.
 Section~\ref{sec:system_model} formulates the two-stage, three-layer selection
 process and deployment-target risk.
 Sections~\ref{sec:reconstruction} and \ref{sec:calibration} present
@@ -319,6 +330,19 @@ actual observations, and usable asynchronous updates sequentially determine
 statistical target reconstruction from the subsequent feasibility-aware
 aggregation decision rather than treating asynchronous arrivals themselves as
 the implicit deployment population.
+
+Federated conformal prediction constructs distributed prediction sets
+with coverage guarantees when client data are heterogeneous.
+Lu \emph{et al.}~\cite{lu2023federated} use partial exchangeability to
+extend split conformal prediction to federated models.
+Plassier \emph{et al.}~\cite{plassier2023conformal} form importance-weighted
+quantiles under label shift, with privacy constraints.
+Both objects are label-set coverage for a trained predictor.
+The diagnostic Gate in Section~\ref{subsec:agg_certificate_alg} is a
+window-level lower bound on realized aggregate opportunity coverage
+$C_t$, used only as an audit of a candidate Design switch, not as a
+prediction set and not as the Design rule used in the reconstruction
+experiments.
 
 \subsection{Non-Uniform Participation and Selection Bias in FL}
 
@@ -1742,24 +1766,27 @@ implementation modules.
 
 \begin{itemize}
     \item \textbf{RQ1:} Does two-stage non-random selection create a meaningful
-    deployment-target risk mismatch, including under real mobility
-    opportunity?
+    deployment-target risk mismatch, including under real taxi opportunity
+    that is not used to rank methods?
     \item \textbf{RQ2:} Does support-conditional Design reduce
     structural deployment-target mismatch, remain competitive on
     target RMSE, and stay non-inferior on four-block worst-group RMSE?
     A pre-registered under-served-block prediction check is reported
     as a recorded negative, not as a second external win.
-    \item \textbf{RQ3:} How do the core correction and calibration components
-    contribute, and when is Design useful as a reconstruction factor?
+    \item \textbf{RQ3:} Which correction and calibration components move
+    the reported endpoints, and when is Design useful as a reconstruction
+    factor?
 \end{itemize}
 
 E1 is used only as a balanced no-harm control.  E2 addresses RQ1 by comparing
 arrival-weighted and deployment-target-weighted risks under controlled
 two-stage selection.  A T-Drive taxi replay then checks whether the same
 four-block target--opportunity mismatch appears under real mobility
-opportunity.  E3 addresses RQ2 on the two scientifically comparable
-SensorScope and U-Air blocks, using support-conditional Design
-(Design on SensorScope; Design off on U-Air).  E4 addresses RQ3 by
+opportunity; it does not rank methods.  E3 addresses RQ2 on the two scientifically comparable
+SensorScope and U-Air blocks under protocol Complete-aligned selection,
+using support-conditional Design
+(Design on SensorScope; Design off on U-Air).  Those traces are not claimed
+to contain mobile clients; protocol opportunity $R$ is always-on.  E4 addresses RQ3 by
 removing one correction or calibration component at a time, and keeps
 the U-Air full-Design reversal in the record.  Section~\ref{subsec:eval_certificate}
 audits a candidate coverage Gate; it does not rescore E3 or E4.
@@ -1781,7 +1808,9 @@ Table~\ref{tab:datasets} summarizes the evaluated datasets.  SensorScope
 \cite{ingelrest2010sensorscope,barrenetxea2019sensorscope}\footnote{\url{https://doi.org/10.5281/zenodo.2654726}}
 and U-Air
 \cite{zheng2013uair}\footnote{\url{http://urban-computing.com/data}}
-provide the main E3/E4 evidence and the coverage-stress audit.  For both, the deployment-target mapping
+provide the main E3/E4 evidence and the coverage-stress audit.
+Original SensorScope and U-Air traces are not claimed to contain mobile
+clients.  For both, the deployment-target mapping
 $h(i)$ consists of four UTC time-of-day groups
 (00--06, 06--12, 12--18, and 18--24), whose masses are constructed from the training
 split without test-label values.  Their opportunity strata $s(i)$ are finer:
@@ -1811,7 +1840,7 @@ groups are the same $h(i)$ used on SensorScope and U-Air.
 \centering
 \caption{Datasets and their roles in the evaluation.  Each dataset is cited to
 its public source.  Target construction uses public/training-side information
-and never test-label values.}
+and never test-label values.  T-Drive is an opportunity replay, not a ranking.}
 \label{tab:datasets}
 \setlength{\tabcolsep}{4.5pt}
 \begin{tabular}{lcccccc}
@@ -1826,16 +1855,17 @@ spatial ID $\times$ time block $\times$ day type & 288 & E3/E4 main\\
 NSW-Traffic~\cite{tfnsw2024traffic} & 43 & 18576/6192/6192 & 4 &
 region $\times$ time block $\times$ day type & 32 & E2 main\\
 T-Drive~\cite{yuan2010tdrive} & 9994 cells & 285659/--/74569 & 4 &
-cell $\times$ time block $\times$ day type & -- & G3 replay, not ranking\\
+cell $\times$ time block $\times$ day type & -- & opportunity replay, not ranking\\
 \bottomrule
 \end{tabular}
 \end{table*}
 
 \subsubsection{Selection protocol and compared methods}
 
-The main E3/E4 condition is \emph{Complete-aligned}, in which opportunity,
-observation, and usable-update selection are all active and non-random in the
-same direction.  All compared methods within a paired block consume the same
+The main E3/E4 condition is \emph{Complete-aligned}, in which protocol
+opportunity, observation, and usable-update selection are all active and
+non-random in the same direction.  On SensorScope and U-Air that protocol
+opportunity process is always-on.  All compared methods within a paired block consume the same
 shared selection trace (the recorded opportunity, observation, registration,
 and update-availability events), so they face identical selection events.
 The five principal same-backbone baselines are
@@ -2251,10 +2281,11 @@ $\|\mathbf Q_R\|_1=o(S_R)$.
 RAVEN is a coupled correction-and-calibration system, not five monotone
 boosters.  As a reconstruction factor, Design helps SensorScope and
 reverses U-Air primaries while still buying $\Delta_{c\text{-}s}$.
-Obs has weaker endpoint-specific effects, Use
-has no clear isolated effect in this family, Inst trades finite-window
-structure against prediction, and Debt is statistically consistent but
-quantitatively small.
+Obs has weaker endpoint-specific effects.  Usable-update correction is
+kept as a sequential selection layer; E4 does not show an isolated
+effect.  Inst trades finite-window structure against prediction.
+Target debt is a consistent accounting term whose isolated changes stay
+well below the $0.5\%$ practical threshold.
 
 \subsection{Finite-Sample Audit of the Aggregate Coverage Certificate}
 \label{subsec:eval_certificate}
@@ -2464,14 +2495,15 @@ natural availability.  E3 therefore keeps support-conditional Design.
 The under-served-block check on validation did not beat adapted FedAU and
 ObsUse by $0.5\%$, so the test look was not opened.  Real T-Drive taxi
 opportunity reproduces the four-block
-mismatch without supplying a method ranking.  Usable-update correction
-has no clear isolated effect in the tested family, and target debt is
-quantitatively small.
+mismatch without supplying a method ranking.  Usable-update correction has no clear isolated effect in the tested
+family.  Target debt remains internal accounting; its isolated changes
+are quantitatively small.
 
 These guarantees hold under explicit support and sequential
 identification.  They do not cover arbitrary hidden confounding,
-misspecified targets, or end-to-end mobile systems.  Extending the
-replay to jointly measured observation and network processes remains future work.
+misspecified targets, or end-to-end mobile systems.  SensorScope and U-Air
+ranking results use protocol opportunity.  Extending the T-Drive replay to
+jointly measured observation and network processes remains future work.
 
 Proofs, additional tables, runtime measurements, and the sealed
 same-backbone E3 plots are submitted as a separate supplemental PDF
