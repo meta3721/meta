@@ -1,0 +1,18 @@
+{
+  "events_sha256": "f0f3187b8a1c590e4f7b039226dffe95de196032c3f1a8dd04e0ff7ee5435012",
+  "metadata": {
+    "dataset": "tdrive_speed",
+    "generator": "tdrive-complete-aligned-r1-v1",
+    "notes": [
+      "R from processed client-fleet measurements",
+      "O/U Complete-aligned controlled transfer from E3",
+      "method-independent"
+    ],
+    "num_clients": 2,
+    "num_windows": 3,
+    "s_max": 5,
+    "seed": 32000
+  },
+  "metadata_sha256": "3754e3602bb6b92a6ac42d11ccab45950f52ec472b77f34a32d19db378923415",
+  "trace_hash": "3a29b37ce7fafdfe3e85dc8fc32d1278645f1d9621413259589b3b5eb5249c6b"
+}

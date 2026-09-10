@@ -1,0 +1,46 @@
+{
+  "experiment_id": "TD-R-E3",
+  "source_zip": "C:\\Users\\szr\\Downloads\\TD_R_E3_round_v1.zip",
+  "ingested_utc": "2026-09-10T01:55:00+00:00",
+  "canonical_dir": "results_tdrive_rank/round_v1",
+  "laptop_canary_backup": "results_tdrive_rank/round_v1_laptop_canary",
+  "status": "PASS",
+  "grid": {
+    "accepted_files": 60,
+    "checkpoints_final_pt": 60,
+    "path_status": "REAL_PATH_EXECUTED",
+    "methods": [
+      "fedavg_window",
+      "twostage_hajek",
+      "fedau_window",
+      "obsuse_window",
+      "raven_wo_design",
+      "raven"
+    ],
+    "seeds": "30001-30010",
+    "n_windows": 178,
+    "e3_csv_tbd": 0,
+    "csv_rmse_matches_accepted": true,
+    "eventtrace_hash_vs_manifest": "all_match",
+    "per_seed_hash_agreement_across_methods": true
+  },
+  "scd_freeze": {
+    "phi_train_unit": 0.47352962798301473,
+    "counts": "135268/285659",
+    "design_on": false,
+    "scd_method": "raven_wo_design",
+    "gate_unused": true,
+    "r_layer": "REAL_FROM_TDRIVE",
+    "o_layer": "CONTROLLED_EXPERIMENTAL p_obs=0.35",
+    "u_layer": "CONTROLLED_EXPERIMENTAL compute_usable_r3 s_max=5"
+  },
+  "device_mix_note": "59/60 cuda; fedavg_window seed 30001 is the laptop CPU canary (RMSE_mu identical to backup, eventtrace_hash 8e183010...). Do not treat TD_R_HARDWARE_STOP.json as current matrix status.",
+  "hardware_stop_json": "stale laptop stop; superseded by this ingest",
+  "c1_table_ready": true,
+  "paper_edits": "not_done; wait for user request",
+  "forbidden": [
+    "do not mix T-Drive into Table II",
+    "do not treat RMSE win as C1 headline",
+    "do not call this end-to-end mobile MCS"
+  ]
+}

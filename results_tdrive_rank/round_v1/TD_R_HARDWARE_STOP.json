@@ -1,0 +1,37 @@
+{
+  "experiment_id": "TD-R-E3",
+  "stop_reason": "HARDWARE_INSUFFICIENT_AFTER_CANARY",
+  "allowed_by": "HANDOFF_EXECUTOR.md §0 and §9 step 6 / §10",
+  "device": "cpu",
+  "cuda": false,
+  "host_ram_gb_visible": 16,
+  "canary": {
+    "dataset": "tdrive_speed",
+    "method": "fedavg_window",
+    "seed": 30001,
+    "path_status": "REAL_PATH_EXECUTED",
+    "n_windows": 178,
+    "runtime_seconds": 2081.150208400002,
+    "accepted": "results_tdrive_rank/round_v1/runs/tdrive_speed/fedavg_window/seed30001/TD_R_ACCEPTED.json",
+    "eventtrace_hash": "8e183010762598e8e1b705762c44e3dae0ee2fa5b644ba35dc8c989130fd5f34"
+  },
+  "completed": [
+    "phi freeze (Design OFF, scd_method=raven_wo_design)",
+    "10 shared EventTraces seeds 30001-30010",
+    "micro fixture method independence",
+    "FedAvg seed 30001 REAL_PATH_EXECUTED"
+  ],
+  "not_started": [
+    "mandatory 10-seed x 6-method matrix (60 runs)",
+    "optional fedasync_window / flamf_timealign_adapted",
+    "manuscript / Table II edits"
+  ],
+  "do_not_treat_as_ranking": [
+    "tables/TD_R_E3.csv (one FedAvg canary row only)",
+    "tables/TD_R_E3_SUMMARY.csv (n=1 / TBD; not 10-seed means)"
+  ],
+  "c1_status": "still major; hybrid T-Drive ranking table does not exist",
+  "claim_ceiling": "results_tdrive_rank/round_v1/CLAIM_CEILING.md",
+  "note": "Do not invent missing method/seed cells. Do not drop methods to pick a winner. Reuse frozen phi and traces on a GPU host to run the matrix.",
+  "stopped_utc": "2026-09-06T06:14:14+00:00"
+}

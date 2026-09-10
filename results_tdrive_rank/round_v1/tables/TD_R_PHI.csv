@@ -1,0 +1,2 @@
+dataset,n_train_units,n_train_zero,phi_train_unit,phi_train_pair,phi_train_R,scd_method,design_on
+tdrive_speed,285659,135268,0.47352962798301473,0.6494222048856599,0.44337044941111337,raven_wo_design,False

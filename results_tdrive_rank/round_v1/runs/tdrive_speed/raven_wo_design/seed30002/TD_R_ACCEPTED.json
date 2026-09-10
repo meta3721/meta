@@ -1,0 +1,21 @@
+{
+  "Delta_c_s": 1.9935550758422007,
+  "Delta_group": 0.523174147885956,
+  "MAE_mu": 0.7725626089426277,
+  "RMSE_mu": 1.1095964298919325,
+  "WorstGroupRMSE": 1.3149865398069733,
+  "WorstGroupRMSE_H1": 1.1327214817915283,
+  "WorstGroupRMSE_H2": 1.3149865398069733,
+  "WorstGroupRMSE_H3": 1.057594125202401,
+  "WorstGroupRMSE_H4": 1.0558973255143616,
+  "dataset": "tdrive_speed",
+  "device": "cuda",
+  "eventtrace_hash": "5fdcb5c652ded47d418f05c35db35c401f426639c45b5f2f2501153daa9bbb06",
+  "git_commit": "UNKNOWN",
+  "method": "raven_wo_design",
+  "n_local_updates": 178,
+  "n_windows": 178,
+  "path_status": "REAL_PATH_EXECUTED",
+  "runtime_seconds": 7914.5038569290045,
+  "seed": 30002
+}

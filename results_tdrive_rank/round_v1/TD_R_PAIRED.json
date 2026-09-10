@@ -1,0 +1,62 @@
+{
+  "rows": [
+    {
+      "Delta_c_s_p_unadj": 9.672076473066227e-10,
+      "Delta_c_s_paired_mean_diff": 0.00201136566856821,
+      "Delta_c_s_paired_rel_mean": 0.001010229707507334,
+      "Delta_group_p_unadj": 0.4781387220217499,
+      "Delta_group_paired_mean_diff": -3.3306690738754695e-17,
+      "Delta_group_paired_rel_mean": -6.366272277279082e-17,
+      "RMSE_mu_p_holm": 0.0,
+      "RMSE_mu_p_unadj": 0.0,
+      "RMSE_mu_paired_mean_diff": 0.017043661494658656,
+      "RMSE_mu_paired_rel_mean": 0.015658141785424202,
+      "WorstGroupRMSE_p_unadj": 4.440892098500626e-16,
+      "WorstGroupRMSE_paired_mean_diff": 0.030536726115684542,
+      "WorstGroupRMSE_paired_rel_mean": 0.023923855803706914,
+      "comparator": "fedau_window",
+      "n_paired": 10,
+      "scd_method": "raven_wo_design",
+      "worstgroup_noninferior_plus_0.5pct": false
+    },
+    {
+      "Delta_c_s_p_unadj": 1.4595937791739289e-09,
+      "Delta_c_s_paired_mean_diff": 0.001978666224054293,
+      "Delta_c_s_paired_rel_mean": 0.0009937915409699181,
+      "Delta_group_p_unadj": 0.805860609520727,
+      "Delta_group_paired_mean_diff": -1.1102230246251566e-17,
+      "Delta_group_paired_rel_mean": -2.1220907590930264e-17,
+      "RMSE_mu_p_holm": 0.0,
+      "RMSE_mu_p_unadj": 0.0,
+      "RMSE_mu_paired_mean_diff": 0.017283287147812222,
+      "RMSE_mu_paired_rel_mean": 0.01588075131513695,
+      "WorstGroupRMSE_p_unadj": 0.0,
+      "WorstGroupRMSE_paired_mean_diff": 0.0310101039070503,
+      "WorstGroupRMSE_paired_rel_mean": 0.024300725332698846,
+      "comparator": "obsuse_window",
+      "n_paired": 10,
+      "scd_method": "raven_wo_design",
+      "worstgroup_noninferior_plus_0.5pct": false
+    },
+    {
+      "Delta_c_s_p_unadj": 0.0,
+      "Delta_c_s_paired_mean_diff": 0.017785919025317322,
+      "Delta_c_s_paired_rel_mean": 0.009002026505395219,
+      "Delta_group_p_unadj": 0.004040984683985727,
+      "Delta_group_paired_mean_diff": 1.6653345369377348e-16,
+      "Delta_group_paired_rel_mean": 3.183136138639544e-16,
+      "RMSE_mu_p_holm": 5.481947246943619e-05,
+      "RMSE_mu_p_unadj": 5.481947246943619e-05,
+      "RMSE_mu_paired_mean_diff": 0.0026703463829193864,
+      "RMSE_mu_paired_rel_mean": 0.0024189559396574126,
+      "WorstGroupRMSE_p_unadj": 5.578474072409634e-05,
+      "WorstGroupRMSE_paired_mean_diff": 0.004237348196416213,
+      "WorstGroupRMSE_paired_rel_mean": 0.0032446442441583243,
+      "comparator": "fedavg_window",
+      "n_paired": 10,
+      "scd_method": "raven_wo_design",
+      "worstgroup_noninferior_plus_0.5pct": true
+    }
+  ],
+  "scd_method": "raven_wo_design"
+}

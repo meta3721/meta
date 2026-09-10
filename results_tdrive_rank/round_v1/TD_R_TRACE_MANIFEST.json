@@ -1,0 +1,72 @@
+{
+  "experiment_id": "TD-R-E3",
+  "gate_unused": true,
+  "generated_utc": "2026-09-05T11:37:44.913475+00:00",
+  "git_commit": "5c4243761c8c5999bb9ec08a25969bef4ad0cdd6",
+  "o_layer": "CONTROLLED_EXPERIMENTAL p_obs=0.35",
+  "r_layer": "REAL_FROM_TDRIVE",
+  "rows": [
+    {
+      "path": "artifacts/e3_tdrive_rank_eventtraces_v1/tdrive_speed/seed30001/training_eventtrace",
+      "seed": 30001,
+      "status": "REUSED",
+      "trace_hash": "8e183010762598e8e1b705762c44e3dae0ee2fa5b644ba35dc8c989130fd5f34"
+    },
+    {
+      "path": "artifacts/e3_tdrive_rank_eventtraces_v1/tdrive_speed/seed30002/training_eventtrace",
+      "seed": 30002,
+      "status": "REUSED",
+      "trace_hash": "5fdcb5c652ded47d418f05c35db35c401f426639c45b5f2f2501153daa9bbb06"
+    },
+    {
+      "path": "artifacts/e3_tdrive_rank_eventtraces_v1/tdrive_speed/seed30003/training_eventtrace",
+      "seed": 30003,
+      "status": "REUSED",
+      "trace_hash": "8f7acd4b3b1444fa9c811ecd35bd5adc45e2bf929ae33922af29b7a56a936b0f"
+    },
+    {
+      "path": "artifacts/e3_tdrive_rank_eventtraces_v1/tdrive_speed/seed30004/training_eventtrace",
+      "seed": 30004,
+      "status": "REUSED",
+      "trace_hash": "9859df3c2e19ebb3ae1cd0da9533547497c53a94e5d2fd8f70745761544337d8"
+    },
+    {
+      "path": "artifacts/e3_tdrive_rank_eventtraces_v1/tdrive_speed/seed30005/training_eventtrace",
+      "seed": 30005,
+      "status": "REUSED",
+      "trace_hash": "6da5c676232221aa439971451dcb008d4bbfb4b4d1a5ef681c257c5495dc8c3d"
+    },
+    {
+      "path": "artifacts/e3_tdrive_rank_eventtraces_v1/tdrive_speed/seed30006/training_eventtrace",
+      "seed": 30006,
+      "status": "REUSED",
+      "trace_hash": "aab7695e6cc4347b1c17f62d830db9fde3fce96fd455e908d4fb1b80d92f29fa"
+    },
+    {
+      "path": "artifacts/e3_tdrive_rank_eventtraces_v1/tdrive_speed/seed30007/training_eventtrace",
+      "seed": 30007,
+      "status": "REUSED",
+      "trace_hash": "75d3ce75c11c9eddf7fd4aaa6949c6c604bfde53b1dcb0cb8c95dcdb17e698e0"
+    },
+    {
+      "path": "artifacts/e3_tdrive_rank_eventtraces_v1/tdrive_speed/seed30008/training_eventtrace",
+      "seed": 30008,
+      "status": "REUSED",
+      "trace_hash": "8e6d331316b2eff129042c4b405efc5201ca3a5ea452f94d782e3fe5664774ba"
+    },
+    {
+      "path": "artifacts/e3_tdrive_rank_eventtraces_v1/tdrive_speed/seed30009/training_eventtrace",
+      "seed": 30009,
+      "status": "REUSED",
+      "trace_hash": "93193f7feb8425b77e2e44124294b85e25dd546bfbf8b199d537b45745bebcb4"
+    },
+    {
+      "path": "artifacts/e3_tdrive_rank_eventtraces_v1/tdrive_speed/seed30010/training_eventtrace",
+      "seed": 30010,
+      "status": "REUSED",
+      "trace_hash": "6953bf50bb115aa13372c709c5e2a2f13cfa523e4534dc6c7b3f6c70624af089"
+    }
+  ],
+  "trace_root": "artifacts/e3_tdrive_rank_eventtraces_v1/",
+  "u_layer": "CONTROLLED_EXPERIMENTAL compute_usable_r3 s_max=5"
+}

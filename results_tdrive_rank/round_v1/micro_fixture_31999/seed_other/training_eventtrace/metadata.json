@@ -1,0 +1,13 @@
+{
+  "dataset": "tdrive_speed",
+  "generator": "tdrive-complete-aligned-r1-v1",
+  "notes": [
+    "R from processed client-fleet measurements",
+    "O/U Complete-aligned controlled transfer from E3",
+    "method-independent"
+  ],
+  "num_clients": 2,
+  "num_windows": 3,
+  "s_max": 5,
+  "seed": 32000
+}

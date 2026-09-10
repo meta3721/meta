@@ -1,0 +1,28 @@
+{
+  "gate_unused": true,
+  "h_encoding": {
+    "H1": 0,
+    "H2": 1,
+    "H3": 2,
+    "H4": 3
+  },
+  "mu": [
+    0.08786493046708417,
+    0.1622524105191165,
+    0.514396062707023,
+    0.23548659630677626
+  ],
+  "n_pi_opp_keys": 1585558,
+  "n_pi_target_keys": 235911,
+  "num_groups": 4,
+  "num_spatial": 9994,
+  "pi_target_meta": {
+    "leftover_mass_before_renorm": 0.14044710268342073,
+    "leftover_n_strata": 7610,
+    "n_positive_keys": 235911,
+    "no_cartesian_pad": true,
+    "renormalized": true
+  },
+  "scaler_mean": 24.89486885942425,
+  "scaler_std": 14.880456848336962
+}

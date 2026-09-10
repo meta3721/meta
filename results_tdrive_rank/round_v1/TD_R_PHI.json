@@ -1,0 +1,146 @@
+{
+  "experiment_id": "TD-R-E3",
+  "status": "PASS",
+  "dataset": "tdrive_speed",
+  "protocol_id": "TDRIVE_REAL_MOBILITY_PROTOCOL_R1",
+  "pi_lookup": "Lambda_s from unique test units, uniform mass, s=opportunity_stratum",
+  "zero_test": "pi <= 0.0",
+  "processed_hashes": [
+    {
+      "path": "data/processed/tdrive_speed/atomic_units.parquet",
+      "expected": "949cd8c7210941b066d300e7cec327c485c5cc6aa6110ce790fdbf0db8a1e414",
+      "got": "949cd8c7210941b066d300e7cec327c485c5cc6aa6110ce790fdbf0db8a1e414",
+      "match": true
+    },
+    {
+      "path": "data/processed/tdrive_speed/client_measurements.parquet",
+      "expected": "6744a86dc97ec497295fedf3dd7efa2756680742b05320497cdc2c96ed049bb5",
+      "got": "6744a86dc97ec497295fedf3dd7efa2756680742b05320497cdc2c96ed049bb5",
+      "match": true
+    }
+  ],
+  "source_hashes_advisory": [
+    {
+      "path": "configs/dataset/tdrive_speed.yaml",
+      "expected": "3d2c53b34f2e20ae3a10de98cd6dd1acc6059ed304063bbc789a70f0dfc30b76",
+      "got": "3d2c53b34f2e20ae3a10de98cd6dd1acc6059ed304063bbc789a70f0dfc30b76",
+      "match": true
+    },
+    {
+      "path": "data/manifests/tdrive_speed_manifest.json",
+      "expected": "31f4a212b316ff0c2e2ba3d6c30a2a1886e35f650c7be4de5032502ff78f1dd1",
+      "got": "31f4a212b316ff0c2e2ba3d6c30a2a1886e35f650c7be4de5032502ff78f1dd1",
+      "match": true
+    },
+    {
+      "path": "src/raven_mcs/data/controlled.py",
+      "expected": "9ecf0a4bbebf0fb145c2a032fe88fbcb0cd9e4d830d35f3fa61df801e10e2aee",
+      "got": "9ecf0a4bbebf0fb145c2a032fe88fbcb0cd9e4d830d35f3fa61df801e10e2aee",
+      "match": true
+    },
+    {
+      "path": "src/raven_mcs/data/split.py",
+      "expected": "5a6670a9f206e162b93ced644e8d31271454dce51ad5b7e2cccc6a0170ee367b",
+      "got": "5a6670a9f206e162b93ced644e8d31271454dce51ad5b7e2cccc6a0170ee367b",
+      "match": true
+    },
+    {
+      "path": "src/raven_mcs/data/tdrive.py",
+      "expected": "1a3b9d5edd4672f403a859ebdc98db053a1ab44d9c421ef7d5f946837f4afd77",
+      "got": "1a3b9d5edd4672f403a859ebdc98db053a1ab44d9c421ef7d5f946837f4afd77",
+      "match": true
+    },
+    {
+      "path": "src/raven_mcs/e3/delta_cs_rho/delta_cs_v6.py",
+      "expected": "580bd1d6d2d0c4c178b16ab9a9ee5f16541fcec617f0551a568fdbcc875398d3",
+      "got": "580bd1d6d2d0c4c178b16ab9a9ee5f16541fcec617f0551a568fdbcc875398d3",
+      "match": true
+    },
+    {
+      "path": "src/raven_mcs/e3/formal/stats.py",
+      "expected": "c1e9685c62649628eec0847bd4d29a4da621c6f66c4775fd05513c8e599e4673",
+      "got": "c1e9685c62649628eec0847bd4d29a4da621c6f66c4775fd05513c8e599e4673",
+      "match": true
+    },
+    {
+      "path": "src/raven_mcs/e3/real_runner/stage2_r3.py",
+      "expected": "60194a3048c90def6a0430f62f535b722a7445ee809cf317b6b7f2a0e3102c4a",
+      "got": "60194a3048c90def6a0430f62f535b722a7445ee809cf317b6b7f2a0e3102c4a",
+      "match": true
+    },
+    {
+      "path": "src/raven_mcs/metrics/accuracy.py",
+      "expected": "18c5dc9636673e68bd48210297b6c8bdb11c759ab466fef4501837f50b091ba9",
+      "got": "18c5dc9636673e68bd48210297b6c8bdb11c759ab466fef4501837f50b091ba9",
+      "match": true
+    },
+    {
+      "path": "src/raven_mcs/metrics/distribution.py",
+      "expected": "23178fb519cacb6f746b1fb10f748191b582dd8ec48d65c15ac0ca7916e5c8c8",
+      "got": "23178fb519cacb6f746b1fb10f748191b582dd8ec48d65c15ac0ca7916e5c8c8",
+      "match": true
+    },
+    {
+      "path": "src/raven_mcs/simulation/event_trace.py",
+      "expected": "39b87ea551c7b9637665779144d0e70a6bc9ecdafb3d63f057c4abd38d31e86b",
+      "got": "39b87ea551c7b9637665779144d0e70a6bc9ecdafb3d63f057c4abd38d31e86b",
+      "match": true
+    },
+    {
+      "path": "src/raven_mcs/tdrive_protocol_seal_r1/constants.py",
+      "expected": "e169eeb2ebe0ac8a38a49e9d987207ed478b299ebbc238ccaa45e943a9bade64",
+      "got": "e169eeb2ebe0ac8a38a49e9d987207ed478b299ebbc238ccaa45e943a9bade64",
+      "match": true
+    },
+    {
+      "path": "src/raven_mcs/tdrive_protocol_seal_r1/eventtrace_generator.py",
+      "expected": "8ddb2fe0c5526100e64ea231d62a04c6148bdc6aaf18f9201d3b50e31145782d",
+      "got": "8ddb2fe0c5526100e64ea231d62a04c6148bdc6aaf18f9201d3b50e31145782d",
+      "match": true
+    },
+    {
+      "path": "src/raven_mcs/tdrive_protocol_seal_r1/pipeline.py",
+      "expected": "64028057b4f93de31c58a1812e6167c225cbbfee903ddb8f73d5b352b0eeb314",
+      "got": "64028057b4f93de31c58a1812e6167c225cbbfee903ddb8f73d5b352b0eeb314",
+      "match": true
+    }
+  ],
+  "phi": {
+    "n_train_units": 285659,
+    "n_train_zero": 135268,
+    "phi_train_unit": 0.47352962798301473,
+    "n_train_pairs": 41018,
+    "n_train_pairs_zero": 26638,
+    "phi_train_pair": 0.6494222048856599,
+    "n_train_R": 223982,
+    "n_train_R_zero": 99307,
+    "phi_train_R": 0.44337044941111337,
+    "n_test_units": 74569,
+    "n_lambda_s_positive": 17483,
+    "n_lambda_s": 17483,
+    "g3_train_R_ref": 0.443,
+    "phi_train_R_minus_g3_ref": 0.0003704494111133605,
+    "design_on": false,
+    "scd_method": "raven_wo_design",
+    "full_design_diagnostic_method": "raven",
+    "train_full_design_extra": true,
+    "rule": "Design_ON iff phi_train_unit == 0"
+  },
+  "scd_freeze": {
+    "experiment_id": "TD-R-E3",
+    "phi_definition": "phi_train_unit",
+    "phi_train_unit": 0.47352962798301473,
+    "n_train_zero": 135268,
+    "n_train_units": 285659,
+    "rule": "Design_ON iff phi_train_unit == 0",
+    "design_on": false,
+    "scd_method": "raven_wo_design",
+    "full_design_diagnostic_method": "raven",
+    "train_full_design_extra": true,
+    "gate_unused": true,
+    "frozen_utc": "2026-09-05T10:28:15.168928+00:00",
+    "note": "Frozen from phi. Not from labels or residuals."
+  },
+  "git_commit": "5c4243761c8c5999bb9ec08a25969bef4ad0cdd6",
+  "computed_utc": "2026-09-05T10:28:15.226828+00:00"
+}

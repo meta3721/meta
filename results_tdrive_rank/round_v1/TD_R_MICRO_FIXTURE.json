@@ -1,0 +1,67 @@
+{
+  "audit": {
+    "hashing_rule": "raven_mcs.simulation.event_trace.freeze_event_trace / compute_trace_hash",
+    "mean_observation_rate": 0.35,
+    "method_argument_ignored": true,
+    "n_clients": 2,
+    "n_event_rows": 4,
+    "n_long_rows": 8,
+    "n_windows": 3,
+    "o_source": "controlled Bernoulli p_obs on R=1",
+    "r_source": "client_measurements inner-joined to train atomic units",
+    "s_max": 5,
+    "u_source": "e3.real_runner.stage2_r3.compute_usable_r3"
+  },
+  "checks": {
+    "controlled_o_or_u_changes_with_seed": true,
+    "deterministic_replay": true,
+    "h_deterministic": true,
+    "method_independence": true,
+    "no_model_fitting": true,
+    "no_post_outcome_fields": true,
+    "r_identical_across_seeds": true,
+    "s_from_processed": true,
+    "same_seed_same_trace": true
+  },
+  "identity_payload_sha256": "1a1378bcae29d20ae1b29b6e7501931f684d0253100d18b7006cdf7b02b7db09",
+  "metadata_a": {
+    "dataset": "tdrive_speed",
+    "generator": "tdrive-complete-aligned-r1-v1",
+    "notes": [
+      "R from processed client-fleet measurements",
+      "O/U Complete-aligned controlled transfer from E3",
+      "method-independent"
+    ],
+    "num_clients": 2,
+    "num_windows": 3,
+    "s_max": 5,
+    "seed": 31999
+  },
+  "n_atomic_units": 8,
+  "n_spatial_cells": 4,
+  "n_taxis": 2,
+  "n_time_slots": 3,
+  "paper_use": "NOT_FOR_PAPER_USE",
+  "seed": 31999,
+  "status": "PASS",
+  "subset_clients": [
+    "vehicle::8708",
+    "vehicle::4447",
+    "vehicle::7362"
+  ],
+  "subset_spatials": [
+    "g0051_0072",
+    "g0051_0071",
+    "g0051_0076",
+    "g0051_0073"
+  ],
+  "subset_time_indices": [
+    0,
+    1,
+    2
+  ],
+  "trace_hash_other_method": "68a1b8ae03be6d44765551b5bdcf4b905974e2b587190c58a5404f3a46f6154e",
+  "trace_hash_other_seed": "3a29b37ce7fafdfe3e85dc8fc32d1278645f1d9621413259589b3b5eb5249c6b",
+  "trace_hash_replay": "68a1b8ae03be6d44765551b5bdcf4b905974e2b587190c58a5404f3a46f6154e",
+  "trace_hash_seed": "68a1b8ae03be6d44765551b5bdcf4b905974e2b587190c58a5404f3a46f6154e"
+}

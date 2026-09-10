@@ -1,0 +1,15 @@
+{
+  "experiment_id": "TD-R-E3",
+  "phi_definition": "phi_train_unit",
+  "phi_train_unit": 0.47352962798301473,
+  "n_train_zero": 135268,
+  "n_train_units": 285659,
+  "rule": "Design_ON iff phi_train_unit == 0",
+  "design_on": false,
+  "scd_method": "raven_wo_design",
+  "full_design_diagnostic_method": "raven",
+  "train_full_design_extra": true,
+  "gate_unused": true,
+  "frozen_utc": "2026-09-05T10:28:15.168928+00:00",
+  "note": "Frozen from phi. Not from labels or residuals."
+}

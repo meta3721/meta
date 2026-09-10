@@ -1,0 +1,22 @@
+{
+  "experiment_id": "TD-R-E3",
+  "round_directory": "results_tdrive_rank/round_v1/",
+  "trace_root": "artifacts/e3_tdrive_rank_eventtraces_v1/",
+  "python": "C:\\Cursor\\raven.mcs\\.venv_new\\Scripts\\python.exe",
+  "dataset": "tdrive_speed",
+  "protocol_id": "TDRIVE_REAL_MOBILITY_PROTOCOL_R1",
+  "seeds_formal": [30001, 30002, 30003, 30004, 30005, 30006, 30007, 30008, 30009, 30010],
+  "canary_seed": 30001,
+  "micro_fixture_seed": 31999,
+  "r_layer": "REAL_FROM_TDRIVE",
+  "o_layer": "CONTROLLED_EXPERIMENTAL p_obs=0.35",
+  "u_layer": "CONTROLLED_EXPERIMENTAL compute_usable_r3 s_max=5",
+  "phi_definition": "phi_train_unit",
+  "rule": "Design_ON iff phi_train_unit == 0",
+  "mu": "TDRIVE_TARGET_H_SEAL.json H1-H4",
+  "worst_group": "max RMSE over H1-H4 (fallback_h_id), not fine s(i)",
+  "do_not_overwrite_seal": "tdrive_protocol_seal_r1/",
+  "do_not_edit_table_ii": true,
+  "do_not_overlay_gps_on_stations": true,
+  "gate_unused": true
+}
