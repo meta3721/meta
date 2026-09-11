@@ -1,0 +1,35 @@
+name: cityscanner_nyc_pm25
+role: c1_kill_locked
+raw_glob: data/raw/cityscanner_nyc_pm25/**
+split:
+  train: 0.60
+  validation: 0.20
+  test: 0.20
+  warmup_fraction_of_train: 0.20
+target:
+  name: pm25
+  unit: ug_per_m3
+grid:
+  cell_meters: 500
+  slot_minutes: 30
+clients:
+  identity: spatial_id
+  vehicles_are_not_fl_clients: true
+physical_filters:
+  - Drop non-finite latitude, longitude, time, or pm25
+  - Drop pm25 < 0 or pm25 > 1000
+  - Empty cell-slots (no kept sample) are absent; not imputed
+download:
+  source_name: MIT Senseable City Lab City Scanner hyperlocal environmental CSVs
+  source_url: https://doi.org/10.5281/zenodo.7961851
+  paper_doi: 10.1038/s41597-023-02425-3
+  license: cc-by-4.0
+  files_in:
+    - NYC_Pilot1_PM.csv
+    - NYC_Pilot2_PM_Part1.csv
+    - NYC_Pilot2_PM_Part2.csv
+    - NYC_Pilot2_PM_Part3.csv
+num_windows: 100
+p_obs: 0.35
+s_max: 5
+seeds_formal: [32001, 32002, 32003, 32004, 32005, 32006, 32007, 32008, 32009, 32010]

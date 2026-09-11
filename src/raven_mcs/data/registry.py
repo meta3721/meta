@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from raven_mcs.data.base import DatasetAdapter
+from raven_mcs.data.cityscanner import CityScannerNYCPM25Adapter
 from raven_mcs.data.sensorscope import SensorScopeAdapter
 from raven_mcs.data.synthetic import SyntheticDatasetAdapter
 from raven_mcs.data.tdrive import TDriveSpeedAdapter
@@ -23,6 +24,8 @@ _ADAPTERS: dict[str, type[DatasetAdapter]] = {
     "traffic_volume": TrafficAdapter,
     "tdrive": TDriveSpeedAdapter,
     "tdrive_speed": TDriveSpeedAdapter,
+    "cityscanner_nyc_pm25": CityScannerNYCPM25Adapter,
+    "cityscanner": CityScannerNYCPM25Adapter,
 }
 
 
